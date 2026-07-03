@@ -1,9 +1,11 @@
-import axios from "axios";
+const BASE_URL = "http://192.168.1.14:8000/api";
 
-export const api = axios.create({
-  baseURL: "http://192.168.1.14:8000/api",
-  timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
+export async function api<T>(endpoint: string): Promise<T> {
+  const response = await fetch(`${BASE_URL}${endpoint}`);
+
+  if (!response.ok) {
+    throw new Error("Erro ao realizar requisição");
+  }
+
+  return response.json();
+}
