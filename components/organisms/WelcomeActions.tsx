@@ -1,12 +1,18 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { FeatureCard } from "@/components/molecules/FeatureCard";
 import { colors, radius, spacing } from "@/theme";
+import { clearAuthSession } from "@/utils/authStorage";
 
 export function WelcomeActions() {
+  async function handleVisitorPress() {
+    await clearAuthSession();
+    router.push("/home");
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.featuresBox}>
@@ -33,19 +39,17 @@ export function WelcomeActions() {
         />
       </View>
 
-      <Link href="/home" asChild>
-        <Pressable style={styles.visitorButton}>
-          <Ionicons name="person-outline" size={28} color={colors.white} />
+      <Pressable style={styles.visitorButton} onPress={handleVisitorPress}>
+        <Ionicons name="person-outline" size={28} color={colors.white} />
 
-          <AppText
-            variant="button"
-            color={colors.white}
-            style={styles.mainButtonText}
-          >
-            Entrar como visitante
-          </AppText>
-        </Pressable>
-      </Link>
+        <AppText
+          variant="button"
+          color={colors.white}
+          style={styles.mainButtonText}
+        >
+          Entrar como visitante
+        </AppText>
+      </Pressable>
 
       <Link href="/(auth)/login" asChild>
         <Pressable style={styles.providerButton}>

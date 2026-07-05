@@ -1,20 +1,25 @@
 import { useRef, useState } from "react";
-import {
-  Pressable,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
+import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
+import { requestOtp, verifyOtp } from "@/services/auth.service";
+import { createProvider, CreateProviderPayload } from "@/services/provider.service";
+import { saveProviderName, saveTokens } from "@/utils/authStorage";
 
 const CODE_LENGTH = 6;
 
-export function VerificationCard() {
+type VerificationCardProps = {
+  phone: string;
+  registrationData?: CreateProviderPayload;
+};
+
+export function VerificationCard({ phone, registrationData }: VerificationCardProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const inputRef = useRef<TextInput>(null);
 
@@ -25,7 +30,7 @@ export function VerificationCard() {
     setError("");
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (code.length !== CODE_LENGTH) {
       setError("Digite o código de 6 dígitos.");
       return;
@@ -33,8 +38,52 @@ export function VerificationCard() {
 
     setError("");
 
-    // TODO: chamar API para validar código
-    console.log("Código informado:", code);
+    try {
+      setLoading(true);
+
+      const result = await verifyOtp(phone, code);
+
+      if (result.account_exists) {
+        if (result.access && result.refresh) {
+          await saveTokens(result.access, result.refresh);
+        }
+
+        await saveProviderName(result.provider_name ?? "");
+
+        router.replace("/home");
+        return;
+      }
+
+      if (!registrationData) {
+        setError("Conta de prestador não encontrada. Realize o cadastro.");
+        return;
+      }
+
+      const provider = await createProvider(registrationData);
+
+      if (provider.access && provider.refresh) {
+        await saveTokens(provider.access, provider.refresh);
+      }
+
+      await saveProviderName(provider.name);
+
+      router.replace("/home");
+    } catch (err: any) {
+      console.log("Erro ao verificar código:", err);
+      setError(err.message || "Código inválido ou expirado.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    try {
+      await requestOtp(phone);
+      Alert.alert("Código reenviado", "Um novo código foi enviado para o seu WhatsApp.");
+    } catch (err) {
+      console.log("Erro ao reenviar código:", err);
+      Alert.alert("Erro", "Não foi possível reenviar o código.");
+    }
   }
 
   return (
@@ -98,9 +147,13 @@ export function VerificationCard() {
         </AppText>
       </View>
 
-      <Pressable style={styles.button} onPress={handleConfirm}>
+      <Pressable
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleConfirm}
+        disabled={loading}
+      >
         <AppText variant="button" color={colors.white} style={styles.buttonText}>
-          Confirmar código
+          {loading ? "Verificando..." : "Confirmar código"}
         </AppText>
 
         <Ionicons name="arrow-forward" size={30} color={colors.white} />
@@ -116,15 +169,11 @@ export function VerificationCard() {
         <View style={styles.line} />
       </View>
 
-      <Pressable style={styles.resendButton}>
+      <Pressable style={styles.resendButton} onPress={handleResend}>
         <Ionicons name="refresh" size={24} color={colors.primary} />
 
         <AppText variant="button" color={colors.primary} style={styles.resendText}>
           Reenviar código
-        </AppText>
-
-        <AppText variant="field" color={colors.text.secondary}>
-          (00:45)
         </AppText>
       </Pressable>
     </View>
@@ -175,7 +224,10 @@ const styles = StyleSheet.create({
 
   hiddenInput: {
     position: "absolute",
-    opacity: 0,
+    width: "100%",
+    height: 54,
+    opacity: 0.01,
+    color: "transparent",
   },
 
   errorText: {
@@ -199,6 +251,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.md,
+  },
+
+  buttonDisabled: {
+    opacity: 0.6,
   },
 
   buttonText: {

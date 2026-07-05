@@ -19,13 +19,21 @@ import { CategorySelector } from "@/components/organisms/CategorySelector";
 import { SelectField, SelectOption } from "@/components/molecules/SelectField";
 import { useStates } from "@/hooks/useStates";
 import { useCities } from "@/hooks/useCities";
+import { sanitizePhone, isValidPhone } from "@/utils/phone";
 import * as ImagePicker from "expo-image-picker";
+import { requestOtp } from "@/services/auth.service";
+import { CreateProviderPayload } from "@/services/provider.service";
 
 export default function ProviderRegister() {
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [phone, setPhone] = useState("");
+    const [phoneError, setPhoneError] = useState("");
     const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
     const [photo, setPhoto] = useState<string | null>(null);
     const [selectedState, setSelectedState] = useState<SelectOption | null>(null);
     const [selectedCity, setSelectedCity] = useState<SelectOption | null>(null);
+    const [submitting, setSubmitting] = useState(false);
 
     const { states, loading: loadingStates } = useStates();
     const { cities, loading: loadingCities } = useCities();
@@ -104,15 +112,58 @@ export default function ProviderRegister() {
         }
     }
 
-    function handleRegisterProvider() {
-        const payload = {
+    async function handleRegisterProvider() {
+        if (!isValidPhone(phone)) {
+            setPhoneError("Número de telefone inválido");
+            return;
+        }
+        setPhoneError("");
+
+        if (!name.trim()) {
+            Alert.alert("Atenção", "Informe seu nome completo.");
+            return;
+        }
+
+        if (!selectedCity) {
+            Alert.alert("Atenção", "Selecione o estado e a cidade.");
+            return;
+        }
+
+        if (selectedCategories.length === 0) {
+            Alert.alert("Atenção", "Selecione ao menos uma categoria.");
+            return;
+        }
+
+        const payload: CreateProviderPayload = {
+            phone,
+            name,
+            city: Number(selectedCity.id),
+            photoUri: photo,
+            description,
             categories: selectedCategories,
-            photo,
-            state: selectedState?.id,
-            city: selectedCity?.id,
         };
 
-        console.log("Dados do prestador:", payload);
+        try {
+            setSubmitting(true);
+
+            await requestOtp(phone);
+
+            router.push({
+                pathname: "/(auth)/verification",
+                params: {
+                    phone,
+                    registration: JSON.stringify(payload),
+                },
+            });
+        } catch (err: any) {
+            console.log("Erro ao solicitar código:", err);
+            Alert.alert(
+                "Erro",
+                err.message || "Não foi possível enviar o código de verificação."
+            );
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     return (
@@ -146,17 +197,31 @@ export default function ProviderRegister() {
 
                 <View style={styles.form}>
                     <TextInput
+                        value={name}
+                        onChangeText={setName}
                         placeholder="Nome completo"
                         placeholderTextColor={colors.text.placeholder}
                         style={styles.input}
                     />
 
                     <TextInput
+                        value={phone}
+                        onChangeText={(text) => {
+                            setPhone(sanitizePhone(text));
+                            setPhoneError("");
+                        }}
                         placeholder="WhatsApp"
                         placeholderTextColor={colors.text.placeholder}
                         keyboardType="phone-pad"
+                        maxLength={11}
                         style={styles.input}
                     />
+
+                    {phoneError ? (
+                        <AppText variant="profession" color={colors.danger} style={styles.errorText}>
+                            {phoneError}
+                        </AppText>
+                    ) : null}
 
                     <SelectField
                         placeholder="Estado"
@@ -199,6 +264,8 @@ export default function ProviderRegister() {
                     </AppText>
 
                     <TextInput
+                        value={description}
+                        onChangeText={setDescription}
                         placeholder="Fale sobre seus serviços..."
                         placeholderTextColor={colors.text.placeholder}
                         multiline
@@ -210,9 +277,13 @@ export default function ProviderRegister() {
                         onChange={setSelectedCategories}
                     />
 
-                    <Pressable style={styles.button} onPress={handleRegisterProvider}>
+                    <Pressable
+                        style={[styles.button, submitting && styles.buttonDisabled]}
+                        onPress={handleRegisterProvider}
+                        disabled={submitting}
+                    >
                         <AppText variant="button" color={colors.white}>
-                            Cadastrar perfil
+                            {submitting ? "Cadastrando..." : "Cadastrar perfil"}
                         </AppText>
                     </Pressable>
                 </View>
@@ -297,5 +368,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginTop: spacing.md,
+    },
+
+    buttonDisabled: {
+        opacity: 0.6,
+    },
+
+    errorText: {
+        marginTop: -spacing.xs,
+        marginBottom: spacing.xs,
     },
 });
