@@ -7,6 +7,7 @@ export async function requestOtp(phone: string): Promise<{ message: string }> {
 export type VerifyOtpResponse = {
   verified: boolean;
   account_exists: boolean;
+  provider_id?: number;
   provider_name?: string;
   access?: string;
   refresh?: string;

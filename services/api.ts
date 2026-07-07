@@ -31,21 +31,47 @@ export async function apiPost<T>(endpoint: string, body: unknown): Promise<T> {
 
 export async function apiUpload<T>(
   endpoint: string,
-  formData: FormData
+  formData: FormData,
+  options: {
+    accessToken?: string | null;
+    method?: "POST" | "PATCH";
+  } = {}
 ): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "POST",
+    method: options.method ?? "POST",
     body: formData,
     headers: {
       Accept: "application/json",
+      ...(options.accessToken
+        ? { Authorization: `Bearer ${options.accessToken}` }
+        : {}),
     },
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
     console.log("Erro da API:", errorBody);
-    throw new Error("Erro ao cadastrar prestador");
+    throw new Error("Erro ao salvar prestador");
   }
 
   return response.json();
+}
+
+export async function apiDelete(
+  endpoint: string,
+  accessToken?: string | null
+): Promise<void> {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.log("Erro da API:", errorBody);
+    throw new Error("Erro ao excluir prestador");
+  }
 }

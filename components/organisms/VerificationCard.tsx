@@ -7,7 +7,7 @@ import { AppText } from "@/components/atoms/AppText";
 import { colors, radius, spacing } from "@/theme";
 import { requestOtp, verifyOtp } from "@/services/auth.service";
 import { createProvider, CreateProviderPayload } from "@/services/provider.service";
-import { saveProviderName, saveTokens } from "@/utils/authStorage";
+import { saveProviderId, saveProviderName, saveTokens } from "@/utils/authStorage";
 
 const CODE_LENGTH = 6;
 
@@ -49,6 +49,9 @@ export function VerificationCard({ phone, registrationData }: VerificationCardPr
         }
 
         await saveProviderName(result.provider_name ?? "");
+        if (result.provider_id) {
+          await saveProviderId(result.provider_id);
+        }
 
         router.replace("/home");
         return;
@@ -66,6 +69,7 @@ export function VerificationCard({ phone, registrationData }: VerificationCardPr
       }
 
       await saveProviderName(provider.name);
+      await saveProviderId(provider.id);
 
       router.replace("/home");
     } catch (err: any) {
