@@ -3,12 +3,12 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
+import { SearchInput } from "@/components/molecules/SearchInput";
 import { useCategories } from "@/hooks/useCategories";
 import { colors, radius, spacing, typography } from "@/theme";
 
@@ -63,21 +63,16 @@ export function CategorySelector({
         Selecione uma ou mais categorias
       </AppText>
 
-      <View style={styles.searchBox}>
-        <Ionicons
-          name="search-outline"
-          size={22}
-          color={colors.text.secondary}
-        />
-
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Buscar categoria"
-          placeholderTextColor={colors.text.placeholder}
-          style={styles.searchInput}
-        />
-      </View>
+      <SearchInput
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Buscar categoria"
+        placeholderTextColor={colors.text.placeholder}
+        iconName="search-outline"
+        iconSize={22}
+        containerStyle={styles.searchBox}
+        inputStyle={styles.searchInput}
+      />
 
       {loading && (
         <View style={styles.feedback}>
@@ -141,21 +136,12 @@ const styles = StyleSheet.create({
 
   searchBox: {
     height: 46,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
     paddingHorizontal: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     marginBottom: spacing.sm,
   },
 
   searchInput: {
-    flex: 1,
     ...typography.field,
-    color: colors.text.primary,
   },
 
   feedback: {

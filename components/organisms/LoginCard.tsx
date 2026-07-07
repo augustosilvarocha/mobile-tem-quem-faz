@@ -1,23 +1,41 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, radius, spacing, typography } from "@/theme";
-import { router } from "expo-router";
+import { sanitizePhone, isValidPhone } from "@/utils/phone";
+import { requestOtp } from "@/services/auth.service";
 
 export function LoginCard() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit() {
-    if (phone.length !== 11) {
+  async function handleSubmit() {
+    if (!isValidPhone(phone)) {
       setError("Número de telefone inválido");
       return;
     }
 
     setError("");
-    router.push("/(auth)/verification");
+
+    try {
+      setLoading(true);
+
+      await requestOtp(phone);
+
+      router.push({
+        pathname: "/(auth)/verification",
+        params: { phone },
+      });
+    } catch (err: any) {
+      console.log("Erro ao solicitar código:", err);
+      setError(err.message || "Não foi possível enviar o código.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -47,7 +65,7 @@ export function LoginCard() {
         <TextInput
           value={phone}
           onChangeText={(text) => {
-            setPhone(text.replace(/\D/g, ""));
+            setPhone(sanitizePhone(text));
             setError("");
           }}
           keyboardType="number-pad"
@@ -57,15 +75,20 @@ export function LoginCard() {
           style={styles.input}
         />
       </View>
+
       {error ? (
         <AppText variant="profession" color={colors.danger} style={styles.errorText}>
           {error}
         </AppText>
       ) : null}
 
-      <Pressable style={styles.button} onPress={handleSubmit}>
+      <Pressable
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleSubmit}
+        disabled={loading}
+      >
         <AppText variant="button" color={colors.white} style={styles.buttonText}>
-          Enviar código
+          {loading ? "Enviando..." : "Enviar código"}
         </AppText>
 
         <Ionicons name="arrow-forward" size={30} color={colors.white} />
@@ -147,6 +170,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
 
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+
   buttonText: {
     fontSize: 20,
   },
@@ -162,6 +189,7 @@ const styles = StyleSheet.create({
   info: {
     textAlign: "center",
   },
+
   errorText: {
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,

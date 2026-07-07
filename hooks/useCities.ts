@@ -1,30 +1,45 @@
 import { useEffect, useState } from "react";
 
-import { City, getCities } from "@/services/city.service";
+import { City, getCachedCities, getCities } from "@/services/city.service";
 
 export function useCities() {
-  const [cities, setCities] = useState<City[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedCities = getCachedCities();
+  const [cities, setCities] = useState<City[]>(() => cachedCities ?? []);
+  const [loading, setLoading] = useState(() => !cachedCities);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadCities() {
       try {
-        setLoading(true);
+        setLoading(!getCachedCities());
         setError(null);
 
         const data = await getCities();
 
-        setCities(data);
+        if (isActive) {
+          setCities(data);
+        }
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
         console.log("Erro ao buscar cidades:", error);
-        setError("Não foi possível carregar as cidades.");
+        setError("Nao foi possivel carregar as cidades.");
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
 
     loadCities();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   return { cities, loading, error };
