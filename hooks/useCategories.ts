@@ -1,30 +1,51 @@
 import { useEffect, useState } from "react";
 
-import { Category, getCategories } from "@/services/category.service";
+import {
+  Category,
+  getCachedCategories,
+  getCategories,
+} from "@/services/category.service";
 
 export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cachedCategories = getCachedCategories();
+  const [categories, setCategories] = useState<Category[]>(
+    () => cachedCategories ?? []
+  );
+  const [loading, setLoading] = useState(() => !cachedCategories);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadCategories() {
       try {
-        setLoading(true);
+        setLoading(!getCachedCategories());
         setError(null);
 
         const data = await getCategories();
 
-        setCategories(data);
+        if (isActive) {
+          setCategories(data);
+        }
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
         console.log("Erro ao buscar categorias:", error);
-        setError("Não foi possível carregar as categorias.");
+        setError("Nao foi possivel carregar as categorias.");
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
 
     loadCategories();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   return {

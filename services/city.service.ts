@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { createMemoryCache } from "./memoryCache";
 
 export type City = {
   id: number;
@@ -8,6 +9,16 @@ export type City = {
   uf: string;
 };
 
+const citiesCache = createMemoryCache<City[]>();
+
+export function getCachedCities() {
+  return citiesCache.getCached();
+}
+
+export function clearCitiesCache() {
+  citiesCache.clear();
+}
+
 export async function getCities(): Promise<City[]> {
-  return api<City[]>("/cities/");
+  return citiesCache.get(() => api<City[]>("/cities/"));
 }
