@@ -1,19 +1,36 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Location from "expo-location";
 
 import {
+  getCachedProviders,
   getProviders,
   Provider,
   ProviderCityFilter,
+  ProviderFilter,
 } from "@/services/provider.service";
 
 export type ProviderCardData = {
   id: number;
   name: string;
   category: string;
+  categoryNames: string[];
   city: string;
   photo?: string;
 };
+
+type UseProvidersOptions = {
+  category?: string | null;
+  city?: string | null;
+  enabled?: boolean;
+  uf?: string | null;
+};
+
+const USER_CITY_FILTER_CACHE_TTL_MS = 5 * 60 * 1000;
+
+let cachedUserCityFilter: ProviderCityFilter | undefined;
+let cachedUserCityFilterAt = 0;
+let hasCachedUserCityFilter = false;
+let pendingUserCityFilterRequest: Promise<ProviderCityFilter | undefined> | null = null;
 
 function getStateFilter(region?: string | null): Pick<ProviderCityFilter, "state" | "uf"> {
   const normalizedRegion = region?.trim();
@@ -29,7 +46,7 @@ function getStateFilter(region?: string | null): Pick<ProviderCityFilter, "state
   return { state: normalizedRegion };
 }
 
-async function getUserCityFilter(): Promise<ProviderCityFilter | undefined> {
+async function loadUserCityFilter(): Promise<ProviderCityFilter | undefined> {
   try {
     const { status } = await Location.requestForegroundPermissionsAsync();
 
@@ -62,11 +79,53 @@ async function getUserCityFilter(): Promise<ProviderCityFilter | undefined> {
   }
 }
 
+function hasFreshUserCityFilter() {
+  return (
+    hasCachedUserCityFilter &&
+    Date.now() - cachedUserCityFilterAt < USER_CITY_FILTER_CACHE_TTL_MS
+  );
+}
+
+function getCachedUserCityFilter() {
+  if (!hasFreshUserCityFilter()) {
+    return undefined;
+  }
+
+  return cachedUserCityFilter;
+}
+
+async function getUserCityFilter(): Promise<ProviderCityFilter | undefined> {
+  if (hasFreshUserCityFilter()) {
+    return cachedUserCityFilter;
+  }
+
+  if (pendingUserCityFilterRequest) {
+    return pendingUserCityFilterRequest;
+  }
+
+  pendingUserCityFilterRequest = loadUserCityFilter()
+    .then((cityFilter) => {
+      cachedUserCityFilter = cityFilter;
+      cachedUserCityFilterAt = Date.now();
+      hasCachedUserCityFilter = true;
+
+      return cityFilter;
+    })
+    .finally(() => {
+      pendingUserCityFilterRequest = null;
+    });
+
+  return pendingUserCityFilterRequest;
+}
+
 function formatProvider(provider: Provider): ProviderCardData {
+  const categoryNames = provider.category_names ?? [];
+
   return {
     id: provider.id,
     name: provider.name,
-    category: provider.category_names?.join(", ") || "Prestador de servico",
+    category: categoryNames.join(", ") || "Prestador de servico",
+    categoryNames,
     city: `${provider.city_name} - ${provider.uf}`,
     photo: provider.photo || undefined,
   };
@@ -125,32 +184,126 @@ function sortProvidersByLocation(providers: Provider[], cityFilter?: ProviderCit
   });
 }
 
-export function useProviders() {
-  const [providers, setProviders] = useState<ProviderCardData[]>([]);
-  const [loading, setLoading] = useState(true);
+function getProviderFilter(options: {
+  category?: string;
+  city?: string;
+  uf?: string;
+}): ProviderFilter | undefined {
+  if (!options.category && !options.city && !options.uf) {
+    return undefined;
+  }
+
+  return {
+    category: options.category,
+    city: options.city,
+    uf: options.uf,
+  };
+}
+
+function getCachedProviderCards(
+  providerFilterOptions: {
+    category?: string;
+    city?: string;
+    uf?: string;
+  },
+  enabled: boolean
+) {
+  if (!enabled) {
+    return [];
+  }
+
+  const cachedProviders = getCachedProviders(getProviderFilter(providerFilterOptions));
+
+  if (!cachedProviders) {
+    return null;
+  }
+
+  return sortProvidersByLocation(
+    cachedProviders,
+    getCachedUserCityFilter()
+  ).map(formatProvider);
+}
+
+export function useProviders(options: UseProvidersOptions = {}) {
+  const categoryFilter = options.category?.trim();
+  const cityFilter = options.city?.trim();
+  const ufFilter = options.uf?.trim();
+  const enabled = options.enabled ?? true;
+  const providerFilterOptions = useMemo(
+    () => ({
+      category: categoryFilter || undefined,
+      city: cityFilter || undefined,
+      uf: ufFilter || undefined,
+    }),
+    [categoryFilter, cityFilter, ufFilter]
+  );
+  const cachedProviderCards = getCachedProviderCards(
+    providerFilterOptions,
+    enabled
+  );
+  const [providers, setProviders] = useState<ProviderCardData[]>(
+    () => cachedProviderCards ?? []
+  );
+  const [loading, setLoading] = useState(
+    () => enabled && cachedProviderCards === null
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
+
+    if (!enabled) {
+      setProviders([]);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     async function loadProviders() {
       try {
-        setLoading(true);
+        const cachedProviderCards = getCachedProviderCards(
+          providerFilterOptions,
+          enabled
+        );
+
+        if (cachedProviderCards) {
+          setProviders(cachedProviderCards);
+          setLoading(false);
+        } else {
+          setLoading(true);
+        }
+
         setError(null);
 
         const cityFilter = await getUserCityFilter();
-        const data = await getProviders();
+        const data = await getProviders(getProviderFilter(providerFilterOptions));
         const sortedProviders = sortProvidersByLocation(data, cityFilter);
+
+        if (!isActive) {
+          return;
+        }
 
         setProviders(sortedProviders.map(formatProvider));
       } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
         console.log("Erro ao buscar prestadores:", error);
         setError("Nao foi possivel carregar os prestadores.");
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
 
     loadProviders();
-  }, []);
+
+    return () => {
+      isActive = false;
+    };
+  }, [enabled, providerFilterOptions]);
 
   return { providers, loading, error };
 }

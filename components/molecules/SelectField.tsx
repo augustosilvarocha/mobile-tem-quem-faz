@@ -4,12 +4,12 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
+import { SearchInput } from "@/components/molecules/SearchInput";
 import { colors, radius, spacing, typography } from "@/theme";
 
 export type SelectOption = {
@@ -100,17 +100,15 @@ export function SelectField({
             </Pressable>
           </View>
 
-          <View style={styles.searchBox}>
-            <Ionicons name="search-outline" size={20} color={colors.text.secondary} />
-
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder={searchPlaceholder}
-              placeholderTextColor={colors.text.placeholder}
-              style={styles.searchInput}
-            />
-          </View>
+          <SearchInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder={searchPlaceholder}
+            placeholderTextColor={colors.text.placeholder}
+            iconName="search-outline"
+            containerStyle={styles.searchBox}
+            inputStyle={styles.searchInput}
+          />
 
           <FlatList
             data={filteredOptions}
@@ -189,21 +187,13 @@ const styles = StyleSheet.create({
 
   searchBox: {
     height: 46,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
     backgroundColor: colors.background.primary,
     paddingHorizontal: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     marginBottom: spacing.sm,
   },
 
   searchInput: {
-    flex: 1,
     ...typography.field,
-    color: colors.text.primary,
   },
 
   list: {

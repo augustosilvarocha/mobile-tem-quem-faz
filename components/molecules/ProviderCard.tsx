@@ -77,10 +77,10 @@ const styles = StyleSheet.create<{
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    padding: spacing.sm,
+    padding: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.md,
     marginBottom: spacing.md,
   },
   avatar: {
