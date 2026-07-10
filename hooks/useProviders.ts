@@ -7,6 +7,7 @@ import {
   Provider,
   ProviderCityFilter,
   ProviderFilter,
+  searchProviders,
 } from "@/services/provider.service";
 
 export type ProviderCardData = {
@@ -22,6 +23,7 @@ type UseProvidersOptions = {
   category?: string | null;
   city?: string | null;
   enabled?: boolean;
+  searchText?: string | null;
   uf?: string | null;
 };
 
@@ -227,8 +229,10 @@ function getCachedProviderCards(
 export function useProviders(options: UseProvidersOptions = {}) {
   const categoryFilter = options.category?.trim();
   const cityFilter = options.city?.trim();
+  const searchText = options.searchText?.trim();
   const ufFilter = options.uf?.trim();
   const enabled = options.enabled ?? true;
+  const isSearchMode = Boolean(searchText);
   const providerFilterOptions = useMemo(
     () => ({
       category: categoryFilter || undefined,
@@ -237,10 +241,9 @@ export function useProviders(options: UseProvidersOptions = {}) {
     }),
     [categoryFilter, cityFilter, ufFilter]
   );
-  const cachedProviderCards = getCachedProviderCards(
-    providerFilterOptions,
-    enabled
-  );
+  const cachedProviderCards = isSearchMode
+    ? null
+    : getCachedProviderCards(providerFilterOptions, enabled);
   const [providers, setProviders] = useState<ProviderCardData[]>(
     () => cachedProviderCards ?? []
   );
@@ -261,22 +264,29 @@ export function useProviders(options: UseProvidersOptions = {}) {
 
     async function loadProviders() {
       try {
-        const cachedProviderCards = getCachedProviderCards(
-          providerFilterOptions,
-          enabled
-        );
-
-        if (cachedProviderCards) {
-          setProviders(cachedProviderCards);
-          setLoading(false);
-        } else {
+        if (isSearchMode) {
+          setProviders([]);
           setLoading(true);
+        } else {
+          const cachedProviderCards = getCachedProviderCards(
+            providerFilterOptions,
+            enabled
+          );
+
+          if (cachedProviderCards) {
+            setProviders(cachedProviderCards);
+            setLoading(false);
+          } else {
+            setLoading(true);
+          }
         }
 
         setError(null);
 
         const cityFilter = await getUserCityFilter();
-        const data = await getProviders(getProviderFilter(providerFilterOptions));
+        const data = isSearchMode
+          ? await searchProviders(searchText ?? "")
+          : await getProviders(getProviderFilter(providerFilterOptions));
         const sortedProviders = sortProvidersByLocation(data, cityFilter);
 
         if (!isActive) {
@@ -290,7 +300,11 @@ export function useProviders(options: UseProvidersOptions = {}) {
         }
 
         console.log("Erro ao buscar prestadores:", error);
-        setError("Nao foi possivel carregar os prestadores.");
+        setError(
+          isSearchMode
+            ? "Nao foi possivel buscar prestadores."
+            : "Nao foi possivel carregar os prestadores."
+        );
       } finally {
         if (isActive) {
           setLoading(false);
@@ -303,7 +317,7 @@ export function useProviders(options: UseProvidersOptions = {}) {
     return () => {
       isActive = false;
     };
-  }, [enabled, providerFilterOptions]);
+  }, [enabled, isSearchMode, providerFilterOptions, searchText]);
 
   return { providers, loading, error };
 }

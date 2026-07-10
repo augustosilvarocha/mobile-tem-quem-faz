@@ -1,4 +1,4 @@
-import { BASE_URL, api, apiDelete, apiUpload } from "./api";
+import { BASE_URL, api, apiDelete, apiPost, apiUpload } from "./api";
 import { createKeyedMemoryCache } from "./memoryCache";
 import { getAccessToken } from "@/utils/authStorage";
 
@@ -127,6 +127,31 @@ export async function getProviders(
       ttlMs: PROVIDERS_CACHE_TTL_MS,
     }
   );
+}
+
+export async function searchProviders(text: string): Promise<Provider[]> {
+  const searchText = text.trim();
+
+  if (!searchText) {
+    return [];
+  }
+
+  try {
+    const providers = await apiPost<Provider[]>("/search/", {
+      text: searchText,
+    });
+
+    return providers.map(normalizeProvider);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.toLowerCase().includes("categoria")
+    ) {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export function getCachedProviders(filter?: ProviderFilter) {

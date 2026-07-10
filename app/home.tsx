@@ -18,64 +18,52 @@ import { Section } from "@/components/molecules/Section";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
 import { CategoryGrid } from "@/components/organisms/CategoryGrid";
 import { useCategories } from "@/hooks/useCategories";
-import { ProviderCardData, useProviders } from "@/hooks/useProviders";
+import { useProviders } from "@/hooks/useProviders";
+import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { colors, radius, spacing } from "@/theme";
-import { getProviderId, getProviderName } from "@/utils/authStorage";
+import {
+  clearAuthSession,
+  getProviderId,
+  getProviderName,
+} from "@/utils/authStorage";
+import {
+  formatRecordingDuration,
+  getOneProviderPerCategory,
+} from "@/utils/providerDisplay";
 
 const GUEST_GREETING = "Olá, seja bem-vindo ao TemQuemFaz";
-
-function normalizeCategoryName(categoryName: string) {
-  return categoryName
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
-
-function getOneProviderPerCategory(providers: ProviderCardData[]) {
-  const representedCategories = new Set<string>();
-
-  return providers.filter((provider) => {
-    const categoryNames =
-      provider.categoryNames.length > 0
-        ? provider.categoryNames
-        : [provider.category];
-    const hasNewCategory = categoryNames.some((categoryName) => {
-      const normalizedCategory = normalizeCategoryName(categoryName);
-
-      return normalizedCategory && !representedCategories.has(normalizedCategory);
-    });
-
-    if (!hasNewCategory) {
-      return false;
-    }
-
-    categoryNames.forEach((categoryName) => {
-      const normalizedCategory = normalizeCategoryName(categoryName);
-
-      if (normalizedCategory) {
-        representedCategories.add(normalizedCategory);
-      }
-    });
-
-    return true;
-  });
-}
 
 export default function Home() {
   const { categories } = useCategories();
   const { providers } = useProviders();
   const [providerName, setProviderName] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [search, setSearch] = useState("");
+  const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
+    onError: (message) => Alert.alert("Busca por voz", message),
+    onTranscript: (text) => {
+      setSearch(text);
+      router.push({
+        pathname: "/providers",
+        params: {
+          search: text,
+        },
+      });
+    },
+  });
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadProviderName() {
-      const storedProviderName = await getProviderName();
+      const [storedProviderId, storedProviderName] = await Promise.all([
+        getProviderId(),
+        getProviderName(),
+      ]);
 
       if (isMounted) {
         setProviderName(storedProviderName);
+        setIsGuest(!storedProviderId);
       }
     }
 
@@ -87,6 +75,18 @@ export default function Home() {
   }, []);
 
   const greeting = providerName ? `Olá, ${providerName}!` : GUEST_GREETING;
+
+  const recordingDuration = formatRecordingDuration(durationMillis);
+  const voiceButtonLabel = isTranscribing
+    ? "Processando audio..."
+    : isRecording
+      ? `Finalizar ${recordingDuration}`
+      : "Buscar por voz";
+  const voiceNavigationLabel = isTranscribing
+    ? "Processando"
+    : isRecording
+      ? recordingDuration
+      : "Busca por voz";
 
   const featuredProviders = useMemo(
     () => getOneProviderPerCategory(providers),
@@ -108,6 +108,11 @@ export default function Home() {
     });
   }
 
+  async function handleGuestExit() {
+    await clearAuthSession();
+    router.replace("/");
+  }
+
   async function handleOpenOwnProfile() {
     const providerId = await getProviderId();
 
@@ -116,7 +121,7 @@ export default function Home() {
       return;
     }
 
-    router.push("/provider/profile");
+    router.push("/providers/profile");
   }
 
   return (
@@ -125,6 +130,21 @@ export default function Home() {
         <View style={styles.locationRow}>
           <Ionicons name="location" size={16} color={colors.text.primary} />
           <AppText style={styles.location}>Pau dos Ferros - RN</AppText>
+
+          {isGuest && (
+            <Pressable
+              accessibilityLabel="Sair do modo convidado e voltar à tela inicial"
+              onPress={handleGuestExit}
+              style={styles.guestExitButton}
+            >
+              <Ionicons
+                name="log-out-outline"
+                size={18}
+                color={colors.primary}
+              />
+              <AppText style={styles.guestExitText}>Sair</AppText>
+            </Pressable>
+          )}
         </View>
 
         <AppText style={styles.greeting}>{greeting}</AppText>
@@ -135,7 +155,7 @@ export default function Home() {
           value={search}
           onChangeText={setSearch}
           onSubmitEditing={handleSearchSubmit}
-          placeholder="Ex.: eletricista, pedreiro, encanador..."
+          placeholder="Ex.: eletricista, pedreiro..."
           returnKeyType="search"
           iconSize={22}
           containerStyle={styles.searchBox}
@@ -145,10 +165,22 @@ export default function Home() {
           onPressAction={handleSearchSubmit}
         />
 
-        <Pressable style={styles.voiceButton}>
-          <Ionicons name="mic" size={22} color={colors.white} />
+        <Pressable
+          disabled={isTranscribing}
+          onPress={handleVoiceSearch}
+          style={[
+            styles.voiceButton,
+            isRecording && styles.voiceButtonRecording,
+            isTranscribing && styles.voiceButtonDisabled,
+          ]}
+        >
+          <Ionicons
+            name={isRecording ? "stop" : "mic"}
+            size={22}
+            color={colors.white}
+          />
 
-          <AppText style={styles.voiceButtonText}>Buscar por voz</AppText>
+          <AppText style={styles.voiceButtonText}>{voiceButtonLabel}</AppText>
         </Pressable>
 
         <Section title="Categorias principais" />
@@ -182,7 +214,7 @@ export default function Home() {
             photo={provider.photo}
             onPress={() =>
               router.push({
-                pathname: "/provider/[id]",
+                pathname: "/providers/[id]",
                 params: {
                   id: provider.id.toString(),
                 },
@@ -195,8 +227,12 @@ export default function Home() {
       <BottomNavigation
         active="home"
         onPressHome={() => router.replace("/home")}
-        onPressVoice={() => console.log("Buscar por voz")}
+        onPressVoice={handleVoiceSearch}
         onPressProfile={handleOpenOwnProfile}
+        voiceActive={isRecording}
+        voiceDisabled={isTranscribing}
+        voiceIconName={isRecording ? "stop" : "mic"}
+        voiceLabel={voiceNavigationLabel}
       />
     </View>
   );
@@ -207,11 +243,15 @@ const styles = StyleSheet.create<{
   content: ViewStyle;
   locationRow: ViewStyle;
   location: TextStyle;
+  guestExitButton: ViewStyle;
+  guestExitText: TextStyle;
   greeting: TextStyle;
   title: TextStyle;
   searchBox: ViewStyle;
   searchInput: TextStyle;
   voiceButton: ViewStyle;
+  voiceButtonDisabled: ViewStyle;
+  voiceButtonRecording: ViewStyle;
   voiceButtonText: TextStyle;
 }>({
   container: {
@@ -233,6 +273,20 @@ const styles = StyleSheet.create<{
 
   location: {
     color: colors.text.primary,
+    fontWeight: "700",
+  },
+
+  guestExitButton: {
+    minHeight: 40,
+    marginLeft: "auto",
+    paddingHorizontal: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+
+  guestExitText: {
+    color: colors.primary,
     fontWeight: "700",
   },
 
@@ -266,7 +320,7 @@ const styles = StyleSheet.create<{
   },
 
   voiceButton: {
-    height: 54,
+    height: 62,
     marginTop: spacing.md,
     backgroundColor: colors.primary,
     borderRadius: radius.md,
@@ -274,6 +328,14 @@ const styles = StyleSheet.create<{
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
+  },
+
+  voiceButtonDisabled: {
+    opacity: 0.7,
+  },
+
+  voiceButtonRecording: {
+    backgroundColor: colors.danger,
   },
 
   voiceButtonText: {

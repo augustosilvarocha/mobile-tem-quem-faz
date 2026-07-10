@@ -11,11 +11,12 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ProviderCard } from "@/components/molecules/ProviderCard";
+import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { SearchInput } from "@/components/molecules/SearchInput";
 import { SelectField, SelectOption } from "@/components/molecules/SelectField";
 import { useCategories } from "@/hooks/useCategories";
 import { useCities } from "@/hooks/useCities";
-import { useProviders } from "@/hooks/useProviders";
+import { ProviderCardData, useProviders } from "@/hooks/useProviders";
 import { useStates } from "@/hooks/useStates";
 import { colors, radius, spacing } from "@/theme";
 
@@ -27,11 +28,48 @@ function normalizeText(value: string) {
     .toLowerCase();
 }
 
+function getProviderCategoryNames(provider: ProviderCardData) {
+  return provider.categoryNames.length > 0
+    ? provider.categoryNames
+    : [provider.category];
+}
+
+function matchesSelectedFilters(
+  provider: ProviderCardData,
+  selectedCategory: SelectOption | null,
+  selectedCity: SelectOption | null,
+  selectedState: SelectOption | null
+) {
+  if (selectedCategory) {
+    const categoryFilter = normalizeText(selectedCategory.label);
+    const hasCategory = getProviderCategoryNames(provider).some(
+      (category) => normalizeText(category) === categoryFilter
+    );
+
+    if (!hasCategory) {
+      return false;
+    }
+  }
+
+  const providerCity = normalizeText(provider.city);
+
+  if (selectedCity && !providerCity.includes(normalizeText(selectedCity.label))) {
+    return false;
+  }
+
+  if (selectedState && !providerCity.includes(normalizeText(String(selectedState.id)))) {
+    return false;
+  }
+
+  return true;
+}
+
 export default function ProvidersScreen() {
   const { search: searchParam } = useLocalSearchParams<{
     search?: string;
   }>();
   const routeSearch = searchParam?.trim() ?? "";
+  const isSearchMode = Boolean(routeSearch);
   const [search, setSearch] = useState(routeSearch);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SelectOption | null>(null);
@@ -44,11 +82,17 @@ export default function ProvidersScreen() {
   const { categories, loading: loadingCategories } = useCategories();
   const { states, loading: loadingStates } = useStates();
   const { cities, loading: loadingCities } = useCities();
-  const { providers, loading, error } = useProviders({
-    category: selectedCategory?.label,
-    city: selectedCity?.label,
-    uf: selectedState ? String(selectedState.id) : undefined,
-  });
+  const { providers, loading, error } = useProviders(
+    isSearchMode
+      ? {
+          searchText: routeSearch,
+        }
+      : {
+          category: selectedCategory?.label,
+          city: selectedCity?.label,
+          uf: selectedState ? String(selectedState.id) : undefined,
+        }
+  );
 
   useEffect(() => {
     setSearch(routeSearch);
@@ -75,6 +119,17 @@ export default function ProvidersScreen() {
   }, [cities, draftState]);
 
   const filteredProviders = useMemo(() => {
+    if (isSearchMode) {
+      return providers.filter((provider) =>
+        matchesSelectedFilters(
+          provider,
+          selectedCategory,
+          selectedCity,
+          selectedState
+        )
+      );
+    }
+
     const text = normalizeText(search);
 
     if (!text) {
@@ -88,7 +143,14 @@ export default function ProvidersScreen() {
 
       return searchableText.includes(text);
     });
-  }, [providers, search]);
+  }, [
+    isSearchMode,
+    providers,
+    search,
+    selectedCategory,
+    selectedCity,
+    selectedState,
+  ]);
 
   const activeFiltersCount = [
     selectedCategory,
@@ -126,23 +188,34 @@ export default function ProvidersScreen() {
     setFiltersVisible(false);
   }
 
+  function handleSearchSubmit() {
+    const query = search.trim();
+
+    if (!query) {
+      router.replace("/providers");
+      return;
+    }
+
+    router.replace({
+      pathname: "/providers",
+      params: {
+        search: query,
+      },
+    });
+  }
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons
-          name="chevron-back"
-          size={28}
-          color={colors.text.primary}
-          onPress={() => router.back()}
-        />
-
-        <AppText style={styles.title}>{title}</AppText>
-      </View>
+      <ScreenHeader title={title} style={styles.header} />
 
       <SearchInput
         value={search}
         onChangeText={setSearch}
-        placeholder="Buscar prestador"
+        onSubmitEditing={isSearchMode ? handleSearchSubmit : undefined}
+        placeholder={isSearchMode ? "Buscar servico" : "Buscar prestador"}
+        returnKeyType={isSearchMode ? "search" : undefined}
+        actionAccessibilityLabel="Pesquisar prestadores"
+        onPressAction={isSearchMode ? handleSearchSubmit : undefined}
         containerStyle={styles.searchContainer}
       />
 
@@ -152,7 +225,7 @@ export default function ProvidersScreen() {
         </AppText>
 
         <Pressable style={styles.filterButton} onPress={handleOpenFilters}>
-          <Ionicons name="filter" size={14} color={colors.primary} />
+          <Ionicons name="filter" size={16} color={colors.primary} />
           <AppText style={styles.filterText}>
             {activeFiltersCount ? `Filtros (${activeFiltersCount})` : "Filtros"}
           </AppText>
@@ -187,7 +260,7 @@ export default function ProvidersScreen() {
               photo={provider.photo}
               onPress={() =>
                 router.push({
-                  pathname: "/provider/[id]",
+                  pathname: "/providers/[id]",
                   params: {
                     id: provider.id.toString(),
                   },
@@ -213,7 +286,7 @@ export default function ProvidersScreen() {
           <View style={styles.filterHeader}>
             <AppText style={styles.filterTitle}>Filtros</AppText>
 
-            <Pressable onPress={handleClearFilters}>
+            <Pressable style={styles.clearButton} onPress={handleClearFilters}>
               <AppText style={styles.clearText}>Limpar</AppText>
             </Pressable>
           </View>
@@ -262,21 +335,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
     paddingTop: spacing.md,
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     marginBottom: spacing.md,
-  },
-
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.text.primary,
   },
 
   searchContainer: {
@@ -284,7 +348,7 @@ const styles = StyleSheet.create({
   },
 
   resultsRow: {
-    minHeight: 32,
+    minHeight: 40,
     marginBottom: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
@@ -296,12 +360,12 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
 
   filterButton: {
-    minHeight: 30,
+    minHeight: 42,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
@@ -315,8 +379,8 @@ const styles = StyleSheet.create({
   filterText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
 
   content: {
@@ -362,21 +426,28 @@ const styles = StyleSheet.create({
   clearText: {
     color: colors.primary,
     fontWeight: "800",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+
+  clearButton: {
+    minHeight: 44,
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   fieldLabel: {
     color: colors.text.primary,
     fontWeight: "700",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
 
   applyButton: {
-    height: 50,
+    height: 60,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     alignItems: "center",
