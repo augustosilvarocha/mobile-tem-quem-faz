@@ -4,11 +4,11 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ProviderCard } from "@/components/molecules/ProviderCard";
+import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { SearchInput } from "@/components/molecules/SearchInput";
 import { useCategories } from "@/hooks/useCategories";
 import { useProviders } from "@/hooks/useProviders";
@@ -64,16 +64,7 @@ export default function CategoryProvidersScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons
-          name="chevron-back"
-          size={28}
-          color={colors.text.primary}
-          onPress={() => router.back()}
-        />
-
-        <AppText style={styles.title}>{title}</AppText>
-      </View>
+      <ScreenHeader title={title} style={styles.header} />
 
       <SearchInput
         value={search}
@@ -108,7 +99,7 @@ export default function CategoryProvidersScreen() {
               photo={provider.photo}
               onPress={() =>
                 router.push({
-                  pathname: "/provider/[id]",
+                  pathname: "/providers/[id]",
                   params: {
                     id: provider.id.toString(),
                   },
@@ -126,21 +117,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
     paddingTop: spacing.md,
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     marginBottom: spacing.md,
-  },
-
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: colors.text.primary,
   },
 
   searchContainer: {

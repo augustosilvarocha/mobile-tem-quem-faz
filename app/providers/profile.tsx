@@ -12,10 +12,13 @@ import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
+import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
+import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { clearAuthSession, getProviderId } from "@/utils/authStorage";
+import { formatRecordingDuration } from "@/utils/providerDisplay";
 
 function getFirstName(name: string) {
   return name.trim().split(/\s+/)[0] || name;
@@ -48,6 +51,21 @@ export default function OwnProviderProfile() {
   const [error, setError] = useState<string | null>(null);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
+    onError: (message) => Alert.alert("Busca por voz", message),
+    onTranscript: (text) =>
+      router.push({
+        pathname: "/providers",
+        params: {
+          search: text,
+        },
+      }),
+  });
+  const voiceNavigationLabel = isTranscribing
+    ? "Processando"
+    : isRecording
+      ? formatRecordingDuration(durationMillis)
+      : "Busca por voz";
 
   useEffect(() => {
     let isActive = true;
@@ -109,7 +127,7 @@ export default function OwnProviderProfile() {
     }
 
     router.push({
-      pathname: "/provider/edit",
+      pathname: "/providers/edit",
       params: {
         providerId: String(provider.id),
       },
@@ -119,21 +137,19 @@ export default function OwnProviderProfile() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={22} color={colors.text.primary} />
-          </Pressable>
-
-          <AppText style={styles.headerTitle}>Perfil</AppText>
-
-          <Pressable
-            style={styles.logoutButton}
-            onPress={() => setLogoutModalVisible(true)}
-          >
-            <Ionicons name="log-out-outline" size={16} color={colors.danger} />
-            <AppText style={styles.logoutText}>Sair</AppText>
-          </Pressable>
-        </View>
+        <ScreenHeader
+          right={
+            <Pressable
+              style={styles.logoutButton}
+              onPress={() => setLogoutModalVisible(true)}
+            >
+              <Ionicons name="log-out-outline" size={16} color={colors.danger} />
+              <AppText style={styles.logoutText}>Sair</AppText>
+            </Pressable>
+          }
+          style={styles.header}
+          title="Perfil"
+        />
 
         {loading ? (
           <View style={styles.feedback}>
@@ -156,7 +172,9 @@ export default function OwnProviderProfile() {
           </View>
         ) : (
           <>
-            <AppText style={styles.greeting}>Ola, {getFirstName(provider.name)}!</AppText>
+            <AppText variant="title" style={styles.greeting}>
+              Ola, {getFirstName(provider.name)}!
+            </AppText>
             <AppText style={styles.memberSince} color={colors.text.secondary}>
               {formatProviderSince(provider.created_at)}
             </AppText>
@@ -187,11 +205,13 @@ export default function OwnProviderProfile() {
               </View>
             </View>
 
-            <AppText style={styles.sectionTitle}>Minhas categorias</AppText>
+            <AppText variant="subtitle" style={styles.sectionTitle}>
+              Minhas categorias
+            </AppText>
             <View style={styles.chips}>
               {getProviderCategories(provider).map((category) => (
                 <View key={category} style={styles.chip}>
-                  <Ionicons name="construct" size={14} color={colors.primary} />
+                  <Ionicons name="construct" size={18} color={colors.primary} />
                   <AppText style={styles.chipText}>{category}</AppText>
                 </View>
               ))}
@@ -199,7 +219,7 @@ export default function OwnProviderProfile() {
 
             <Pressable style={styles.actionCard} onPress={handleEditProfile}>
               <View style={styles.actionIcon}>
-                <Ionicons name="person-outline" size={20} color={colors.primary} />
+                <Ionicons name="person-outline" size={24} color={colors.primary} />
               </View>
 
               <View style={styles.actionText}>
@@ -209,7 +229,7 @@ export default function OwnProviderProfile() {
                 </AppText>
               </View>
 
-              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
             </Pressable>
 
             <Pressable
@@ -222,7 +242,7 @@ export default function OwnProviderProfile() {
               }
             >
               <View style={styles.actionIcon}>
-                <Ionicons name="people-outline" size={22} color={colors.primary} />
+                <Ionicons name="people-outline" size={24} color={colors.primary} />
               </View>
 
               <View style={styles.actionText}>
@@ -241,8 +261,12 @@ export default function OwnProviderProfile() {
       <BottomNavigation
         active="profile"
         onPressHome={() => router.replace("/home")}
-        onPressVoice={() => console.log("Buscar por voz")}
+        onPressVoice={handleVoiceSearch}
         onPressProfile={() => undefined}
+        voiceActive={isRecording}
+        voiceDisabled={isTranscribing}
+        voiceIconName={isRecording ? "stop" : "mic"}
+        voiceLabel={voiceNavigationLabel}
       />
 
       <ConfirmActionModal
@@ -266,31 +290,17 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.screen,
+    paddingTop: spacing.lg,
     paddingBottom: 118,
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: spacing.lg,
   },
 
-  backButton: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  headerTitle: {
-    flex: 1,
-    color: colors.text.primary,
-    fontWeight: "700",
-  },
-
   logoutButton: {
-    height: 30,
+    minHeight: 44,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
@@ -303,8 +313,8 @@ const styles = StyleSheet.create({
   logoutText: {
     color: colors.danger,
     fontWeight: "700",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
 
   feedback: {
@@ -318,7 +328,7 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    minHeight: 46,
+    minHeight: 56,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
@@ -411,24 +421,24 @@ const styles = StyleSheet.create({
   },
 
   chip: {
-    minHeight: 28,
+    minHeight: 40,
     borderRadius: radius.sm,
     backgroundColor: colors.background.card,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
 
   chipText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 20,
   },
 
   actionCard: {
-    minHeight: 66,
+    minHeight: 88,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -441,12 +451,12 @@ const styles = StyleSheet.create({
   },
 
   inviteCard: {
-    minHeight: 76,
+    minHeight: 88,
     backgroundColor: colors.background.card,
   },
 
   actionIcon: {
-    width: 28,
+    width: 32,
     alignItems: "center",
   },
 
@@ -458,13 +468,13 @@ const styles = StyleSheet.create({
   actionTitle: {
     color: colors.text.primary,
     fontWeight: "800",
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 16,
+    lineHeight: 20,
   },
 
   actionDescription: {
-    marginTop: 2,
-    fontSize: 11,
-    lineHeight: 15,
+    marginTop: spacing.xs,
+    fontSize: 14,
+    lineHeight: 18,
   },
 });

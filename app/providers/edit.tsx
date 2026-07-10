@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
+import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { ProviderProfileForm } from "@/components/organisms/ProviderProfileForm";
 import {
   CreateProviderPayload,
@@ -92,7 +93,7 @@ export default function EditProviderProfile() {
     await saveProviderName(updatedProvider.name);
     await saveProviderId(updatedProvider.id);
 
-    router.replace("/provider/profile");
+    router.replace("/providers/profile");
   }
 
   async function handleDeleteProvider() {
@@ -125,18 +126,11 @@ export default function EditProviderProfile() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
-          </Pressable>
-
-          <View style={styles.headerText}>
-            <AppText style={styles.title}>Editar perfil</AppText>
-            <AppText color={colors.text.secondary}>
-              Atualize seus dados de prestador.
-            </AppText>
-          </View>
-        </View>
+        <ScreenHeader
+          style={styles.header}
+          subtitle="Atualize seus dados de prestador."
+          title="Editar perfil"
+        />
 
         {loading ? (
           <View style={styles.feedback}>
@@ -197,34 +191,13 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
     paddingBottom: spacing.xl,
   },
 
   header: {
     marginTop: spacing.lg,
     marginBottom: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-
-  backButton: {
-    width: 38,
-    height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  headerText: {
-    flex: 1,
-  },
-
-  title: {
-    color: colors.text.primary,
-    fontSize: 22,
-    lineHeight: 26,
-    fontWeight: "800",
   },
 
   feedback: {
@@ -233,7 +206,7 @@ const styles = StyleSheet.create({
   },
 
   deleteButton: {
-    height: 50,
+    height: 58,
     borderWidth: 1,
     borderColor: colors.danger,
     borderRadius: radius.md,

@@ -13,11 +13,18 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
+import { ScreenHeader } from "@/components/molecules/ScreenHeader";
+import { ZoomableImageModal } from "@/components/molecules/ZoomableImageModal";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
+import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { getProviderId } from "@/utils/authStorage";
 import { sanitizePhone } from "@/utils/phone";
+import { formatRecordingDuration } from "@/utils/providerDisplay";
+
+const WHATSAPP_DEFAULT_MESSAGE =
+  "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";
 
 function getProviderCategories(provider: Provider) {
   return provider.category_names?.length
@@ -46,7 +53,23 @@ export default function ProviderDetails() {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [whatsAppModalVisible, setWhatsAppModalVisible] = useState(false);
+  const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
+    onError: (message) => Alert.alert("Busca por voz", message),
+    onTranscript: (text) =>
+      router.push({
+        pathname: "/providers",
+        params: {
+          search: text,
+        },
+      }),
+  });
+  const voiceNavigationLabel = isTranscribing
+    ? "Processando"
+    : isRecording
+      ? formatRecordingDuration(durationMillis)
+      : "Busca por voz";
 
   useEffect(() => {
     let isActive = true;
@@ -95,7 +118,7 @@ export default function ProviderDetails() {
       return;
     }
 
-    router.push("/provider/profile");
+    router.push("/providers/profile");
   }
 
   async function handleOpenWhatsApp() {
@@ -111,7 +134,9 @@ export default function ProviderDetails() {
     }
 
     try {
-      await Linking.openURL(`https://wa.me/${whatsAppNumber}`);
+      const message = encodeURIComponent(WHATSAPP_DEFAULT_MESSAGE);
+
+      await Linking.openURL(`https://wa.me/${whatsAppNumber}?text=${message}`);
       setWhatsAppModalVisible(false);
     } catch (error) {
       console.log("Erro ao abrir WhatsApp:", error);
@@ -122,13 +147,7 @@ export default function ProviderDetails() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={22} color={colors.text.primary} />
-          </Pressable>
-
-          <AppText style={styles.headerTitle}>Detalhes do Prestador</AppText>
-        </View>
+        <ScreenHeader title="Detalhes do Prestador" style={styles.header} />
 
         {loading ? (
           <View style={styles.feedback}>
@@ -146,7 +165,20 @@ export default function ProviderDetails() {
           <>
             <View style={styles.profileCard}>
               {provider.photo ? (
-                <Image source={{ uri: provider.photo }} style={styles.avatar} />
+                <Pressable
+                  accessibilityLabel={`Ampliar foto de ${provider.name}`}
+                  accessibilityRole="button"
+                  onPress={() => setPhotoModalVisible(true)}
+                  style={({ pressed }) => [
+                    styles.avatarButton,
+                    pressed && styles.avatarPressed,
+                  ]}
+                >
+                  <Image
+                    source={{ uri: provider.photo }}
+                    style={styles.avatar}
+                  />
+                </Pressable>
               ) : (
                 <View style={styles.avatarPlaceholder}>
                   <Ionicons name="person" size={32} color={colors.text.secondary} />
@@ -182,7 +214,7 @@ export default function ProviderDetails() {
             <View style={styles.chips}>
               {getProviderCategories(provider).map((category) => (
                 <View key={category} style={styles.chip}>
-                  <Ionicons name="construct" size={14} color={colors.primary} />
+                  <Ionicons name="construct" size={18} color={colors.primary} />
                   <AppText style={styles.chipText}>{category}</AppText>
                 </View>
               ))}
@@ -192,7 +224,7 @@ export default function ProviderDetails() {
               style={styles.whatsAppButton}
               onPress={() => setWhatsAppModalVisible(true)}
             >
-              <Ionicons name="logo-whatsapp" size={22} color={colors.white} />
+              <Ionicons name="logo-whatsapp" size={28} color={colors.white} />
               <AppText style={styles.whatsAppButtonText}>
                 Falar no Whatsapp
               </AppText>
@@ -204,8 +236,12 @@ export default function ProviderDetails() {
       <BottomNavigation
         active="home"
         onPressHome={() => router.replace("/home")}
-        onPressVoice={() => console.log("Buscar por voz")}
+        onPressVoice={handleVoiceSearch}
         onPressProfile={handleOpenOwnProfile}
+        voiceActive={isRecording}
+        voiceDisabled={isTranscribing}
+        voiceIconName={isRecording ? "stop" : "mic"}
+        voiceLabel={voiceNavigationLabel}
       />
 
       {provider ? (
@@ -220,6 +256,14 @@ export default function ProviderDetails() {
           onConfirm={handleOpenWhatsApp}
         />
       ) : null}
+
+      {provider?.photo ? (
+        <ZoomableImageModal
+          imageUri={provider.photo}
+          onClose={() => setPhotoModalVisible(false)}
+          visible={photoModalVisible}
+        />
+      ) : null}
     </View>
   );
 }
@@ -231,27 +275,13 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.screen,
+    paddingTop: spacing.lg,
     paddingBottom: 118,
   },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     marginBottom: spacing.lg,
-  },
-
-  backButton: {
-    width: 34,
-    height: 34,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  headerTitle: {
-    color: colors.text.primary,
-    fontWeight: "700",
   },
 
   feedback: {
@@ -260,7 +290,7 @@ const styles = StyleSheet.create({
   },
 
   profileCard: {
-    minHeight: 112,
+    minHeight: 124,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -275,6 +305,16 @@ const styles = StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 39,
+  },
+
+  avatarButton: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+  },
+
+  avatarPressed: {
+    opacity: 0.75,
   },
 
   avatarPlaceholder: {
@@ -318,8 +358,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     color: colors.text.primary,
     fontWeight: "800",
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 18,
+    lineHeight: 22,
   },
 
   descriptionBox: {
@@ -333,8 +373,8 @@ const styles = StyleSheet.create({
 
   description: {
     color: colors.text.primary,
-    fontSize: 13,
-    lineHeight: 17,
+    fontSize: 15,
+    lineHeight: 20,
   },
 
   chips: {
@@ -345,24 +385,24 @@ const styles = StyleSheet.create({
   },
 
   chip: {
-    minHeight: 28,
+    minHeight: 40,
     borderRadius: radius.sm,
     backgroundColor: colors.background.card,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
 
   chipText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 20,
   },
 
   whatsAppButton: {
-    height: 54,
+    height: 64,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     flexDirection: "row",
@@ -374,5 +414,7 @@ const styles = StyleSheet.create({
   whatsAppButtonText: {
     color: colors.white,
     fontWeight: "800",
+    fontSize: 18,
+    lineHeight: 22,
   },
 });
