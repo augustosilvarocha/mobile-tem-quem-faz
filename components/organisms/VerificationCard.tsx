@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    height: 58,
+    height: 64,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     flexDirection: "row",
@@ -280,6 +280,7 @@ const styles = StyleSheet.create({
   },
 
   resendButton: {
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

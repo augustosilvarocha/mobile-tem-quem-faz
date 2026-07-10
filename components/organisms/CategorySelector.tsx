@@ -51,12 +51,12 @@ export function CategorySelector({
 
   return (
     <View style={styles.container}>
-      <AppText variant="name" style={styles.title}>
+      <AppText variant="subtitle" style={styles.title}>
         Categoria de serviço
       </AppText>
 
       <AppText
-        variant="profession"
+        variant="field"
         color={colors.text.secondary}
         style={styles.subtitle}
       >
@@ -77,14 +77,14 @@ export function CategorySelector({
       {loading && (
         <View style={styles.feedback}>
           <ActivityIndicator color={colors.primary} />
-          <AppText variant="profession" color={colors.text.secondary}>
+          <AppText variant="field" color={colors.text.secondary}>
             Carregando categorias...
           </AppText>
         </View>
       )}
 
       {!loading && error && (
-        <AppText variant="profession" color={colors.text.secondary}>
+        <AppText variant="field" color={colors.text.secondary}>
           {error}
         </AppText>
       )}
@@ -102,13 +102,13 @@ export function CategorySelector({
               >
                 <Ionicons
                   name={isSelected ? "checkbox" : "square-outline"}
-                  size={22}
+                  size={24}
                   color={isSelected ? colors.primary : colors.text.primary}
                 />
 
-                <Ionicons name="construct" size={20} color={colors.primary} />
+                <Ionicons name="construct" size={22} color={colors.primary} />
 
-                <AppText variant="profession" style={styles.categoryText}>
+                <AppText variant="field" style={styles.categoryText}>
                   {category.name}
                 </AppText>
               </Pressable>
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
 
   searchBox: {
-    height: 46,
+    height: 54,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
 
   categoryItem: {
     width: "48%",
-    height: 42,
+    minHeight: 62,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,

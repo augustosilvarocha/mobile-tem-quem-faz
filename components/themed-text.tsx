@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
@@ -8,10 +9,27 @@ export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
+function normalizeTextChildren(children: ReactNode): ReactNode {
+  if (
+    children === null ||
+    children === undefined ||
+    typeof children === 'boolean'
+  ) {
+    return '';
+  }
+
+  if (Array.isArray(children)) {
+    return children.map(normalizeTextChildren);
+  }
+
+  return children;
+}
+
 export function ThemedText({
   style,
   lightColor,
   darkColor,
+  children,
   type = 'default',
   ...rest
 }: ThemedTextProps) {
@@ -29,7 +47,9 @@ export function ThemedText({
         style,
       ]}
       {...rest}
-    />
+    >
+      {normalizeTextChildren(children)}
+    </Text>
   );
 }
 

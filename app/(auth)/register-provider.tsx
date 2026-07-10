@@ -84,12 +84,16 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
     paddingBottom: spacing.xl,
   },
 
   backButton: {
     marginTop: spacing.lg,
+    width: 28,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   header: {

@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-import { colors, radius, spacing } from "@/theme";
+import { colors, radius, spacing, typography } from "@/theme";
 
 type SearchInputProps = Omit<TextInputProps, "style"> & {
   containerStyle?: StyleProp<ViewStyle>;
@@ -71,7 +71,7 @@ export function SearchInput({
 
 const styles = StyleSheet.create({
   container: {
-    height: 48,
+    height: 54,
     backgroundColor: colors.white,
     borderRadius: radius.md,
     borderWidth: 1,
@@ -84,13 +84,16 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
+    height: "100%",
+    ...typography.field,
     color: colors.text.primary,
     paddingVertical: 0,
+    textAlignVertical: "center",
   },
 
   actionButton: {
-    width: 36,
-    height: 36,
+    width: 42,
+    height: 42,
     borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",

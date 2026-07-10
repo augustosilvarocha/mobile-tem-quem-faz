@@ -29,8 +29,10 @@ export function CategoryCard({
       onPress={onPress}
     >
       {isMore ? (
-        <View style={styles.plusCircle}>
-          <Ionicons name="add" size={56} color={colors.primary} />
+        <View style={styles.moreIconArea}>
+          <View style={styles.plusCircle}>
+            <Ionicons name="add" size={56} color={colors.primary} />
+          </View>
         </View>
       ) : image ? (
         <Image
@@ -43,12 +45,12 @@ export function CategoryCard({
       )}
 
       <AppText
+        variant="name"
+        style={styles.title}
         numberOfLines={2}
         ellipsizeMode="tail"
-        style={[
-          styles.title,
-          isMore ? styles.moreText : undefined,
-        ]}
+        adjustsFontSizeToFit
+        minimumFontScale={0.9}
       >
         {title}
       </AppText>
@@ -62,13 +64,13 @@ const styles = StyleSheet.create<{
   moreCard: ViewStyle;
   image: ImageStyle;
   imagePlaceholder: ViewStyle;
+  moreIconArea: ViewStyle;
   plusCircle: ViewStyle;
   title: TextStyle;
-  moreText: TextStyle;
 }>({
   card: {
     width: "47%",
-    height: 180,
+    height: 188,
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
@@ -76,7 +78,8 @@ const styles = StyleSheet.create<{
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
   },
 
   selectedCard: {
@@ -89,20 +92,27 @@ const styles = StyleSheet.create<{
   },
 
   image: {
-    width: 120,
-    height: 120,
+    width: 124,
+    height: 124,
   },
 
   imagePlaceholder: {
-    width: 120,
-    height: 120,
+    width: 124,
+    height: 124,
     borderRadius: radius.md,
     backgroundColor: colors.background.card,
   },
 
+  moreIconArea: {
+    width: 124,
+    height: 124,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   plusCircle: {
-    width: 100,
-    height: 100,
+    width: 96,
+    height: 96,
     borderRadius: radius.full,
     backgroundColor: colors.white,
     alignItems: "center",
@@ -110,17 +120,13 @@ const styles = StyleSheet.create<{
   },
 
   title: {
-    fontWeight: "700",
-    color: colors.text.primary,
     textAlign: "center",
-    lineHeight: 18,
     marginTop: spacing.sm,
-    minHeight: 38,
-    maxWidth: "100%",
-  },
-
-  moreText: {
-    color: colors.primary,
+    minHeight: 40,
+    maxHeight: 40,
+    width: "100%",
+    flexShrink: 0,
     textAlignVertical: "center",
+    includeFontPadding: false,
   },
 });

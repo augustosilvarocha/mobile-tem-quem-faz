@@ -55,6 +55,6 @@ const styles = StyleSheet.create({
 
   description: {
     textAlign: "center",
-    lineHeight: 16,
+    lineHeight: 18,
   },
 });

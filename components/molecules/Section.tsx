@@ -17,7 +17,7 @@ export function Section({ title, actionText, onPressAction }: SectionProps) {
       </AppText>
 
       {actionText ? (
-        <Pressable onPress={onPressAction}>
+        <Pressable style={styles.actionButton} onPress={onPressAction}>
           <AppText variant="buttonSmall" style={styles.action}>
             {actionText}
           </AppText>
@@ -44,5 +44,12 @@ const styles = StyleSheet.create({
   action: {
     fontWeight: "700",
     color: colors.primary,
+  },
+
+  actionButton: {
+    minHeight: 44,
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

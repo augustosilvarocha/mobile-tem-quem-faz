@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
     paddingBottom: spacing.xl ?? spacing.lg,
   },
 });

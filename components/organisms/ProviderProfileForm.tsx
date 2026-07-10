@@ -225,7 +225,11 @@ export function ProviderProfileForm({
       />
 
       {phoneError ? (
-        <AppText variant="profession" color={colors.danger} style={styles.errorText}>
+        <AppText
+          variant="profession"
+          color={colors.danger}
+          style={styles.errorText}
+        >
           {phoneError}
         </AppText>
       ) : null}
@@ -303,7 +307,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    height: 46,
+    height: 56,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -319,7 +323,7 @@ const styles = StyleSheet.create({
   },
 
   photoBox: {
-    height: 64,
+    height: 82,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -336,13 +340,13 @@ const styles = StyleSheet.create({
   },
 
   textArea: {
-    height: 90,
+    height: 112,
     paddingTop: spacing.sm,
     textAlignVertical: "top",
   },
 
   button: {
-    height: 50,
+    height: 60,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     alignItems: "center",

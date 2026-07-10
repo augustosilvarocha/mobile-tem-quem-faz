@@ -38,12 +38,12 @@ export function WelcomeHeader({
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
+    paddingHorizontal: spacing.screen,
   },
 
   logo: {
     width: 250,
-    height: 186,
-    marginTop: spacing.xl,
+    height: 140,
   },
   subtitle: {
     color: colors.secondary,
@@ -55,5 +55,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 250,
     marginTop: spacing.md,
+    transform: [{ translateY: spacing.sm }],
   },
 });

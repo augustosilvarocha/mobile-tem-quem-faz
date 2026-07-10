@@ -34,7 +34,7 @@ export default function Verification() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
     backgroundColor: colors.background.primary,
   },
 });

@@ -72,7 +72,7 @@ export function SelectField({
         onPress={handleOpen}
       >
         <AppText
-          variant="profession"
+          variant="field"
           color={value ? colors.text.primary : colors.text.placeholder}
         >
           {loading ? "Carregando..." : value ? value.label : placeholder}
@@ -91,7 +91,7 @@ export function SelectField({
 
         <View style={styles.sheet}>
           <View style={styles.sheetHeader}>
-            <AppText variant="name" style={styles.sheetTitle}>
+            <AppText variant="subtitle" style={styles.sheetTitle}>
               {placeholder}
             </AppText>
 
@@ -117,7 +117,7 @@ export function SelectField({
             style={styles.list}
             renderItem={({ item }) => (
               <Pressable style={styles.optionItem} onPress={() => handleSelect(item)}>
-                <AppText variant="profession" color={colors.text.primary}>
+                <AppText variant="field" color={colors.text.primary}>
                   {item.label}
                 </AppText>
 
@@ -128,7 +128,7 @@ export function SelectField({
             )}
             ListEmptyComponent={
               <AppText
-                variant="profession"
+                variant="field"
                 color={colors.text.secondary}
                 style={styles.emptyText}
               >
@@ -144,7 +144,7 @@ export function SelectField({
 
 const styles = StyleSheet.create({
   field: {
-    height: 46,
+    height: 54,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
 
   searchBox: {
-    height: 46,
+    height: 54,
     backgroundColor: colors.background.primary,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
 
   optionItem: {
-    height: 46,
+    minHeight: 54,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     flexDirection: "row",

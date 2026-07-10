@@ -124,6 +124,8 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text.primary,
     fontWeight: "800",
+    fontSize: 20,
+    lineHeight: 24,
     textAlign: "center",
     marginBottom: spacing.xs,
   },
@@ -131,14 +133,14 @@ const styles = StyleSheet.create({
   description: {
     color: colors.text.secondary,
     textAlign: "center",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 15,
+    lineHeight: 20,
     marginBottom: spacing.lg,
   },
 
   confirmButton: {
     width: "100%",
-    height: 46,
+    height: 56,
     borderRadius: radius.sm,
     backgroundColor: colors.danger,
     alignItems: "center",
@@ -149,11 +151,13 @@ const styles = StyleSheet.create({
   confirmText: {
     color: colors.white,
     fontWeight: "800",
+    fontSize: 16,
+    lineHeight: 20,
   },
 
   cancelButton: {
     width: "100%",
-    height: 44,
+    height: 54,
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
@@ -165,6 +169,8 @@ const styles = StyleSheet.create({
   cancelText: {
     color: colors.danger,
     fontWeight: "800",
+    fontSize: 16,
+    lineHeight: 20,
   },
 
   disabledButton: {

@@ -20,14 +20,14 @@ export const typography = {
 
   name: {
     fontFamily: fontFamily.semiBold,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
   },
 
   profession: {
     fontFamily: fontFamily.regular,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
 
   button: {
@@ -38,14 +38,14 @@ export const typography = {
 
   buttonSmall: {
     fontFamily: fontFamily.semiBold,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 18,
   },
 
   field: {
     fontFamily: fontFamily.regular,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
   },
 
   placeholder: {

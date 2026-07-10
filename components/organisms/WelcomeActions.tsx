@@ -94,7 +94,7 @@ export function WelcomeActions() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.screen,
   },
 
   featuresBox: {
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
 
   visitorButton: {
-    height: 56,
+    height: 62,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     marginTop: spacing.sm,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
 
   providerButton: {
-    height: 56,
+    height: 62,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.primary,
@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderStyle: "dashed",
     borderColor: colors.border,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
   },
 
   registerLabel: {
@@ -159,6 +159,7 @@ const styles = StyleSheet.create({
   },
 
   registerButton: {
+    minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

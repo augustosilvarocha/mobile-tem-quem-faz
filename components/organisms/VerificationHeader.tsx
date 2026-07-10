@@ -8,7 +8,11 @@ import { colors, spacing } from "@/theme";
 export function VerificationHeader() {
   return (
     <View style={styles.container}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
+      <Pressable
+        hitSlop={8}
+        style={styles.backButton}
+        onPress={() => router.back()}
+      >
         <Ionicons name="arrow-back" size={30} color={colors.primary} />
       </Pressable>
 
@@ -53,6 +57,10 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     zIndex: 10,
+    width: 30,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   logo: {
