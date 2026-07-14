@@ -27,18 +27,20 @@ import {
   getProviderName,
 } from "@/utils/authStorage";
 import {
-  formatRecordingDuration,
   getOneProviderPerCategory,
 } from "@/utils/providerDisplay";
+import { formatRecordingDuration } from "@/utils/time";
 
 const GUEST_GREETING = "Olá, seja bem-vindo ao TemQuemFaz";
 
 export default function Home() {
   const { categories } = useCategories();
   const { providers } = useProviders();
+
   const [providerName, setProviderName] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
   const [search, setSearch] = useState("");
+  
   const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
     onTranscript: (text) => {

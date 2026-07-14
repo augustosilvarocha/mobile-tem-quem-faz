@@ -37,11 +37,3 @@ export function getOneProviderPerCategory(providers: ProviderCardData[] = []) {
     return true;
   });
 }
-
-export function formatRecordingDuration(durationMillis: number) {
-  const totalSeconds = Math.floor(durationMillis / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}

@@ -1,4 +1,4 @@
-export const BASE_URL = "http://192.168.1.14:8000/api";
+export const BASE_URL = "http://192.168.1.3:8000/api";
 
 export async function api<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`);

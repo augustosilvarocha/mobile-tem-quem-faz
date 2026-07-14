@@ -1,5 +1,6 @@
-import { BASE_URL, api, apiDelete, apiPost, apiUpload } from "./api";
+import { api, apiDelete, apiPost, apiUpload } from "./api";
 import { createKeyedMemoryCache } from "./memoryCache";
+import { normalizeRemoteImageUrl } from "./mediaUrl";
 import { getAccessToken } from "@/utils/authStorage";
 
 export type CreateProviderPayload = {
@@ -48,30 +49,8 @@ const PROVIDERS_CACHE_TTL_MS = 5 * 60 * 1000;
 const providersCache = createKeyedMemoryCache<Provider[]>();
 const providerDetailsCache = createKeyedMemoryCache<Provider>();
 
-function getApiHost() {
-  return BASE_URL.replace(/^https?:\/\//, "").split(":")[0];
-}
-
-function getApiOrigin() {
-  return BASE_URL.replace(/\/api\/?$/, "");
-}
-
 function normalizePhotoUrl(photo: string | null) {
-  if (!photo) {
-    return null;
-  }
-
-  if (photo.startsWith("/")) {
-    return `${getApiOrigin()}${photo}`;
-  }
-
-  const apiHost = getApiHost();
-
-  return photo
-    .replace("://localhost:", `://${apiHost}:`)
-    .replace("://127.0.0.1:", `://${apiHost}:`)
-    .replace("://0.0.0.0:", `://${apiHost}:`)
-    .replace("://minio:", `://${apiHost}:`);
+  return normalizeRemoteImageUrl(photo);
 }
 
 function normalizeProvider(provider: Provider): Provider {

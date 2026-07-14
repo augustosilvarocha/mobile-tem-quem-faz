@@ -21,7 +21,7 @@ import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { getProviderId } from "@/utils/authStorage";
 import { sanitizePhone } from "@/utils/phone";
-import { formatRecordingDuration } from "@/utils/providerDisplay";
+import { formatRecordingDuration } from "@/utils/time";
 
 const WHATSAPP_DEFAULT_MESSAGE =
   "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";

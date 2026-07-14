@@ -18,7 +18,7 @@ import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { clearAuthSession, getProviderId } from "@/utils/authStorage";
-import { formatRecordingDuration } from "@/utils/providerDisplay";
+import { formatRecordingDuration } from "@/utils/time";
 
 function getFirstName(name: string) {
   return name.trim().split(/\s+/)[0] || name;
