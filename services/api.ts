@@ -1,10 +1,34 @@
-export const BASE_URL = "http://192.168.1.3:8000/api";
+const DEFAULT_BASE_URL = "http://192.168.1.2:8000/api";
+
+function normalizeBaseUrl(baseUrl: string) {
+  return baseUrl.replace(/\/+$/, "");
+}
+
+async function parseJsonResponse(response: Response) {
+  return response.json().catch(() => null);
+}
+
+function getParsedErrorMessage(data: any, fallback: string) {
+  return data?.error || data?.detail || fallback;
+}
+
+async function getErrorMessage(response: Response, fallback: string) {
+  const data = await parseJsonResponse(response);
+
+  return getParsedErrorMessage(data, fallback);
+}
+
+export const BASE_URL = normalizeBaseUrl(
+  process.env.EXPO_PUBLIC_API_URL || DEFAULT_BASE_URL
+);
 
 export async function api<T>(endpoint: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`);
 
   if (!response.ok) {
-    throw new Error("Erro ao realizar requisição");
+    throw new Error(
+      await getErrorMessage(response, "Erro ao realizar requisicao")
+    );
   }
 
   return response.json();
@@ -19,11 +43,10 @@ export async function apiPost<T>(endpoint: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
 
-  const data = await response.json().catch(() => null);
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
-    const message = data?.error || "Erro na requisição";
-    throw new Error(message);
+    throw new Error(getParsedErrorMessage(data, "Erro na requisicao"));
   }
 
   return data as T;
