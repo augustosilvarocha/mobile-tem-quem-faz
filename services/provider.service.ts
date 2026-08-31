@@ -10,6 +10,14 @@ export type CreateProviderPayload = {
   photoUri: string | null;
   description: string;
   categories: number[];
+  neighborhood?: string;
+  street?: string;
+  number?: string;
+  address_complement?: string;
+  reference_point?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  show_location_on_map?: boolean;
 };
 
 export type UpdateProviderPayload = CreateProviderPayload;
@@ -28,6 +36,14 @@ export type Provider = {
   uf: string;
   photo: string | null;
   description: string;
+  neighborhood: string | null;
+  street: string | null;
+  number: string | null;
+  address_complement: string | null;
+  reference_point: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  show_location_on_map: boolean;
   categories: number[];
   category_names?: string[];
   created_at: string;
@@ -160,15 +176,25 @@ export async function getProviderById(providerId: number | string): Promise<Prov
   );
 }
 
+function appendOptionalFormField(
+  formData: FormData,
+  fieldName: string,
+  value?: string | number | boolean | null
+) {
+  if (value === undefined || value === null || value === "") {
+    return;
+  }
+
+  formData.append(fieldName, String(value));
+}
+
 export async function createProvider(
   payload: CreateProviderPayload
 ): Promise<Provider> {
   const formData = new FormData();
 
   appendProviderFormData(formData, payload);
-
   const provider = await apiUpload<Provider>("/providers/", formData);
-
   clearProvidersCache();
 
   return normalizeProvider(provider);
@@ -178,10 +204,26 @@ function appendProviderFormData(
   formData: FormData,
   payload: CreateProviderPayload
 ) {
-  formData.append("user.phone", payload.phone);
-  formData.append("name", payload.name);
-  formData.append("city", String(payload.city));
-  formData.append("description", payload.description);
+  appendOptionalFormField(formData, "name", payload.name);
+  appendOptionalFormField(formData, "user.phone", payload.phone);
+  appendOptionalFormField(formData, "city", payload.city);
+  appendOptionalFormField(formData, "description", payload.description);
+  appendOptionalFormField(formData, "neighborhood", payload.neighborhood);
+  appendOptionalFormField(formData, "street", payload.street);
+  appendOptionalFormField(formData, "number", payload.number);
+  appendOptionalFormField(
+    formData,
+    "address_complement",
+    payload.address_complement
+  );
+  appendOptionalFormField(formData, "reference_point", payload.reference_point);
+  appendOptionalFormField(formData, "latitude", payload.latitude);
+  appendOptionalFormField(formData, "longitude", payload.longitude);
+
+  formData.append(
+    "show_location_on_map",
+    payload.show_location_on_map ? "true" : "false"
+  );
 
   payload.categories.forEach((categoryId) => {
     formData.append("categories", String(categoryId));

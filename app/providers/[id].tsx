@@ -13,6 +13,7 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
+import { ProviderLocationMap } from "@/components/molecules/ProviderLocationMap";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { ZoomableImageModal } from "@/components/molecules/ZoomableImageModal";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
@@ -26,6 +27,12 @@ import { formatRecordingDuration } from "@/utils/time";
 const WHATSAPP_DEFAULT_MESSAGE =
   "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";
 
+type ProviderWithMapLocation = Provider & {
+  latitude: number;
+  longitude: number;
+  show_location_on_map: true;
+};
+
 function getProviderCategories(provider: Provider) {
   return provider.category_names?.length
     ? provider.category_names
@@ -34,6 +41,33 @@ function getProviderCategories(provider: Provider) {
 
 function getProviderLocation(provider: Provider) {
   return `${provider.city_name} - ${provider.uf}`;
+}
+
+function getProviderAddress(provider: Provider) {
+  const streetWithNumber = [provider.street, provider.number]
+    .filter(Boolean)
+    .join(", ");
+  const addressParts = [
+    streetWithNumber,
+    provider.neighborhood,
+    provider.reference_point,
+  ].filter(Boolean);
+
+  return addressParts.join(" - ");
+}
+
+function hasProviderMapLocation(
+  provider: Provider
+): provider is ProviderWithMapLocation {
+  return (
+    provider.show_location_on_map &&
+    typeof provider.latitude === "number" &&
+    typeof provider.longitude === "number"
+  );
+}
+
+function getProviderMapUrl(provider: ProviderWithMapLocation) {
+  return `https://www.google.com/maps/search/?api=1&query=${provider.latitude},${provider.longitude}`;
 }
 
 function getWhatsAppNumber(phone: string) {
@@ -70,6 +104,7 @@ export default function ProviderDetails() {
     : isRecording
       ? formatRecordingDuration(durationMillis)
       : "Busca por voz";
+  const providerAddress = provider ? getProviderAddress(provider) : "";
 
   useEffect(() => {
     let isActive = true;
@@ -141,6 +176,19 @@ export default function ProviderDetails() {
     } catch (error) {
       console.log("Erro ao abrir WhatsApp:", error);
       Alert.alert("WhatsApp", "Nao foi possivel abrir o WhatsApp.");
+    }
+  }
+
+  async function handleOpenMap() {
+    if (!provider || !hasProviderMapLocation(provider)) {
+      return;
+    }
+
+    try {
+      await Linking.openURL(getProviderMapUrl(provider));
+    } catch (error) {
+      console.log("Erro ao abrir mapa:", error);
+      Alert.alert("Mapa", "Nao foi possivel abrir o mapa.");
     }
   }
 
@@ -219,6 +267,28 @@ export default function ProviderDetails() {
                 </View>
               ))}
             </View>
+
+            {hasProviderMapLocation(provider) ? (
+              <>
+                <AppText style={styles.sectionTitle}>Localizacao</AppText>
+
+                {providerAddress ? (
+                  <AppText style={styles.mapAddress}>{providerAddress}</AppText>
+                ) : null}
+
+                <ProviderLocationMap
+                  latitude={provider.latitude}
+                  longitude={provider.longitude}
+                  title={provider.name}
+                  description={getProviderLocation(provider)}
+                />
+
+                <Pressable style={styles.mapButton} onPress={handleOpenMap}>
+                  <Ionicons name="navigate" size={20} color={colors.primary} />
+                  <AppText style={styles.mapButtonText}>Abrir no mapa</AppText>
+                </Pressable>
+              </>
+            ) : null}
 
             <Pressable
               style={styles.whatsAppButton}
@@ -401,10 +471,39 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  mapAddress: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    lineHeight: 19,
+    marginBottom: spacing.sm,
+  },
+
+  mapButton: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+  },
+
+  mapButtonText: {
+    color: colors.primary,
+    fontWeight: "800",
+    fontSize: 15,
+    lineHeight: 20,
+  },
+
   whatsAppButton: {
     height: 64,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
+    marginTop: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

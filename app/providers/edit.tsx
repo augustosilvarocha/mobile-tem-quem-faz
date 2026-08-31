@@ -152,6 +152,14 @@ export default function EditProviderProfile() {
                 name: provider.name,
                 phone: provider.user.phone,
                 photoUri: provider.photo,
+                neighborhood: provider.neighborhood,
+                street: provider.street,
+                number: provider.number,
+                address_complement: provider.address_complement,
+                reference_point: provider.reference_point,
+                latitude: provider.latitude,
+                longitude: provider.longitude,
+                show_location_on_map: provider.show_location_on_map,
               }}
               submitLabel="Salvar alteracoes"
               submittingLabel="Salvando..."

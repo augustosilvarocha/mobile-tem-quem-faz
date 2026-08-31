@@ -6,9 +6,13 @@ import {
   StyleSheet,
   TextInput,
   View,
+  Switch,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import MapView, { Marker, Region } from "react-native-maps";
 
 import { AppText } from "@/components/atoms/AppText";
 import { SelectField, SelectOption } from "@/components/molecules/SelectField";
@@ -26,6 +30,14 @@ export type ProviderProfileFormInitialValues = {
   name?: string;
   phone?: string;
   photoUri?: string | null;
+  neighborhood?: string | null;
+  street?: string | null;
+  number?: string | null;
+  address_complement?: string | null;
+  reference_point?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  show_location_on_map?: boolean;
 };
 
 type ProviderProfileFormProps = {
@@ -60,6 +72,22 @@ export function ProviderProfileForm({
   const [selectedCity, setSelectedCity] = useState<SelectOption | null>(null);
   const [initialCityApplied, setInitialCityApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [neighborhood, setNeighborhood] = useState(initialValues?.neighborhood ?? "");
+  const [street, setStreet] = useState(initialValues?.street ?? "");
+  const [number, setNumber] = useState(initialValues?.number ?? "");
+  const [addressComplement, setAddressComplement] = useState(initialValues?.address_complement ?? "");
+  const [referencePoint, setReferencePoint] = useState(initialValues?.reference_point ?? "");
+  const [latitude, setLatitude] = useState(initialValues?.latitude ?? null);
+  const [longitude, setLongitude] = useState(initialValues?.longitude ?? null);
+  const [showLocationOnMap, setShowLocationOnMap] = useState(initialValues?.show_location_on_map ?? false);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [mapPickerVisible, setMapPickerVisible] = useState(false);
+  const [mapRegion, setMapRegion] = useState<Region>({
+    latitude: latitude ?? -14.2350,
+    longitude: longitude ?? -51.9253,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+  });
 
   const { states, loading: loadingStates } = useStates();
   const { cities, loading: loadingCities } = useCities();
@@ -78,6 +106,7 @@ export function ProviderProfileForm({
       .filter((city) => city.uf === selectedState.id)
       .map((city) => ({ id: city.id, label: city.name }));
   }, [cities, selectedState]);
+  const hasSelectedLocation = latitude !== null && longitude !== null;
 
   useEffect(() => {
     if (initialCityApplied || !initialValues?.cityId || cities.length === 0) {
@@ -156,6 +185,90 @@ export function ProviderProfileForm({
     }
   }
 
+  async function handleUserCurrentLocation() {
+    try {
+      setLoadingLocation(true);
+
+      const permission = await Location.requestForegroundPermissionsAsync();
+
+      if (permission.status !== Location.PermissionStatus.GRANTED) {
+        Alert.alert(
+          "Permissao negada",
+          permission.canAskAgain
+            ? "Nao foi possivel obter sua localizacao. Tente permitir o acesso quando o aviso aparecer."
+            : "A permissao de localizacao foi bloqueada. Habilite a permissao nas configuracoes do dispositivo."
+        );
+        return;
+      }
+
+      const locationServicesEnabled =
+        await Location.hasServicesEnabledAsync();
+
+      if (!locationServicesEnabled) {
+        Alert.alert(
+          "Localizacao desligada",
+          "Ative a localizacao do dispositivo para marcar o local."
+        );
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+      setShowLocationOnMap(true);
+    } catch (error) {
+      console.log("Erro ao obter localizacao:", error);
+      Alert.alert(
+        "Localizacao",
+        "Nao foi possivel obter sua localizacao atual."
+      );
+    } finally {
+      setLoadingLocation(false);
+    }
+  }
+
+  function handleOpenMapPicker() {
+    setMapRegion({
+      latitude: latitude ?? mapRegion.latitude,
+      longitude: longitude ?? mapRegion.longitude,
+      latitudeDelta: mapRegion.latitudeDelta,
+      longitudeDelta: mapRegion.longitudeDelta,
+    });
+    setMapPickerVisible(true);
+  }
+
+  function handleSelectMapLocation(coordinate: {
+    latitude: number;
+    longitude: number;
+  }) {
+    setLatitude(coordinate.latitude);
+    setLongitude(coordinate.longitude);
+    setShowLocationOnMap(true);
+  }
+
+  function handleConfirmMapLocation() {
+    if (latitude === null || longitude === null) {
+      Alert.alert("Mapa", "Marque um ponto no mapa antes de confirmar.");
+      return;
+    }
+    setMapPickerVisible(false);
+  }
+
+  function handleToggleShowLocationOnMap(enabled: boolean) {
+    if (enabled && !hasSelectedLocation) {
+      Alert.alert(
+        "Localizacao",
+        "Use sua localizacao atual ou marque um ponto no mapa antes de exibir."
+      );
+      return;
+    }
+
+    setShowLocationOnMap(enabled);
+  }
+
   async function handleSubmit() {
     if (!isValidPhone(phone)) {
       setPhoneError("Numero de telefone invalido");
@@ -189,6 +302,14 @@ export function ProviderProfileForm({
         photoUri: photoChanged ? photo : null,
         description,
         categories: selectedCategories,
+        neighborhood,
+        street,
+        number,
+        address_complement: addressComplement,
+        reference_point: referencePoint,
+        latitude,
+        longitude,
+        show_location_on_map: showLocationOnMap,
       });
     } catch (err: any) {
       console.log("Erro ao enviar dados do prestador:", err);
@@ -201,7 +322,8 @@ export function ProviderProfileForm({
     }
   }
 
-  return (
+return (
+  <>
     <View style={styles.form}>
       <TextInput
         value={name}
@@ -254,6 +376,95 @@ export function ProviderProfileForm({
       />
 
       <AppText variant="name" style={styles.label}>
+        Endereco do comercio
+      </AppText>
+
+      <TextInput
+        value={neighborhood}
+        onChangeText={setNeighborhood}
+        placeholder="Bairro"
+        placeholderTextColor={colors.text.placeholder}
+        style={styles.input}
+      />
+
+      <TextInput
+        value={street}
+        onChangeText={setStreet}
+        placeholder="Rua"
+        placeholderTextColor={colors.text.placeholder}
+        style={styles.input}
+      />
+
+      <View style={styles.inputRow}>
+        <TextInput
+          value={number}
+          onChangeText={setNumber}
+          placeholder="Numero"
+          placeholderTextColor={colors.text.placeholder}
+          keyboardType="numeric"
+          style={[styles.input, styles.numberInput]}
+        />
+
+        <TextInput
+          value={addressComplement}
+          onChangeText={setAddressComplement}
+          placeholder="Complemento"
+          placeholderTextColor={colors.text.placeholder}
+          style={[styles.input, styles.flexInput]}
+        />
+      </View>
+
+      <TextInput
+        value={referencePoint}
+        onChangeText={setReferencePoint}
+        placeholder="Ponto de referencia"
+        placeholderTextColor={colors.text.placeholder}
+        style={styles.input}
+      />
+
+      <Pressable
+        style={[
+          styles.locationButton,
+          loadingLocation && styles.locationButtonDisabled,
+        ]}
+        onPress={handleUserCurrentLocation}
+        disabled={loadingLocation}
+      >
+        <Ionicons name="location" size={20} color={colors.primary} />
+        <AppText variant="profession" color={colors.primary}>
+          {loadingLocation
+            ? "Buscando localizacao..."
+            : hasSelectedLocation
+              ? "Atualizar minha localizacao atual"
+              : "Usar minha localizacao atual"}
+        </AppText>
+      </Pressable>
+
+      <Pressable style={styles.locationButton} onPress={handleOpenMapPicker}>
+        <Ionicons name="map" size={20} color={colors.primary} />
+        <AppText variant="profession" color={colors.primary}>
+          Marcar no mapa
+        </AppText>
+      </Pressable>
+
+      {hasSelectedLocation ? (
+        <AppText variant="profession" style={styles.locationStatus}>
+          Localizacao marcada para exibicao no mapa.
+        </AppText>
+      ) : null}
+
+      <View style={styles.switchRow}>
+        <AppText variant="profession" color={colors.text.primary}>
+          Exibir localizacao no mapa
+        </AppText>
+
+        <Switch
+          value={showLocationOnMap}
+          onValueChange={handleToggleShowLocationOnMap}
+        />
+      </View>
+
+      <AppText variant="name" style={styles.label}>
         Foto de perfil
       </AppText>
 
@@ -298,7 +509,55 @@ export function ProviderProfileForm({
         </AppText>
       </Pressable>
     </View>
-  );
+
+    <Modal
+      visible={mapPickerVisible}
+      animationType="slide"
+      onRequestClose={() => setMapPickerVisible(false)}
+    >
+      <View style={styles.mapPickerContainer}>
+        <View style={styles.mapPickerHeader}>
+          <Pressable
+            style={styles.mapPickerIconButton}
+            onPress={() => setMapPickerVisible(false)}
+          >
+            <Ionicons name="close" size={24} color={colors.text.primary} />
+          </Pressable>
+
+          <AppText variant="name" color={colors.text.primary}>
+            Marcar local
+          </AppText>
+
+          <Pressable
+            style={styles.mapPickerIconButton}
+            onPress={handleConfirmMapLocation}
+          >
+            <Ionicons name="checkmark" size={24} color={colors.primary} />
+          </Pressable>
+        </View>
+
+        <MapView
+          style={styles.mapPicker}
+          initialRegion={mapRegion}
+          onRegionChangeComplete={setMapRegion}
+          onPress={(event) => {
+            handleSelectMapLocation(event.nativeEvent.coordinate);
+          }}
+        >
+          {latitude !== null && longitude !== null ? (
+            <Marker
+              coordinate={{ latitude, longitude }}
+              draggable
+              onDragEnd={(event) => {
+                handleSelectMapLocation(event.nativeEvent.coordinate);
+              }}
+            />
+          ) : null}
+        </MapView>
+      </View>
+    </Modal>
+  </>
+);
 }
 
 const styles = StyleSheet.create({
@@ -362,4 +621,78 @@ const styles = StyleSheet.create({
     marginTop: -spacing.xs,
     marginBottom: spacing.xs,
   },
-});
+  inputRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+
+  numberInput: {
+    width: 110,
+  },
+
+  flexInput: {
+    flex: 1,
+  },
+
+  locationButton: {
+    height: 52,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+
+  locationButtonDisabled: {
+    opacity: 0.6,
+  },
+
+  locationStatus: {
+    marginTop: -spacing.xs,
+    color: colors.text.secondary,
+  },
+
+  switchRow: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  mapPickerContainer: {
+    flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+
+  mapPickerHeader: {
+    height: 72,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.white,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+
+  mapPickerIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.background.card,
+  },
+
+  mapPicker: {
+    flex: 1,
+  },
+  });

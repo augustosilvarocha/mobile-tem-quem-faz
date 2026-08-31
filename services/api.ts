@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = "http://192.168.1.2:8000/api";
+const DEFAULT_BASE_URL = "http://192.168.1.6:8000/api";
 
 function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.replace(/\/+$/, "");
