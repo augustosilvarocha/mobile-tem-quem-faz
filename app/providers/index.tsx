@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -71,6 +71,7 @@ export default function ProvidersScreen() {
   const routeSearch = searchParam?.trim() ?? "";
   const isSearchMode = Boolean(routeSearch);
   const [search, setSearch] = useState(routeSearch);
+  const [previousRouteSearch, setPreviousRouteSearch] = useState(routeSearch);
   const [filtersVisible, setFiltersVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SelectOption | null>(null);
   const [selectedState, setSelectedState] = useState<SelectOption | null>(null);
@@ -94,9 +95,10 @@ export default function ProvidersScreen() {
         }
   );
 
-  useEffect(() => {
+  if (routeSearch !== previousRouteSearch) {
+    setPreviousRouteSearch(routeSearch);
     setSearch(routeSearch);
-  }, [routeSearch]);
+  }
 
   const categoryOptions: SelectOption[] = useMemo(
     () => categories.map((category) => ({ id: category.id, label: category.name })),

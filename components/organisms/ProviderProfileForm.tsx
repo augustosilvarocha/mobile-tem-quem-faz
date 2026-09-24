@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Alert,
   Image,
@@ -22,6 +22,7 @@ import { useStates } from "@/hooks/useStates";
 import { CreateProviderPayload } from "@/services/provider.service";
 import { colors, radius, spacing, typography } from "@/theme";
 import { isValidPhone, sanitizePhone } from "@/utils/phone";
+import { persistLocalImage } from "@/utils/persistLocalImage";
 
 export type ProviderProfileFormInitialValues = {
   categoryIds?: number[];
@@ -108,21 +109,16 @@ export function ProviderProfileForm({
   }, [cities, selectedState]);
   const hasSelectedLocation = latitude !== null && longitude !== null;
 
-  useEffect(() => {
-    if (initialCityApplied || !initialValues?.cityId || cities.length === 0) {
-      return;
+  if (!initialCityApplied && initialValues?.cityId && cities.length > 0) {
+    const initialCity = cities.find((city) => city.id === initialValues.cityId);
+
+    if (initialCity) {
+      setSelectedState({ id: initialCity.uf, label: initialCity.uf });
+      setSelectedCity({ id: initialCity.id, label: initialCity.name });
     }
 
-    const city = cities.find((city) => city.id === initialValues.cityId);
-
-    if (!city) {
-      return;
-    }
-
-    setSelectedState({ id: city.uf, label: city.uf });
-    setSelectedCity({ id: city.id, label: city.name });
     setInitialCityApplied(true);
-  }, [cities, initialCityApplied, initialValues?.cityId]);
+  }
 
   function handleSelectState(option: SelectOption) {
     setSelectedState(option);
@@ -156,7 +152,7 @@ export function ProviderProfileForm({
     });
 
     if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
+      setPhoto(persistLocalImage(result.assets[0].uri, "provider-photo"));
       setPhotoChanged(true);
     }
   }
@@ -180,7 +176,7 @@ export function ProviderProfileForm({
     });
 
     if (!result.canceled) {
-      setPhoto(result.assets[0].uri);
+      setPhoto(persistLocalImage(result.assets[0].uri, "provider-photo"));
       setPhotoChanged(true);
     }
   }

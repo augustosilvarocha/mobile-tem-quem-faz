@@ -115,14 +115,7 @@ export default function Home() {
     router.replace("/");
   }
 
-  async function handleOpenOwnProfile() {
-    const providerId = await getProviderId();
-
-    if (!providerId) {
-      Alert.alert("Perfil", "Entre ou cadastre-se como prestador para acessar seu perfil.");
-      return;
-    }
-
+  function handleOpenOwnProfile() {
     router.push("/providers/profile");
   }
 

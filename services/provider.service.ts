@@ -2,6 +2,7 @@ import { api, apiDelete, apiPost, apiUpload } from "./api";
 import { createKeyedMemoryCache } from "./memoryCache";
 import { normalizeRemoteImageUrl } from "./mediaUrl";
 import { getAccessToken } from "@/utils/authStorage";
+import { File } from "expo-file-system";
 
 export type CreateProviderPayload = {
   phone: string;
@@ -230,15 +231,9 @@ function appendProviderFormData(
   });
 
   if (payload.photoUri) {
-    const fileName = payload.photoUri.split("/").pop() ?? "photo.jpg";
-    const extension = fileName.split(".").pop()?.toLowerCase();
-    const mimeType = extension === "png" ? "image/png" : "image/jpeg";
+    const photoFile = new File(payload.photoUri);
 
-    formData.append("photo", {
-      uri: payload.photoUri,
-      name: fileName,
-      type: mimeType,
-    } as any);
+    formData.append("photo", photoFile, photoFile.name);
   }
 }
 

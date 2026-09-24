@@ -1,3 +1,5 @@
+import { fetch as expoFetch } from "expo/fetch";
+
 const DEFAULT_BASE_URL = "http://192.168.1.6:8000/api";
 
 function normalizeBaseUrl(baseUrl: string) {
@@ -60,7 +62,7 @@ export async function apiUpload<T>(
     method?: "POST" | "PATCH";
   } = {}
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
+  const response = await expoFetch(`${BASE_URL}${endpoint}`, {
     method: options.method ?? "POST",
     body: formData,
     headers: {
@@ -72,9 +74,9 @@ export async function apiUpload<T>(
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.log("Erro da API:", errorBody);
-    throw new Error("Erro ao salvar prestador");
+    throw new Error(
+      await getErrorMessage(response, "Erro ao salvar os dados")
+    );
   }
 
   return response.json();
@@ -93,8 +95,8 @@ export async function apiDelete(
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.log("Erro da API:", errorBody);
-    throw new Error("Erro ao excluir prestador");
+    throw new Error(
+      await getErrorMessage(response, "Erro ao excluir os dados")
+    );
   }
 }

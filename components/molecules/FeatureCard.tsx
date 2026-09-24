@@ -16,9 +16,11 @@ export function FeatureCard({ icon, title, description }: FeatureCardProps) {
         <Ionicons name={icon} size={32} color={colors.primary} />
       </View>
 
-      <AppText variant="name" style={styles.title}>
-        {title}
-      </AppText>
+      <View style={styles.titleArea}>
+        <AppText variant="name" style={styles.title} numberOfLines={2}>
+          {title}
+        </AppText>
+      </View>
 
       <AppText
         variant="profession"
@@ -50,11 +52,21 @@ const styles = StyleSheet.create({
 
   title: {
     textAlign: "center",
+    fontSize: 15,
+    lineHeight: 19,
+  },
+
+  titleArea: {
+    minHeight: 38,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 4,
   },
 
   description: {
+    minHeight: 54,
     textAlign: "center",
+    fontSize: 13,
     lineHeight: 18,
   },
 });

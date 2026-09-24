@@ -13,14 +13,18 @@ import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
+import { PortfolioGallery } from "@/components/molecules/PortfolioGallery";
 import { ProviderLocationMap } from "@/components/molecules/ProviderLocationMap";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { ZoomableImageModal } from "@/components/molecules/ZoomableImageModal";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
+import {
+  getPortfolio,
+  PortfolioItem,
+} from "@/services/portfolio.service";
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
-import { getProviderId } from "@/utils/authStorage";
 import { sanitizePhone } from "@/utils/phone";
 import { formatRecordingDuration } from "@/utils/time";
 
@@ -85,8 +89,11 @@ function getWhatsAppNumber(phone: string) {
 export default function ProviderDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [portfolioLoading, setPortfolioLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [portfolioError, setPortfolioError] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [whatsAppModalVisible, setWhatsAppModalVisible] = useState(false);
   const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
@@ -133,8 +140,33 @@ export default function ProviderDetails() {
       }
     }
 
+    async function loadPortfolio() {
+      try {
+        setPortfolioLoading(true);
+        setPortfolioError(null);
+
+        const items = await getPortfolio(id);
+
+        if (isActive) {
+          setPortfolio(items);
+        }
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        console.log("Erro ao carregar portfolio:", error);
+        setPortfolioError("Nao foi possivel carregar o portfolio.");
+      } finally {
+        if (isActive) {
+          setPortfolioLoading(false);
+        }
+      }
+    }
+
     if (id) {
       loadProvider();
+      loadPortfolio();
     }
 
     return () => {
@@ -142,17 +174,7 @@ export default function ProviderDetails() {
     };
   }, [id]);
 
-  async function handleOpenOwnProfile() {
-    const providerId = await getProviderId();
-
-    if (!providerId) {
-      Alert.alert(
-        "Perfil",
-        "Entre ou cadastre-se como prestador para acessar seu perfil."
-      );
-      return;
-    }
-
+  function handleOpenOwnProfile() {
     router.push("/providers/profile");
   }
 
@@ -267,6 +289,21 @@ export default function ProviderDetails() {
                 </View>
               ))}
             </View>
+
+            <AppText style={[styles.sectionTitle, styles.portfolioSectionTitle]}>
+              Portfolio
+            </AppText>
+            {portfolioLoading ? (
+              <AppText style={styles.portfolioFeedback}>
+                Carregando portfolio...
+              </AppText>
+            ) : portfolioError ? (
+              <AppText style={styles.portfolioFeedback}>
+                {portfolioError}
+              </AppText>
+            ) : (
+              <PortfolioGallery items={portfolio} />
+            )}
 
             {hasProviderMapLocation(provider) ? (
               <>
@@ -476,6 +513,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     marginBottom: spacing.sm,
+  },
+
+  portfolioFeedback: {
+    color: colors.text.secondary,
+    fontSize: 14,
+    lineHeight: 19,
+    paddingVertical: spacing.md,
+  },
+
+  portfolioSectionTitle: {
+    marginTop: spacing.sm,
   },
 
   mapButton: {

@@ -49,6 +49,7 @@ export default function OwnProviderProfile() {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
@@ -74,12 +75,13 @@ export default function OwnProviderProfile() {
       try {
         setLoading(true);
         setError(null);
+        setIsGuest(false);
 
         const providerId = await getProviderId();
 
         if (!providerId) {
           if (isActive) {
-            setError("Entre como prestador para acessar seu perfil.");
+            setIsGuest(true);
           }
           return;
         }
@@ -155,20 +157,41 @@ export default function OwnProviderProfile() {
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary}>Carregando perfil...</AppText>
           </View>
+        ) : isGuest ? (
+          <View style={styles.feedback}>
+            <Image
+              resizeMode="contain"
+              source={require("../../assets/images/logo.png")}
+              style={styles.guestLogo}
+            />
+
+            <Image
+              resizeMode="contain"
+              source={require("../../assets/images/cadastre-se.png")}
+              style={styles.guestImage}
+            />
+
+            <AppText style={styles.guestTitle}>
+              Faça parte do TemQuemFaz
+            </AppText>
+            <AppText color={colors.text.secondary} style={styles.feedbackText}>
+              Cadastre seu perfil, mostre seus trabalhos e encontre novos clientes.
+            </AppText>
+
+            <Pressable
+              style={styles.primaryButton}
+              onPress={() => router.push("/(auth)/register-provider")}
+            >
+              <AppText color={colors.white} style={styles.primaryButtonText}>
+                Cadastrar como prestador
+              </AppText>
+            </Pressable>
+          </View>
         ) : error || !provider ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary} style={styles.feedbackText}>
               {error ?? "Perfil nao encontrado."}
             </AppText>
-
-            <Pressable
-              style={styles.primaryButton}
-              onPress={() => router.push("/(auth)/login")}
-            >
-              <AppText color={colors.white} style={styles.primaryButtonText}>
-                Entrar ou cadastrar
-              </AppText>
-            </Pressable>
           </View>
         ) : (
           <>
@@ -233,6 +256,24 @@ export default function OwnProviderProfile() {
             </Pressable>
 
             <Pressable
+              style={styles.actionCard}
+              onPress={() => router.push("/providers/portfolio")}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons name="images-outline" size={24} color={colors.primary} />
+              </View>
+
+              <View style={styles.actionText}>
+                <AppText style={styles.actionTitle}>Gerenciar portfolio</AppText>
+                <AppText style={styles.actionDescription} color={colors.text.secondary}>
+                  Adicione e organize seus trabalhos.
+                </AppText>
+              </View>
+
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+            </Pressable>
+
+            <Pressable
               style={[styles.actionCard, styles.inviteCard]}
               onPress={() =>
                 Alert.alert(
@@ -290,6 +331,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
+    flexGrow: 1,
     paddingHorizontal: spacing.screen,
     paddingTop: spacing.lg,
     paddingBottom: 118,
@@ -318,16 +360,37 @@ const styles = StyleSheet.create({
   },
 
   feedback: {
-    paddingTop: spacing.xl,
+    flex: 1,
     alignItems: "center",
-    gap: spacing.md,
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingBottom: spacing.md,
   },
 
   feedbackText: {
     textAlign: "center",
   },
 
+  guestImage: {
+    width: 230,
+    height: 230,
+  },
+
+  guestLogo: {
+    width: 250,
+    height: 140,
+  },
+
+  guestTitle: {
+    color: colors.text.primary,
+    fontWeight: "800",
+    fontSize: 20,
+    lineHeight: 24,
+    textAlign: "center",
+  },
+
   primaryButton: {
+    width: "100%",
     minHeight: 56,
     borderRadius: radius.md,
     backgroundColor: colors.primary,

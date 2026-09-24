@@ -36,6 +36,16 @@ export async function getAccessToken() {
   return SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
 }
 
+export async function getRequiredAccessToken() {
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error("Sessao expirada. Faca login novamente.");
+  }
+
+  return accessToken;
+}
+
 export async function getRefreshToken() {
   return SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
 }

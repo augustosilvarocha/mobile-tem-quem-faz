@@ -31,9 +31,9 @@ export function ZoomableImageModal({
   onClose,
   visible,
 }: ZoomableImageModalProps) {
-  const { width } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const imageSize = width;
+  const imageSize = Math.max(width, height);
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
   const translationX = useSharedValue(0);
@@ -145,7 +145,7 @@ export function ZoomableImageModal({
               source={{ uri: imageUri }}
               style={[
                 styles.image,
-                { height: imageSize, width: imageSize },
+                { height, width },
                 animatedImageStyle,
               ]}
             />
@@ -187,6 +187,7 @@ const styles = StyleSheet.create({
 
   image: {
     maxWidth: "100%",
+    maxHeight: "100%",
   },
 
   closeButton: {
