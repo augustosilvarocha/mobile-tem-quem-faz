@@ -63,8 +63,13 @@ export type ProviderFilter = ProviderCityFilter & {
 };
 
 const PROVIDERS_CACHE_TTL_MS = 5 * 60 * 1000;
+const SEARCH_CACHE_TTL_MS = PROVIDERS_CACHE_TTL_MS;
 const providersCache = createKeyedMemoryCache<Provider[]>();
 const providerDetailsCache = createKeyedMemoryCache<Provider>();
+const searchResultsCache = new Map<
+  string,
+  { providers: Provider[]; cachedAt: number }
+>();
 
 function normalizePhotoUrl(photo: string | null) {
   return normalizeRemoteImageUrl(photo);
@@ -75,6 +80,29 @@ function normalizeProvider(provider: Provider): Provider {
     ...provider,
     photo: normalizePhotoUrl(provider.photo),
   };
+}
+
+function getSearchCacheKey(text: string) {
+  return text.trim().toLocaleLowerCase("pt-BR");
+}
+
+function getCachedSearchProviders(text: string) {
+  const key = getSearchCacheKey(text);
+  const cached = searchResultsCache.get(key);
+
+  if (!cached || Date.now() - cached.cachedAt >= SEARCH_CACHE_TTL_MS) {
+    searchResultsCache.delete(key);
+    return null;
+  }
+
+  return cached.providers;
+}
+
+export function cacheProviderSearchResult(text: string, providers: Provider[]) {
+  searchResultsCache.set(getSearchCacheKey(text), {
+    providers: providers.map(normalizeProvider),
+    cachedAt: Date.now(),
+  });
 }
 
 function getProvidersEndpoint(filter?: ProviderFilter) {
@@ -132,12 +160,21 @@ export async function searchProviders(text: string): Promise<Provider[]> {
     return [];
   }
 
+  const cachedProviders = getCachedSearchProviders(searchText);
+
+  if (cachedProviders) {
+    return cachedProviders;
+  }
+
   try {
     const providers = await apiPost<Provider[]>("/search/", {
       text: searchText,
     });
 
-    return providers.map(normalizeProvider);
+    const normalizedProviders = providers.map(normalizeProvider);
+    cacheProviderSearchResult(searchText, normalizedProviders);
+
+    return normalizedProviders;
   } catch (error) {
     if (
       error instanceof Error &&
@@ -159,6 +196,7 @@ export function getCachedProviders(filter?: ProviderFilter) {
 export function clearProvidersCache() {
   providersCache.clear();
   providerDetailsCache.clear();
+  searchResultsCache.clear();
 }
 
 export async function getProviderById(providerId: number | string): Promise<Provider> {

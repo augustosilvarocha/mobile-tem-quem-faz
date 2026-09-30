@@ -1,8 +1,13 @@
 import { BASE_URL } from "./api";
+import {
+  cacheProviderSearchResult,
+  type Provider,
+} from "./provider.service";
 
 type AudioSearchResponse = {
   text?: string;
   error?: string;
+  providers?: Provider[];
 };
 
 function getFileName(audioUri: string) {
@@ -74,6 +79,10 @@ export async function transcribeVoiceSearch(audioUri: string) {
 
   if (!text) {
     throw new Error("Nao foi possivel entender o audio.");
+  }
+
+  if (Array.isArray(data?.providers)) {
+    cacheProviderSearchResult(text, data.providers);
   }
 
   return text;
