@@ -41,16 +41,24 @@ export type ProviderProfileFormInitialValues = {
   show_location_on_map?: boolean;
 };
 
+export type ProviderRegistrationStep = 1 | 2;
+
 type ProviderProfileFormProps = {
   initialValues?: ProviderProfileFormInitialValues;
+  mode?: "edit" | "registration";
+  onRegistrationStepChange?: (step: ProviderRegistrationStep) => void;
   onSubmit: (payload: CreateProviderPayload) => Promise<void>;
+  registrationStep?: ProviderRegistrationStep;
   submitLabel: string;
   submittingLabel: string;
 };
 
 export function ProviderProfileForm({
   initialValues,
+  mode = "edit",
+  onRegistrationStepChange,
   onSubmit,
+  registrationStep = 1,
   submitLabel,
   submittingLabel,
 }: ProviderProfileFormProps) {
@@ -92,6 +100,9 @@ export function ProviderProfileForm({
 
   const { states, loading: loadingStates } = useStates();
   const { cities, loading: loadingCities } = useCities();
+  const isRegistration = mode === "registration";
+  const showRequiredFields = !isRegistration || registrationStep === 1;
+  const showLocationFields = !isRegistration || registrationStep === 2;
 
   const stateOptions: SelectOption[] = useMemo(
     () => states.map((state) => ({ id: state.uf, label: state.uf })),
@@ -126,8 +137,8 @@ export function ProviderProfileForm({
   }
 
   async function handlePickPhoto() {
-    Alert.alert("Foto de perfil", "Escolha uma opcao", [
-      { text: "Camera", onPress: takePhoto },
+    Alert.alert("Foto de perfil", "Escolha uma opção", [
+      { text: "Câmera", onPress: takePhoto },
       { text: "Galeria", onPress: pickFromGallery },
       { text: "Cancelar", style: "cancel" },
     ]);
@@ -138,8 +149,8 @@ export function ProviderProfileForm({
 
     if (status !== "granted") {
       Alert.alert(
-        "Permissao necessaria",
-        "Precisamos de acesso a camera para tirar a foto."
+        "Permissão necessária",
+        "Precisamos de acesso à câmera para tirar a foto."
       );
       return;
     }
@@ -162,8 +173,8 @@ export function ProviderProfileForm({
 
     if (status !== "granted") {
       Alert.alert(
-        "Permissao necessaria",
-        "Precisamos de acesso a galeria para escolher a foto."
+        "Permissão necessária",
+        "Precisamos de acesso à galeria para escolher a foto."
       );
       return;
     }
@@ -189,10 +200,10 @@ export function ProviderProfileForm({
 
       if (permission.status !== Location.PermissionStatus.GRANTED) {
         Alert.alert(
-          "Permissao negada",
+          "Permissão negada",
           permission.canAskAgain
-            ? "Nao foi possivel obter sua localizacao. Tente permitir o acesso quando o aviso aparecer."
-            : "A permissao de localizacao foi bloqueada. Habilite a permissao nas configuracoes do dispositivo."
+            ? "Não foi possível obter sua localização. Permita o acesso quando o aviso aparecer."
+            : "A permissão de localização foi bloqueada. Habilite-a nas configurações do dispositivo."
         );
         return;
       }
@@ -202,8 +213,8 @@ export function ProviderProfileForm({
 
       if (!locationServicesEnabled) {
         Alert.alert(
-          "Localizacao desligada",
-          "Ative a localizacao do dispositivo para marcar o local."
+          "Localização desligada",
+          "Ative a localização do dispositivo para marcar o local."
         );
         return;
       }
@@ -214,12 +225,18 @@ export function ProviderProfileForm({
 
       setLatitude(location.coords.latitude);
       setLongitude(location.coords.longitude);
+      setMapRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.012,
+        longitudeDelta: 0.012,
+      });
       setShowLocationOnMap(true);
     } catch (error) {
-      console.log("Erro ao obter localizacao:", error);
+      console.log("Erro ao obter localização:", error);
       Alert.alert(
-        "Localizacao",
-        "Nao foi possivel obter sua localizacao atual."
+        "Localização",
+        "Não foi possível obter sua localização atual."
       );
     } finally {
       setLoadingLocation(false);
@@ -242,6 +259,11 @@ export function ProviderProfileForm({
   }) {
     setLatitude(coordinate.latitude);
     setLongitude(coordinate.longitude);
+    setMapRegion((current) => ({
+      ...current,
+      latitude: coordinate.latitude,
+      longitude: coordinate.longitude,
+    }));
     setShowLocationOnMap(true);
   }
 
@@ -256,8 +278,8 @@ export function ProviderProfileForm({
   function handleToggleShowLocationOnMap(enabled: boolean) {
     if (enabled && !hasSelectedLocation) {
       Alert.alert(
-        "Localizacao",
-        "Use sua localizacao atual ou marque um ponto no mapa antes de exibir."
+        "Localização",
+        "Use sua localização atual ou marque um ponto no mapa antes de exibir."
       );
       return;
     }
@@ -265,26 +287,55 @@ export function ProviderProfileForm({
     setShowLocationOnMap(enabled);
   }
 
-  async function handleSubmit() {
+  function handleUseAddressOnly() {
+    setLatitude(null);
+    setLongitude(null);
+    setShowLocationOnMap(false);
+  }
+
+  function validateRequiredFields() {
     if (!isValidPhone(phone)) {
-      setPhoneError("Numero de telefone invalido");
-      return;
+      setPhoneError("Número de telefone inválido.");
+      return false;
     }
 
     setPhoneError("");
 
     if (!name.trim()) {
-      Alert.alert("Atencao", "Informe seu nome completo.");
+      Alert.alert("Atenção", "Informe seu nome completo.");
+      return false;
+    }
+
+    if (!selectedCity) {
+      Alert.alert("Atenção", "Selecione o estado e a cidade.");
+      return false;
+    }
+
+    if (selectedCategories.length === 0) {
+      Alert.alert("Atenção", "Selecione ao menos uma categoria.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function handleContinueToLocation() {
+    if (!validateRequiredFields()) {
+      return;
+    }
+
+    onRegistrationStepChange?.(2);
+  }
+
+  async function submitProfile(includeLocation: boolean) {
+    if (!validateRequiredFields()) {
+      if (isRegistration) {
+        onRegistrationStepChange?.(1);
+      }
       return;
     }
 
     if (!selectedCity) {
-      Alert.alert("Atencao", "Selecione o estado e a cidade.");
-      return;
-    }
-
-    if (selectedCategories.length === 0) {
-      Alert.alert("Atencao", "Selecione ao menos uma categoria.");
       return;
     }
 
@@ -298,262 +349,421 @@ export function ProviderProfileForm({
         photoUri: photoChanged ? photo : null,
         description,
         categories: selectedCategories,
-        neighborhood,
-        street,
-        number,
-        address_complement: addressComplement,
-        reference_point: referencePoint,
-        latitude,
-        longitude,
-        show_location_on_map: showLocationOnMap,
+        neighborhood: includeLocation ? neighborhood : "",
+        street: includeLocation ? street : "",
+        number: includeLocation ? number : "",
+        address_complement: includeLocation ? addressComplement : "",
+        reference_point: includeLocation ? referencePoint : "",
+        latitude: includeLocation ? latitude : null,
+        longitude: includeLocation ? longitude : null,
+        show_location_on_map: includeLocation ? showLocationOnMap : false,
       });
     } catch (err: any) {
       console.log("Erro ao enviar dados do prestador:", err);
       Alert.alert(
         "Erro",
-        err.message || "Nao foi possivel salvar os dados do prestador."
+        err.message || "Não foi possível salvar os dados do prestador."
       );
     } finally {
       setSubmitting(false);
     }
   }
 
-return (
-  <>
-    <View style={styles.form}>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder="Nome completo"
-        placeholderTextColor={colors.text.placeholder}
-        style={styles.input}
-      />
+  function handleSubmit() {
+    return submitProfile(true);
+  }
 
-      <TextInput
-        value={phone}
-        onChangeText={(text) => {
-          setPhone(sanitizePhone(text));
-          setPhoneError("");
-        }}
-        placeholder="WhatsApp"
-        placeholderTextColor={colors.text.placeholder}
-        keyboardType="phone-pad"
-        maxLength={11}
-        style={styles.input}
-      />
+  function handleSkipLocation() {
+    return submitProfile(false);
+  }
 
-      {phoneError ? (
-        <AppText
-          variant="profession"
-          color={colors.danger}
-          style={styles.errorText}
-        >
-          {phoneError}
-        </AppText>
-      ) : null}
-
-      <SelectField
-        placeholder="Estado"
-        value={selectedState}
-        options={stateOptions}
-        onSelect={handleSelectState}
-        loading={loadingStates}
-        searchPlaceholder="Buscar estado"
-      />
-
-      <SelectField
-        placeholder="Cidade"
-        value={selectedCity}
-        options={cityOptions}
-        onSelect={setSelectedCity}
-        disabled={!selectedState}
-        loading={loadingCities}
-        searchPlaceholder="Buscar cidade"
-      />
-
-      <AppText variant="name" style={styles.label}>
-        Endereco do comercio
-      </AppText>
-
-      <TextInput
-        value={neighborhood}
-        onChangeText={setNeighborhood}
-        placeholder="Bairro"
-        placeholderTextColor={colors.text.placeholder}
-        style={styles.input}
-      />
-
-      <TextInput
-        value={street}
-        onChangeText={setStreet}
-        placeholder="Rua"
-        placeholderTextColor={colors.text.placeholder}
-        style={styles.input}
-      />
-
-      <View style={styles.inputRow}>
-        <TextInput
-          value={number}
-          onChangeText={setNumber}
-          placeholder="Numero"
-          placeholderTextColor={colors.text.placeholder}
-          keyboardType="numeric"
-          style={[styles.input, styles.numberInput]}
-        />
-
-        <TextInput
-          value={addressComplement}
-          onChangeText={setAddressComplement}
-          placeholder="Complemento"
-          placeholderTextColor={colors.text.placeholder}
-          style={[styles.input, styles.flexInput]}
-        />
-      </View>
-
-      <TextInput
-        value={referencePoint}
-        onChangeText={setReferencePoint}
-        placeholder="Ponto de referencia"
-        placeholderTextColor={colors.text.placeholder}
-        style={styles.input}
-      />
-
-      <Pressable
-        style={[
-          styles.locationButton,
-          loadingLocation && styles.locationButtonDisabled,
-        ]}
-        onPress={handleUserCurrentLocation}
-        disabled={loadingLocation}
-      >
-        <Ionicons name="location" size={20} color={colors.primary} />
-        <AppText variant="profession" color={colors.primary}>
-          {loadingLocation
-            ? "Buscando localizacao..."
-            : hasSelectedLocation
-              ? "Atualizar minha localizacao atual"
-              : "Usar minha localizacao atual"}
-        </AppText>
-      </Pressable>
-
-      <Pressable style={styles.locationButton} onPress={handleOpenMapPicker}>
-        <Ionicons name="map" size={20} color={colors.primary} />
-        <AppText variant="profession" color={colors.primary}>
-          Marcar no mapa
-        </AppText>
-      </Pressable>
-
-      {hasSelectedLocation ? (
-        <AppText variant="profession" style={styles.locationStatus}>
-          Localizacao marcada para exibicao no mapa.
-        </AppText>
-      ) : null}
-
-      <View style={styles.switchRow}>
-        <AppText variant="profession" color={colors.text.primary}>
-          Exibir localizacao no mapa
-        </AppText>
-
-        <Switch
-          value={showLocationOnMap}
-          onValueChange={handleToggleShowLocationOnMap}
-        />
-      </View>
-
-      <AppText variant="name" style={styles.label}>
-        Foto de perfil
-      </AppText>
-
-      <Pressable style={styles.photoBox} onPress={handlePickPhoto}>
-        {photo ? (
-          <Image source={{ uri: photo }} style={styles.photoPreview} />
-        ) : (
+  return (
+    <>
+      <View style={styles.form}>
+        {showRequiredFields ? (
           <>
-            <Ionicons name="camera" size={22} color={colors.primary} />
-            <AppText variant="profession" color={colors.primary}>
-              Adicionar foto
+            <AppText variant="name" style={styles.label}>
+              Nome completo
             </AppText>
+            <TextInput
+              accessibilityLabel="Nome completo"
+              value={name}
+              onChangeText={setName}
+              placeholder="Digite seu nome completo"
+              placeholderTextColor={colors.text.placeholder}
+              style={styles.input}
+            />
+
+            <AppText variant="name" style={styles.label}>
+              WhatsApp
+            </AppText>
+            <TextInput
+              accessibilityLabel="Número do WhatsApp"
+              value={phone}
+              onChangeText={(text) => {
+                setPhone(sanitizePhone(text));
+                setPhoneError("");
+              }}
+              placeholder="Digite somente os números"
+              placeholderTextColor={colors.text.placeholder}
+              keyboardType="phone-pad"
+              maxLength={11}
+              style={styles.input}
+            />
+
+            {phoneError ? (
+              <AppText
+                accessibilityLiveRegion="assertive"
+                accessibilityRole="alert"
+                variant="profession"
+                color={colors.danger}
+                style={styles.errorText}
+              >
+                {phoneError}
+              </AppText>
+            ) : null}
+
+            <AppText variant="name" style={styles.label}>
+              Estado
+            </AppText>
+            <SelectField
+              placeholder="Selecione o estado"
+              value={selectedState}
+              options={stateOptions}
+              onSelect={handleSelectState}
+              loading={loadingStates}
+              searchPlaceholder="Buscar estado"
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Cidade
+            </AppText>
+            <SelectField
+              placeholder="Selecione a cidade"
+              value={selectedCity}
+              options={cityOptions}
+              onSelect={setSelectedCity}
+              disabled={!selectedState}
+              loading={loadingCities}
+              searchPlaceholder="Buscar cidade"
+            />
+
+            <CategorySelector
+              selectedCategories={selectedCategories}
+              onChange={setSelectedCategories}
+            />
+
+            {isRegistration ? (
+              <Pressable
+                accessibilityLabel="Continuar para endereço e localização"
+                accessibilityRole="button"
+                style={styles.button}
+                onPress={handleContinueToLocation}
+              >
+                <AppText variant="button" color={colors.white}>
+                  Continuar
+                </AppText>
+                <Ionicons name="arrow-forward" size={22} color={colors.white} />
+              </Pressable>
+            ) : null}
           </>
-        )}
-      </Pressable>
+        ) : null}
 
-      <AppText variant="name" style={styles.label}>
-        Descricao do seu servico
-      </AppText>
+        {!isRegistration ? (
+          <>
+            <AppText variant="name" style={styles.label}>
+              Foto de perfil (opcional)
+            </AppText>
+            <Pressable
+              accessibilityLabel={photo ? "Alterar foto de perfil" : "Adicionar foto de perfil"}
+              accessibilityRole="button"
+              style={styles.photoBox}
+              onPress={handlePickPhoto}
+            >
+              {photo ? (
+                <Image source={{ uri: photo }} style={styles.photoPreview} />
+              ) : (
+                <>
+                  <Ionicons name="camera" size={22} color={colors.primary} />
+                  <AppText variant="profession" color={colors.primary}>
+                    Adicionar foto
+                  </AppText>
+                </>
+              )}
+            </Pressable>
 
-      <TextInput
-        value={description}
-        onChangeText={setDescription}
-        placeholder="Fale sobre seus servicos..."
-        placeholderTextColor={colors.text.placeholder}
-        multiline
-        style={[styles.input, styles.textArea]}
-      />
+            <AppText variant="name" style={styles.label}>
+              Descrição do seu serviço (opcional)
+            </AppText>
+            <TextInput
+              accessibilityLabel="Descrição do seu serviço"
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Conte um pouco sobre seus serviços"
+              placeholderTextColor={colors.text.placeholder}
+              multiline
+              style={[styles.input, styles.textArea]}
+            />
+          </>
+        ) : null}
 
-      <CategorySelector
-        selectedCategories={selectedCategories}
-        onChange={setSelectedCategories}
-      />
+        {showLocationFields ? (
+          <>
+            <AppText variant="subtitle" style={styles.sectionTitle}>
+              Endereço do comércio
+            </AppText>
 
-      <Pressable
-        style={[styles.button, submitting && styles.buttonDisabled]}
-        onPress={handleSubmit}
-        disabled={submitting}
+            <AppText variant="name" style={styles.label}>
+              Bairro
+            </AppText>
+            <TextInput
+              accessibilityLabel="Bairro opcional"
+              value={neighborhood}
+              onChangeText={setNeighborhood}
+              placeholder="Ex.: Centro"
+              placeholderTextColor={colors.text.placeholder}
+              style={styles.input}
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Rua
+            </AppText>
+            <TextInput
+              accessibilityLabel="Rua opcional"
+              value={street}
+              onChangeText={setStreet}
+              placeholder="Digite o nome da rua"
+              placeholderTextColor={colors.text.placeholder}
+              style={styles.input}
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Número
+            </AppText>
+            <TextInput
+              accessibilityLabel="Número do endereço opcional"
+              value={number}
+              onChangeText={setNumber}
+              placeholder="Ex.: 120"
+              placeholderTextColor={colors.text.placeholder}
+              keyboardType="numeric"
+              style={styles.input}
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Complemento
+            </AppText>
+            <TextInput
+              accessibilityLabel="Complemento do endereço opcional"
+              value={addressComplement}
+              onChangeText={setAddressComplement}
+              placeholder="Ex.: Sala 2"
+              placeholderTextColor={colors.text.placeholder}
+              style={styles.input}
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Ponto de referência
+            </AppText>
+            <TextInput
+              accessibilityLabel="Ponto de referência opcional"
+              value={referencePoint}
+              onChangeText={setReferencePoint}
+              placeholder="Ex.: Próximo à praça"
+              placeholderTextColor={colors.text.placeholder}
+              style={styles.input}
+            />
+
+            <AppText variant="subtitle" style={styles.sectionTitle}>
+              Localização no mapa
+            </AppText>
+            <AppText style={styles.locationHelp} color={colors.text.secondary}>
+              Use a localização do celular ou escolha o ponto manualmente.
+            </AppText>
+
+            <Pressable
+              accessibilityLabel="Usar a localização atual deste celular"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: loadingLocation }}
+              style={[
+                styles.locationButton,
+                loadingLocation && styles.locationButtonDisabled,
+              ]}
+              onPress={handleUserCurrentLocation}
+              disabled={loadingLocation}
+            >
+              <Ionicons name="location" size={20} color={colors.primary} />
+              <AppText variant="profession" color={colors.primary}>
+                {loadingLocation
+                  ? "Buscando localização..."
+                  : hasSelectedLocation
+                    ? "Atualizar localização atual"
+                    : "Usar localização atual"}
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel="Escolher a localização no mapa"
+              accessibilityRole="button"
+              style={styles.locationButton}
+              onPress={handleOpenMapPicker}
+            >
+              <Ionicons name="map" size={20} color={colors.primary} />
+              <AppText variant="profession" color={colors.primary}>
+                Escolher no mapa
+              </AppText>
+            </Pressable>
+
+            {hasSelectedLocation && latitude !== null && longitude !== null ? (
+              <View style={styles.locationPreviewContainer}>
+                <AppText variant="name" style={styles.previewTitle}>
+                  Confira se o ponto está correto
+                </AppText>
+                <AppText style={styles.previewHelp} color={colors.text.secondary}>
+                  Se estiver errado, toque em “Escolher no mapa” para ajustar.
+                </AppText>
+                <MapView
+                  accessibilityLabel="Prévia da localização marcada"
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                  scrollEnabled={false}
+                  style={styles.locationPreview}
+                  toolbarEnabled={false}
+                  zoomEnabled={false}
+                  region={{
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.012,
+                    longitudeDelta: 0.012,
+                  }}
+                >
+                  <Marker coordinate={{ latitude, longitude }} />
+                </MapView>
+              </View>
+            ) : (
+              <AppText variant="profession" style={styles.locationStatus}>
+                Nenhum ponto foi marcado no mapa.
+              </AppText>
+            )}
+
+            {hasSelectedLocation ? (
+              <>
+                <Pressable
+                  accessibilityLabel="Remover a localização marcada e usar somente o endereço"
+                  accessibilityRole="button"
+                  style={styles.locationButton}
+                  onPress={handleUseAddressOnly}
+                >
+                  <Ionicons name="close-circle-outline" size={20} color={colors.primary} />
+                  <AppText variant="profession" color={colors.primary}>
+                    Remover marcação do mapa
+                  </AppText>
+                </Pressable>
+
+                <View style={styles.switchRow}>
+                  <AppText
+                    variant="profession"
+                    color={colors.text.primary}
+                    style={styles.switchLabel}
+                  >
+                    Mostrar esta localização no perfil
+                  </AppText>
+                  <Switch
+                    accessibilityLabel="Mostrar esta localização no perfil"
+                    value={showLocationOnMap}
+                    onValueChange={handleToggleShowLocationOnMap}
+                  />
+                </View>
+              </>
+            ) : null}
+
+            <Pressable
+              accessibilityLabel={submitting ? submittingLabel : submitLabel}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: submitting }}
+              style={[styles.button, submitting && styles.buttonDisabled]}
+              onPress={handleSubmit}
+              disabled={submitting}
+            >
+              <AppText variant="button" color={colors.white}>
+                {submitting ? submittingLabel : submitLabel}
+              </AppText>
+            </Pressable>
+
+            {isRegistration ? (
+              <Pressable
+                accessibilityLabel="Pular endereço e localização"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: submitting }}
+                disabled={submitting}
+                style={styles.skipButton}
+                onPress={handleSkipLocation}
+              >
+                <AppText variant="button" color={colors.primary}>
+                  Pular esta etapa
+                </AppText>
+              </Pressable>
+            ) : null}
+          </>
+        ) : null}
+      </View>
+
+      <Modal
+        visible={mapPickerVisible}
+        animationType="slide"
+        onRequestClose={() => setMapPickerVisible(false)}
       >
-        <AppText variant="button" color={colors.white}>
-          {submitting ? submittingLabel : submitLabel}
-        </AppText>
-      </Pressable>
-    </View>
+        <View style={styles.mapPickerContainer}>
+          <View style={styles.mapPickerHeader}>
+            <Pressable
+              accessibilityLabel="Fechar mapa"
+              accessibilityRole="button"
+              style={styles.mapPickerIconButton}
+              onPress={() => setMapPickerVisible(false)}
+            >
+              <Ionicons name="close" size={24} color={colors.text.primary} />
+            </Pressable>
 
-    <Modal
-      visible={mapPickerVisible}
-      animationType="slide"
-      onRequestClose={() => setMapPickerVisible(false)}
-    >
-      <View style={styles.mapPickerContainer}>
-        <View style={styles.mapPickerHeader}>
-          <Pressable
-            style={styles.mapPickerIconButton}
-            onPress={() => setMapPickerVisible(false)}
-          >
-            <Ionicons name="close" size={24} color={colors.text.primary} />
-          </Pressable>
+            <AppText variant="name" color={colors.text.primary}>
+              Escolher localização
+            </AppText>
 
-          <AppText variant="name" color={colors.text.primary}>
-            Marcar local
+            <Pressable
+              accessibilityLabel="Confirmar localização marcada"
+              accessibilityRole="button"
+              style={styles.mapPickerIconButton}
+              onPress={handleConfirmMapLocation}
+            >
+              <Ionicons name="checkmark" size={24} color={colors.primary} />
+            </Pressable>
+          </View>
+
+          <AppText style={styles.mapPickerHelp} color={colors.text.secondary}>
+            Toque no mapa ou arraste o marcador até o local correto.
           </AppText>
 
-          <Pressable
-            style={styles.mapPickerIconButton}
-            onPress={handleConfirmMapLocation}
+          <MapView
+            style={styles.mapPicker}
+            initialRegion={mapRegion}
+            onRegionChangeComplete={setMapRegion}
+            onPress={(event) => {
+              handleSelectMapLocation(event.nativeEvent.coordinate);
+            }}
           >
-            <Ionicons name="checkmark" size={24} color={colors.primary} />
-          </Pressable>
+            {latitude !== null && longitude !== null ? (
+              <Marker
+                coordinate={{ latitude, longitude }}
+                draggable
+                onDragEnd={(event) => {
+                  handleSelectMapLocation(event.nativeEvent.coordinate);
+                }}
+              />
+            ) : null}
+          </MapView>
         </View>
-
-        <MapView
-          style={styles.mapPicker}
-          initialRegion={mapRegion}
-          onRegionChangeComplete={setMapRegion}
-          onPress={(event) => {
-            handleSelectMapLocation(event.nativeEvent.coordinate);
-          }}
-        >
-          {latitude !== null && longitude !== null ? (
-            <Marker
-              coordinate={{ latitude, longitude }}
-              draggable
-              onDragEnd={(event) => {
-                handleSelectMapLocation(event.nativeEvent.coordinate);
-              }}
-            />
-          ) : null}
-        </MapView>
-      </View>
-    </Modal>
-  </>
-);
+      </Modal>
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -573,6 +783,11 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    marginTop: spacing.sm,
+    color: colors.text.primary,
+  },
+
+  sectionTitle: {
     marginTop: spacing.sm,
     color: colors.text.primary,
   },
@@ -601,11 +816,15 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    height: 60,
+    minHeight: 60,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: spacing.sm,
     marginTop: spacing.md,
   },
 
@@ -617,17 +836,12 @@ const styles = StyleSheet.create({
     marginTop: -spacing.xs,
     marginBottom: spacing.xs,
   },
-  inputRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
 
-  numberInput: {
-    width: 110,
-  },
-
-  flexInput: {
-    flex: 1,
+  skipButton: {
+    minHeight: 52,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
   },
 
   locationButton: {
@@ -646,9 +860,39 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  locationStatus: {
+  locationHelp: {
     marginTop: -spacing.xs,
+    marginBottom: spacing.xs,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+
+  locationStatus: {
     color: colors.text.secondary,
+    textAlign: "center",
+  },
+
+  locationPreviewContainer: {
+    marginTop: spacing.xs,
+  },
+
+  previewTitle: {
+    color: colors.text.primary,
+  },
+
+  previewHelp: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+
+  locationPreview: {
+    width: "100%",
+    height: 220,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   switchRow: {
@@ -661,6 +905,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+
+  switchLabel: {
+    flex: 1,
   },
 
   mapPickerContainer: {
@@ -688,7 +937,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background.card,
   },
 
+  mapPickerHelp: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+
   mapPicker: {
     flex: 1,
   },
-  });
+});
