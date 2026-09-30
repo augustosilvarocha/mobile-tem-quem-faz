@@ -21,6 +21,9 @@ export function CategoryCard({
 }: CategoryCardProps) {
   return (
     <Pressable
+      accessibilityLabel={isMore ? "Ver mais categorias" : title}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
       style={[
         styles.card,
         selected ? styles.selectedCard : undefined,
@@ -49,8 +52,6 @@ export function CategoryCard({
         style={styles.title}
         numberOfLines={2}
         ellipsizeMode="tail"
-        adjustsFontSizeToFit
-        minimumFontScale={0.9}
       >
         {title}
       </AppText>
@@ -70,16 +71,16 @@ const styles = StyleSheet.create<{
 }>({
   card: {
     width: "47%",
-    height: 188,
+    minHeight: 176,
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.sm,
   },
 
   selectedCard: {
@@ -92,20 +93,20 @@ const styles = StyleSheet.create<{
   },
 
   image: {
-    width: 124,
-    height: 124,
+    width: 116,
+    height: 116,
   },
 
   imagePlaceholder: {
-    width: 124,
-    height: 124,
+    width: 116,
+    height: 116,
     borderRadius: radius.md,
     backgroundColor: colors.background.card,
   },
 
   moreIconArea: {
-    width: 124,
-    height: 124,
+    width: 116,
+    height: 116,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -121,9 +122,8 @@ const styles = StyleSheet.create<{
 
   title: {
     textAlign: "center",
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
     minHeight: 40,
-    maxHeight: 40,
     width: "100%",
     flexShrink: 0,
     textAlignVertical: "center",
