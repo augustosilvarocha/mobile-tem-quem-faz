@@ -67,8 +67,8 @@ export default function EditProviderProfile() {
           return;
         }
 
-        console.log("Erro ao carregar perfil para edicao:", error);
-        setError("Nao foi possivel carregar os dados do perfil.");
+        console.log("Erro ao carregar perfil para edição:", error);
+        setError("Não foi possível carregar os dados do perfil.");
       } finally {
         if (isActive) {
           setLoading(false);
@@ -109,7 +109,7 @@ export default function EditProviderProfile() {
       router.replace("/");
     } catch (error) {
       console.log("Erro ao excluir conta:", error);
-      Alert.alert("Erro", "Nao foi possivel excluir a conta.");
+      Alert.alert("Erro", "Não foi possível excluir a conta.");
     } finally {
       setDeleting(false);
     }
@@ -139,7 +139,7 @@ export default function EditProviderProfile() {
         ) : error || !provider ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary}>
-              {error ?? "Perfil nao encontrado."}
+              {error ?? "Perfil não encontrado."}
             </AppText>
           </View>
         ) : (
@@ -161,7 +161,7 @@ export default function EditProviderProfile() {
                 longitude: provider.longitude,
                 show_location_on_map: provider.show_location_on_map,
               }}
-              submitLabel="Salvar alteracoes"
+              submitLabel="Salvar alterações"
               submittingLabel="Salvando..."
               onSubmit={handleUpdateProvider}
             />
@@ -181,7 +181,7 @@ export default function EditProviderProfile() {
         visible={deleteModalVisible}
         iconName="trash-outline"
         title="Deseja excluir sua conta?"
-        description="Essa acao remove seu perfil de prestador e nao pode ser desfeita."
+        description="Essa ação remove seu perfil de prestador e não pode ser desfeita."
         confirmText="Excluir conta"
         loading={deleting}
         onCancel={() => setDeleteModalVisible(false)}

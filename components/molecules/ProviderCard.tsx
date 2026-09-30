@@ -44,16 +44,16 @@ export function ProviderCard({
         )}
 
         <View style={styles.info}>
-          <AppText style={styles.name} numberOfLines={1}>
+          <AppText style={styles.name} numberOfLines={2}>
             {name}
           </AppText>
-          <AppText style={styles.category} numberOfLines={2}>
+          <AppText style={styles.category} numberOfLines={3}>
             {category}
           </AppText>
 
           <View style={styles.locationRow}>
             <Ionicons name="location" size={16} color={colors.primary} />
-            <AppText style={styles.location} numberOfLines={1}>
+            <AppText style={styles.location} numberOfLines={2}>
               {city}
             </AppText>
           </View>
@@ -93,7 +93,7 @@ const styles = StyleSheet.create<{
   },
   content: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing.md,
   },
   cardPressed: {
@@ -124,8 +124,8 @@ const styles = StyleSheet.create<{
   },
   category: {
     color: colors.text.secondary,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: 2,
   },
   locationRow: {
@@ -137,8 +137,8 @@ const styles = StyleSheet.create<{
   location: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
   button: {
     minHeight: 48,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create<{
   buttonText: {
     color: colors.white,
     fontWeight: "700",
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
 });

@@ -26,7 +26,6 @@ import {
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { sanitizePhone } from "@/utils/phone";
-import { formatRecordingDuration } from "@/utils/time";
 
 const WHATSAPP_DEFAULT_MESSAGE =
   "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";
@@ -96,7 +95,7 @@ export default function ProviderDetails() {
   const [portfolioError, setPortfolioError] = useState<string | null>(null);
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [whatsAppModalVisible, setWhatsAppModalVisible] = useState(false);
-  const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
+  const { handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
     onTranscript: (text) =>
       router.push({
@@ -109,8 +108,8 @@ export default function ProviderDetails() {
   const voiceNavigationLabel = isTranscribing
     ? "Processando"
     : isRecording
-      ? formatRecordingDuration(durationMillis)
-      : "Busca por voz";
+      ? "Finalizar"
+      : "Falar serviço";
   const providerAddress = provider ? getProviderAddress(provider) : "";
 
   useEffect(() => {
@@ -256,16 +255,16 @@ export default function ProviderDetails() {
               )}
 
               <View style={styles.cardInfo}>
-                <AppText style={styles.providerName} numberOfLines={1}>
+                <AppText style={styles.providerName} numberOfLines={2}>
                   {provider.name}
                 </AppText>
-                <AppText style={styles.providerCategory} numberOfLines={1}>
+                <AppText style={styles.providerCategory} numberOfLines={2}>
                   {getProviderCategories(provider)[0]}
                 </AppText>
 
                 <View style={styles.locationRow}>
                   <Ionicons name="location" size={14} color={colors.primary} />
-                  <AppText style={styles.location} numberOfLines={1}>
+                  <AppText style={styles.location} numberOfLines={2}>
                     {getProviderLocation(provider)}
                   </AppText>
                 </View>
@@ -320,7 +319,12 @@ export default function ProviderDetails() {
                   description={getProviderLocation(provider)}
                 />
 
-                <Pressable style={styles.mapButton} onPress={handleOpenMap}>
+                <Pressable
+                  accessibilityLabel="Abrir localização do prestador no mapa"
+                  accessibilityRole="button"
+                  style={styles.mapButton}
+                  onPress={handleOpenMap}
+                >
                   <Ionicons name="navigate" size={20} color={colors.primary} />
                   <AppText style={styles.mapButtonText}>Abrir no mapa</AppText>
                 </Pressable>
@@ -328,6 +332,8 @@ export default function ProviderDetails() {
             ) : null}
 
             <Pressable
+              accessibilityLabel={`Conversar com ${provider.name} pelo WhatsApp`}
+              accessibilityRole="button"
               style={styles.whatsAppButton}
               onPress={() => setWhatsAppModalVisible(true)}
             >
@@ -480,8 +486,8 @@ const styles = StyleSheet.create({
 
   description: {
     color: colors.text.primary,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   chips: {
@@ -504,21 +510,21 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   mapAddress: {
     color: colors.text.secondary,
-    fontSize: 14,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 22,
     marginBottom: spacing.sm,
   },
 
   portfolioFeedback: {
     color: colors.text.secondary,
-    fontSize: 14,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 22,
     paddingVertical: spacing.md,
   },
 
@@ -543,8 +549,8 @@ const styles = StyleSheet.create({
   mapButtonText: {
     color: colors.primary,
     fontWeight: "800",
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   whatsAppButton: {

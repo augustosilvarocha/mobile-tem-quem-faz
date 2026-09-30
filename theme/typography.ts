@@ -26,8 +26,8 @@ export const typography = {
 
   profession: {
     fontFamily: fontFamily.regular,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   button: {
@@ -38,8 +38,8 @@ export const typography = {
 
   buttonSmall: {
     fontFamily: fontFamily.semiBold,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   field: {

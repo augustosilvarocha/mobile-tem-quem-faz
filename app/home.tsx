@@ -80,15 +80,18 @@ export default function Home() {
 
   const recordingDuration = formatRecordingDuration(durationMillis);
   const voiceButtonLabel = isTranscribing
-    ? "Processando audio..."
+    ? "Entendendo o que você falou..."
     : isRecording
-      ? `Finalizar ${recordingDuration}`
-      : "Buscar por voz";
+      ? `Finalizar gravação ${recordingDuration}`
+      : "Falar o serviço que preciso";
+  const voiceHelperText = isRecording
+    ? "Fale agora e toque novamente para finalizar."
+    : 'Toque no microfone e diga, por exemplo: "Preciso de um eletricista".';
   const voiceNavigationLabel = isTranscribing
     ? "Processando"
     : isRecording
-      ? recordingDuration
-      : "Busca por voz";
+      ? "Finalizar"
+      : "Falar serviço";
 
   const featuredProviders = useMemo(
     () => getOneProviderPerCategory(providers),
@@ -161,6 +164,14 @@ export default function Home() {
         />
 
         <Pressable
+          accessibilityHint={
+            isRecording
+              ? "Finaliza a gravação e procura prestadores"
+              : 'Diga algo como "Preciso de um eletricista"'
+          }
+          accessibilityLabel={voiceButtonLabel}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isTranscribing }}
           disabled={isTranscribing}
           onPress={handleVoiceSearch}
           style={[
@@ -177,6 +188,8 @@ export default function Home() {
 
           <AppText style={styles.voiceButtonText}>{voiceButtonLabel}</AppText>
         </Pressable>
+
+        <AppText style={styles.voiceHelperText}>{voiceHelperText}</AppText>
 
         <Section title="Categorias principais" />
 
@@ -248,6 +261,7 @@ const styles = StyleSheet.create<{
   voiceButtonDisabled: ViewStyle;
   voiceButtonRecording: ViewStyle;
   voiceButtonText: TextStyle;
+  voiceHelperText: TextStyle;
 }>({
   container: {
     flex: 1,
@@ -315,10 +329,12 @@ const styles = StyleSheet.create<{
   },
 
   voiceButton: {
-    height: 62,
+    minHeight: 64,
     marginTop: spacing.md,
     backgroundColor: colors.primary,
     borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -337,6 +353,15 @@ const styles = StyleSheet.create<{
     color: colors.white,
     fontWeight: "700",
     fontSize: 18,
+    lineHeight: 24,
+    textAlign: "center",
+  },
+
+  voiceHelperText: {
+    marginTop: spacing.sm,
+    color: colors.text.secondary,
+    fontSize: 16,
     lineHeight: 22,
+    textAlign: "center",
   },
 });

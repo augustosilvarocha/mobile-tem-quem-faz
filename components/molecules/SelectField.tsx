@@ -68,6 +68,18 @@ export function SelectField({
   return (
     <>
       <Pressable
+        accessibilityLabel={
+          loading
+            ? `${placeholder}, carregando opções`
+            : value
+              ? `${placeholder}: ${value.label}`
+              : placeholder
+        }
+        accessibilityRole="button"
+        accessibilityState={{
+          disabled: disabled || loading,
+          expanded: visible,
+        }}
         style={[styles.field, disabled && styles.fieldDisabled]}
         onPress={handleOpen}
       >
@@ -95,7 +107,11 @@ export function SelectField({
               {placeholder}
             </AppText>
 
-            <Pressable onPress={() => setVisible(false)}>
+            <Pressable
+              accessibilityLabel="Fechar lista de opções"
+              accessibilityRole="button"
+              onPress={() => setVisible(false)}
+            >
               <Ionicons name="close" size={24} color={colors.text.primary} />
             </Pressable>
           </View>
@@ -116,7 +132,13 @@ export function SelectField({
             keyboardShouldPersistTaps="handled"
             style={styles.list}
             renderItem={({ item }) => (
-              <Pressable style={styles.optionItem} onPress={() => handleSelect(item)}>
+              <Pressable
+                accessibilityLabel={item.label}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: value?.id === item.id }}
+                style={styles.optionItem}
+                onPress={() => handleSelect(item)}
+              >
                 <AppText variant="field" color={colors.text.primary}>
                   {item.label}
                 </AppText>

@@ -64,6 +64,7 @@ export function CategorySelector({
       </AppText>
 
       <SearchInput
+        accessibilityLabel="Buscar categoria de serviço"
         value={search}
         onChangeText={setSearch}
         placeholder="Buscar categoria"
@@ -96,6 +97,9 @@ export function CategorySelector({
 
             return (
               <Pressable
+                accessibilityLabel={category.name}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isSelected }}
                 key={category.id}
                 style={styles.categoryItem}
                 onPress={() => toggleCategory(category.id)}

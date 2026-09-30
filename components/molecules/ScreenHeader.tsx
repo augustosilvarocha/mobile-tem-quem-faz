@@ -44,7 +44,7 @@ export function ScreenHeader({
 
       <View style={styles.textContainer}>
         <AppText
-          numberOfLines={1}
+          numberOfLines={2}
           style={[styles.title, titleStyle]}
           variant="title"
         >

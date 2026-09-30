@@ -23,22 +23,42 @@ export function BottomNavigation({
   voiceActive = false,
   voiceDisabled = false,
   voiceIconName = "mic",
-  voiceLabel = "Busca por voz",
+  voiceLabel = "Falar serviço",
 }: BottomNavigationProps) {
   return (
     <View style={styles.container}>
-      <Pressable style={styles.item} onPress={onPressHome}>
+      <Pressable
+        accessibilityLabel="Início"
+        accessibilityRole="tab"
+        accessibilityState={{ selected: active === "home" }}
+        style={styles.item}
+        onPress={onPressHome}
+      >
         <Ionicons
           name={active === "home" ? "home" : "home-outline"}
           size={28}
           color={colors.primary}
         />
-        <AppText style={styles.label} numberOfLines={1}>
+        <AppText style={styles.label} numberOfLines={2}>
           Início
         </AppText>
       </Pressable>
 
       <Pressable
+        accessibilityHint={
+          voiceActive
+            ? "Finaliza a gravação e procura prestadores"
+            : "Inicia uma gravação para você dizer o serviço que precisa"
+        }
+        accessibilityLabel={
+          voiceDisabled
+            ? "Processando busca por voz"
+            : voiceActive
+              ? "Finalizar gravação"
+              : "Falar o serviço que preciso"
+        }
+        accessibilityRole="button"
+        accessibilityState={{ disabled: voiceDisabled }}
         disabled={voiceDisabled}
         style={styles.voiceItem}
         onPress={onPressVoice}
@@ -52,18 +72,24 @@ export function BottomNavigation({
         >
           <Ionicons name={voiceIconName} size={30} color={colors.white} />
         </View>
-        <AppText style={styles.label} numberOfLines={1}>
+        <AppText style={styles.label} numberOfLines={2}>
           {voiceLabel}
         </AppText>
       </Pressable>
 
-      <Pressable style={styles.item} onPress={onPressProfile}>
+      <Pressable
+        accessibilityLabel="Perfil"
+        accessibilityRole="tab"
+        accessibilityState={{ selected: active === "profile" }}
+        style={styles.item}
+        onPress={onPressProfile}
+      >
         <Ionicons
           name={active === "profile" ? "person" : "person-outline"}
           size={28}
           color={colors.primary}
         />
-        <AppText style={styles.label} numberOfLines={1}>
+        <AppText style={styles.label} numberOfLines={2}>
           Perfil
         </AppText>
       </Pressable>
@@ -73,7 +99,7 @@ export function BottomNavigation({
 
 const styles = StyleSheet.create({
   container: {
-    height: 90,
+    minHeight: 96,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -114,8 +140,8 @@ const styles = StyleSheet.create({
   label: {
     color: colors.primary,
     fontWeight: "600",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 20,
     textAlign: "center",
   },
 });

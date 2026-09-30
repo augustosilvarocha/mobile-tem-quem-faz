@@ -18,7 +18,6 @@ import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { clearAuthSession, getProviderId } from "@/utils/authStorage";
-import { formatRecordingDuration } from "@/utils/time";
 
 function getFirstName(name: string) {
   return name.trim().split(/\s+/)[0] || name;
@@ -52,7 +51,7 @@ export default function OwnProviderProfile() {
   const [isGuest, setIsGuest] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
+  const { handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
     onTranscript: (text) =>
       router.push({
@@ -65,8 +64,8 @@ export default function OwnProviderProfile() {
   const voiceNavigationLabel = isTranscribing
     ? "Processando"
     : isRecording
-      ? formatRecordingDuration(durationMillis)
-      : "Busca por voz";
+      ? "Finalizar"
+      : "Falar serviço";
 
   useEffect(() => {
     let isActive = true;
@@ -212,16 +211,16 @@ export default function OwnProviderProfile() {
               )}
 
               <View style={styles.cardInfo}>
-                <AppText style={styles.providerName} numberOfLines={1}>
+                <AppText style={styles.providerName} numberOfLines={2}>
                   {provider.name}
                 </AppText>
-                <AppText style={styles.providerCategory} numberOfLines={1}>
+                <AppText style={styles.providerCategory} numberOfLines={2}>
                   {getProviderCategories(provider)[0]}
                 </AppText>
 
                 <View style={styles.infoRow}>
                   <Ionicons name="location" size={14} color={colors.primary} />
-                  <AppText style={styles.infoText} numberOfLines={1}>
+                  <AppText style={styles.infoText} numberOfLines={2}>
                     {provider.city_name} - {provider.uf}
                   </AppText>
                 </View>
@@ -355,8 +354,8 @@ const styles = StyleSheet.create({
   logoutText: {
     color: colors.danger,
     fontWeight: "700",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   feedback: {
@@ -496,8 +495,8 @@ const styles = StyleSheet.create({
   chipText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   actionCard: {
@@ -537,7 +536,7 @@ const styles = StyleSheet.create({
 
   actionDescription: {
     marginTop: spacing.xs,
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 });

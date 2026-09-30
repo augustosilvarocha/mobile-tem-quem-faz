@@ -362,8 +362,8 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   filterButton: {
@@ -381,8 +381,8 @@ const styles = StyleSheet.create({
   filterText: {
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   content: {
@@ -428,8 +428,8 @@ const styles = StyleSheet.create({
   clearText: {
     color: colors.primary,
     fontWeight: "800",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   clearButton: {
@@ -442,8 +442,8 @@ const styles = StyleSheet.create({
   fieldLabel: {
     color: colors.text.primary,
     fontWeight: "700",
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
