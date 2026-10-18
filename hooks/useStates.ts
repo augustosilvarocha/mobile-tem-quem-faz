@@ -27,7 +27,7 @@ export function useStates() {
         }
 
         console.log("Erro ao buscar estados:", error);
-        setError("Nao foi possivel carregar os estados.");
+        setError("Não foi possível carregar os estados.");
       } finally {
         if (isActive) {
           setLoading(false);

@@ -282,7 +282,7 @@ export async function updateProvider(
   const accessToken = await getAccessToken();
 
   if (!accessToken) {
-    throw new Error("Sessao expirada. Faca login novamente.");
+    throw new Error("Sessão expirada. Faça login novamente.");
   }
 
   const formData = new FormData();
@@ -307,7 +307,7 @@ export async function deleteProvider(providerId: number | string): Promise<void>
   const accessToken = await getAccessToken();
 
   if (!accessToken) {
-    throw new Error("Sessao expirada. Faca login novamente.");
+    throw new Error("Sessão expirada. Faça login novamente.");
   }
 
   await apiDelete(`/providers/${providerId}/`, accessToken);

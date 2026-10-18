@@ -27,7 +27,7 @@ export function useCities() {
         }
 
         console.log("Erro ao buscar cidades:", error);
-        setError("Nao foi possivel carregar as cidades.");
+        setError("Não foi possível carregar as cidades.");
       } finally {
         if (isActive) {
           setLoading(false);

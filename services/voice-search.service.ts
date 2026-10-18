@@ -72,13 +72,13 @@ export async function transcribeVoiceSearch(audioUri: string) {
   const data = await parseAudioSearchResponse(response);
 
   if (!response.ok) {
-    throw new Error(data?.error || "Nao foi possivel transcrever o audio.");
+    throw new Error(data?.error || "Não foi possível transcrever o áudio.");
   }
 
   const text = data?.text?.trim();
 
   if (!text) {
-    throw new Error("Nao foi possivel entender o audio.");
+    throw new Error("Não foi possível entender o áudio.");
   }
 
   if (Array.isArray(data?.providers)) {

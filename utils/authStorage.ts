@@ -40,7 +40,7 @@ export async function getRequiredAccessToken() {
   const accessToken = await getAccessToken();
 
   if (!accessToken) {
-    throw new Error("Sessao expirada. Faca login novamente.");
+    throw new Error("Sessão expirada. Faça login novamente.");
   }
 
   return accessToken;

@@ -48,7 +48,7 @@ export async function apiPost<T>(endpoint: string, body: unknown): Promise<T> {
   const data = await parseJsonResponse(response);
 
   if (!response.ok) {
-    throw new Error(getParsedErrorMessage(data, "Erro na requisicao"));
+    throw new Error(getParsedErrorMessage(data, "Erro na requisição"));
   }
 
   return data as T;

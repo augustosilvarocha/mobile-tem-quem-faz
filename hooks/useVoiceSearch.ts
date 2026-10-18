@@ -24,7 +24,7 @@ export function useVoiceSearch({ onError, onTranscript }: UseVoiceSearchOptions)
       const message =
         error instanceof Error
           ? error.message
-          : "Nao foi possivel concluir a busca por voz.";
+          : "Não foi possível concluir a busca por voz.";
 
       onError?.(message);
     },
@@ -61,7 +61,7 @@ export function useVoiceSearch({ onError, onTranscript }: UseVoiceSearchOptions)
       const audioUri = recorder.uri || recorder.getStatus().url;
 
       if (!audioUri) {
-        throw new Error("Nao foi possivel localizar o audio gravado.");
+        throw new Error("Não foi possível localizar o áudio gravado.");
       }
 
       setIsTranscribing(true);

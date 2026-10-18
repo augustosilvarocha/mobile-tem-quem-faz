@@ -33,7 +33,7 @@ export function useCategories() {
         }
 
         console.log("Erro ao buscar categorias:", error);
-        setError("Nao foi possivel carregar as categorias.");
+        setError("Não foi possível carregar as categorias.");
       } finally {
         if (isActive) {
           setLoading(false);
