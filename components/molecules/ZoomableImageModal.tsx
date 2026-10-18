@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Modal, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import {
@@ -17,6 +18,8 @@ import { colors, spacing } from "@/theme";
 
 type ZoomableImageModalProps = {
   imageUri: string;
+  imageUris?: string[];
+  initialIndex?: number;
   onClose: () => void;
   visible: boolean;
 };
@@ -28,11 +31,16 @@ function clamp(value: number, minimum: number, maximum: number) {
 
 export function ZoomableImageModal({
   imageUri,
+  imageUris,
+  initialIndex = 0,
   onClose,
   visible,
 }: ZoomableImageModalProps) {
   const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const images = imageUris?.length ? imageUris : [imageUri];
+  const currentIndex = Math.max(0, Math.min(activeIndex, images.length - 1));
   const imageSize = Math.max(width, height);
   const scale = useSharedValue(1);
   const savedScale = useSharedValue(1);
@@ -41,14 +49,33 @@ export function ZoomableImageModal({
   const savedTranslationX = useSharedValue(0);
   const savedTranslationY = useSharedValue(0);
 
-  function handleClose() {
+  useEffect(() => {
+    setActiveIndex(initialIndex);
     scale.value = 1;
     savedScale.value = 1;
     translationX.value = 0;
     translationY.value = 0;
     savedTranslationX.value = 0;
     savedTranslationY.value = 0;
+  }, [imageUri, initialIndex, visible, scale, savedScale, translationX, translationY, savedTranslationX, savedTranslationY]);
+
+  function resetZoom() {
+    scale.value = 1;
+    savedScale.value = 1;
+    translationX.value = 0;
+    translationY.value = 0;
+    savedTranslationX.value = 0;
+    savedTranslationY.value = 0;
+  }
+
+  function handleClose() {
+    resetZoom();
     onClose();
+  }
+
+  function showImage(index: number) {
+    resetZoom();
+    setActiveIndex(index);
   }
 
   const pinchGesture = Gesture.Pinch()
@@ -142,7 +169,7 @@ export function ZoomableImageModal({
           <GestureDetector gesture={composedGesture}>
             <Animated.Image
               resizeMode="contain"
-              source={{ uri: imageUri }}
+              source={{ uri: images[currentIndex] }}
               style={[
                 styles.image,
                 { height, width },
@@ -160,12 +187,38 @@ export function ZoomableImageModal({
             <Ionicons name="close" color={colors.white} size={30} />
           </Pressable>
 
-          <AppText
-            color={colors.white}
-            style={[styles.hint, { bottom: insets.bottom + spacing.lg }]}
-          >
-            Use dois dedos ou toque duas vezes para ampliar
-          </AppText>
+          {images.length > 1 ? (
+            <View style={[styles.galleryControls, { bottom: insets.bottom + spacing.md }]}>
+              <Pressable
+                accessibilityLabel="Foto anterior"
+                accessibilityRole="button"
+                disabled={currentIndex === 0}
+                onPress={() => showImage(currentIndex - 1)}
+                style={[styles.galleryButton, currentIndex === 0 && styles.disabled]}
+              >
+                <Ionicons name="chevron-back" color={colors.white} size={26} />
+              </Pressable>
+              <AppText color={colors.white}>
+                {currentIndex + 1} / {images.length}
+              </AppText>
+              <Pressable
+                accessibilityLabel="Próxima foto"
+                accessibilityRole="button"
+                disabled={currentIndex === images.length - 1}
+                onPress={() => showImage(currentIndex + 1)}
+                style={[styles.galleryButton, currentIndex === images.length - 1 && styles.disabled]}
+              >
+                <Ionicons name="chevron-forward" color={colors.white} size={26} />
+              </Pressable>
+            </View>
+          ) : (
+            <AppText
+              color={colors.white}
+              style={[styles.hint, { bottom: insets.bottom + spacing.lg }]}
+            >
+              Use dois dedos ou toque duas vezes para ampliar
+            </AppText>
+          )}
         </View>
       </GestureHandlerRootView>
     </Modal>
@@ -209,4 +262,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     opacity: 0.8,
   },
+
+  galleryControls: {
+    position: "absolute",
+    left: spacing.screen,
+    right: spacing.screen,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  galleryButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  disabled: { opacity: 0.3 },
 });

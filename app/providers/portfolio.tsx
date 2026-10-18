@@ -23,6 +23,7 @@ import {
 } from "@/services/portfolio.service";
 import { colors, radius, spacing } from "@/theme";
 import { getProviderId } from "@/utils/authStorage";
+import { getPortfolioImageUris } from "@/utils/portfolioImages";
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
@@ -45,7 +46,7 @@ export default function ManagePortfolio() {
         ? {
             title: editingItem.title,
             description: editingItem.description,
-            imageUri: editingItem.image,
+            images: editingItem.images.map((image) => ({ id: image.id, uri: image.image })),
           }
         : undefined,
     [editingItem]
@@ -62,7 +63,7 @@ export default function ManagePortfolio() {
         const currentProviderId = await getProviderId();
 
         if (!currentProviderId) {
-          throw new Error("Entre como prestador para gerenciar o portfolio.");
+          throw new Error("Entre como prestador para gerenciar o portfólio.");
         }
 
         const portfolioItems = await getPortfolio(currentProviderId);
@@ -74,7 +75,7 @@ export default function ManagePortfolio() {
       } catch (error) {
         if (isActive) {
           setError(
-            getErrorMessage(error, "Nao foi possivel carregar o portfolio.")
+            getErrorMessage(error, "Não foi possível carregar o portfólio.")
           );
         }
       } finally {
@@ -122,11 +123,7 @@ export default function ManagePortfolio() {
         const updatedItem = await updatePortfolioItem(
           providerId,
           editingItem.id,
-          {
-            ...payload,
-            imageUri:
-              payload.imageUri === editingItem.image ? null : payload.imageUri,
-          }
+          payload
         );
 
         setItems((currentItems) =>
@@ -144,8 +141,8 @@ export default function ManagePortfolio() {
       setFormVisible(false);
     } catch (error) {
       Alert.alert(
-        "Portfolio",
-        getErrorMessage(error, "Nao foi possivel salvar o trabalho.")
+        "Portfólio",
+        getErrorMessage(error, "Não foi possível salvar o trabalho.")
       );
     } finally {
       setSubmitting(false);
@@ -166,8 +163,8 @@ export default function ManagePortfolio() {
       setDeletingItem(null);
     } catch (error) {
       Alert.alert(
-        "Portfolio",
-        getErrorMessage(error, "Nao foi possivel excluir o trabalho.")
+        "Portfólio",
+        getErrorMessage(error, "Não foi possível excluir o trabalho.")
       );
     } finally {
       setDeleting(false);
@@ -182,16 +179,17 @@ export default function ManagePortfolio() {
       >
         <ScreenHeader
           style={styles.header}
-          subtitle="Mostre alguns dos trabalhos que voce ja realizou."
-          title="Portfolio"
+          subtitle="Mostre alguns dos trabalhos que você já realizou."
+          title="Portfólio"
         />
 
         {loading ? (
-          <AppText style={styles.feedback}>Carregando portfolio...</AppText>
+          <AppText style={styles.feedback}>Carregando portfólio...</AppText>
         ) : error ? (
           <AppText style={styles.feedback}>{error}</AppText>
         ) : formVisible ? (
           <PortfolioItemForm
+            key={editingItem?.id ?? "new"}
             initialValues={formInitialValues}
             onCancel={handleCloseForm}
             onSubmit={handleSubmit}
@@ -212,19 +210,29 @@ export default function ManagePortfolio() {
                   color={colors.text.secondary}
                 />
                 <AppText style={styles.emptyText}>
-                  Seu portfolio ainda nao possui trabalhos.
+                  Seu portfólio ainda não possui trabalhos.
                 </AppText>
               </View>
             ) : (
               <View style={styles.list}>
                 {items.map((item) => (
                   <View key={item.id} style={styles.item}>
-                    {item.image ? (
-                      <Image
-                        resizeMode="contain"
-                        source={{ uri: item.image }}
-                        style={styles.image}
-                      />
+                    {getPortfolioImageUris(item).length > 0 ? (
+                      <View style={styles.image}>
+                        <Image
+                          resizeMode="contain"
+                          source={{ uri: getPortfolioImageUris(item)[0] }}
+                          style={styles.coverImage}
+                        />
+                        {getPortfolioImageUris(item).length > 1 ? (
+                          <View style={styles.imageCount}>
+                            <Ionicons name="images-outline" size={13} color={colors.white} />
+                            <AppText style={styles.imageCountText}>
+                              {getPortfolioImageUris(item).length}
+                            </AppText>
+                          </View>
+                        ) : null}
+                      </View>
                     ) : (
                       <View style={styles.imagePlaceholder}>
                         <Ionicons
@@ -283,7 +291,7 @@ export default function ManagePortfolio() {
 
       <ConfirmActionModal
         confirmText="Excluir trabalho"
-        description={`O trabalho ${deletingItem?.title ?? "selecionado"} sera removido do seu portfolio.`}
+        description={`O trabalho ${deletingItem?.title ?? "selecionado"} será removido do seu portfólio.`}
         iconName="trash-outline"
         loading={deleting}
         onCancel={() => setDeletingItem(null)}
@@ -381,6 +389,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+  coverImage: { width: "100%", height: "100%", borderRadius: radius.sm },
+
+  imageCount: {
+    position: "absolute",
+    right: spacing.xs,
+    bottom: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 44,
+    gap: 4,
+    height: 24,
+    paddingHorizontal: spacing.xs,
+    borderRadius: 4,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+  },
+
+  imageCountText: { fontSize: 12, lineHeight: 16, color: colors.white },
 
   itemContent: {
     flex: 1,

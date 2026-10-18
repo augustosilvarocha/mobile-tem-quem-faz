@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
 import { PortfolioItem } from "@/services/portfolio.service";
 import { colors, radius, spacing } from "@/theme";
+import { getPortfolioImageUris } from "@/utils/portfolioImages";
 
+import { PortfolioImageCarousel } from "./PortfolioImageCarousel";
 import { ZoomableImageModal } from "./ZoomableImageModal";
 
 type PortfolioGalleryProps = {
@@ -13,7 +15,10 @@ type PortfolioGalleryProps = {
 };
 
 export function PortfolioGallery({ items }: PortfolioGalleryProps) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<{
+    uris: string[];
+    index: number;
+  } | null>(null);
 
   if (items.length === 0) {
     return (
@@ -24,7 +29,7 @@ export function PortfolioGallery({ items }: PortfolioGalleryProps) {
           color={colors.text.secondary}
         />
         <AppText style={styles.emptyText}>
-          Este prestador ainda nao adicionou trabalhos ao portfolio.
+          Este prestador ainda não adicionou trabalhos ao portfólio.
         </AppText>
       </View>
     );
@@ -35,31 +40,14 @@ export function PortfolioGallery({ items }: PortfolioGalleryProps) {
       <View style={styles.grid}>
         {items.map((item) => (
           <View key={item.id} style={styles.item}>
-            {item.image ? (
-              <Pressable
-                accessibilityLabel={`Ampliar imagem de ${item.title}`}
-                accessibilityRole="button"
-                onPress={() => setSelectedImage(item.image)}
-                style={({ pressed }) => [
-                  styles.imageButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Image
-                  resizeMode="contain"
-                  source={{ uri: item.image }}
-                  style={styles.image}
-                />
-              </Pressable>
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Ionicons
-                  name="image-outline"
-                  size={32}
-                  color={colors.text.secondary}
-                />
-              </View>
-            )}
+            <PortfolioImageCarousel
+              imageUris={getPortfolioImageUris(item)}
+              title={item.title}
+              onPressImage={(index) => setSelectedImages({
+                uris: getPortfolioImageUris(item),
+                index,
+              })}
+            />
 
             <View style={styles.itemContent}>
               <AppText style={styles.title} numberOfLines={2}>
@@ -73,10 +61,12 @@ export function PortfolioGallery({ items }: PortfolioGalleryProps) {
         ))}
       </View>
 
-      {selectedImage ? (
+      {selectedImages ? (
         <ZoomableImageModal
-          imageUri={selectedImage}
-          onClose={() => setSelectedImage(null)}
+          imageUri={selectedImages.uris[selectedImages.index]}
+          imageUris={selectedImages.uris}
+          initialIndex={selectedImages.index}
+          onClose={() => setSelectedImages(null)}
           visible
         />
       ) : null}
@@ -99,29 +89,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.white,
     overflow: "hidden",
-  },
-
-  imageButton: {
-    width: "100%",
-    aspectRatio: 1,
-    backgroundColor: colors.background.card,
-  },
-
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-
-  imagePlaceholder: {
-    width: "100%",
-    aspectRatio: 1,
-    backgroundColor: colors.background.card,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  pressed: {
-    opacity: 0.75,
   },
 
   itemContent: {

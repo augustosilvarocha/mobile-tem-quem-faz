@@ -12,12 +12,17 @@ import * as ImagePicker from "expo-image-picker";
 
 import { AppText } from "@/components/atoms/AppText";
 import { SavePortfolioItemPayload } from "@/services/portfolio.service";
+import {
+  appendPortfolioImages,
+  MAX_PORTFOLIO_IMAGES,
+  type PortfolioImageDraft,
+} from "@/utils/portfolioImages";
 import { colors, radius, spacing } from "@/theme";
 
 type PortfolioItemFormValues = {
   title: string;
   description: string;
-  imageUri: string | null;
+  images: PortfolioImageDraft[];
 };
 
 type PortfolioItemFormProps = {
@@ -30,7 +35,7 @@ type PortfolioItemFormProps = {
 const EMPTY_VALUES: PortfolioItemFormValues = {
   title: "",
   description: "",
-  imageUri: null,
+  images: [],
 };
 
 export function PortfolioItemForm({
@@ -41,27 +46,49 @@ export function PortfolioItemForm({
 }: PortfolioItemFormProps) {
   const [title, setTitle] = useState(initialValues.title);
   const [description, setDescription] = useState(initialValues.description);
-  const [imageUri, setImageUri] = useState(initialValues.imageUri);
+  const [images, setImages] = useState(initialValues.images);
+  const [choosingImages, setChoosingImages] = useState(false);
 
-  async function handleChooseImage() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== ImagePicker.PermissionStatus.GRANTED) {
-      Alert.alert(
-        "Permissao necessaria",
-        "Permita o acesso as fotos para escolher uma imagem."
-      );
+  async function handleChooseImages() {
+    if (choosingImages || submitting || images.length >= MAX_PORTFOLIO_IMAGES) {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: false,
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+    setChoosingImages(true);
 
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== ImagePicker.PermissionStatus.GRANTED) {
+        Alert.alert(
+          "Permissão necessária",
+          "Permita o acesso às fotos para escolher as imagens."
+        );
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: false,
+        allowsMultipleSelection: true,
+        mediaTypes: ["images"],
+        orderedSelection: true,
+        quality: 0.8,
+        selectionLimit: MAX_PORTFOLIO_IMAGES - images.length,
+      });
+
+      if (!result.canceled) {
+        setImages((current) => appendPortfolioImages(
+          current,
+          result.assets.map((asset) => ({ uri: asset.uri, file: asset.file }))
+        ));
+      }
+    } catch {
+      Alert.alert(
+        "Fotos do trabalho",
+        "Não foi possível abrir as fotos. Tente novamente."
+      );
+    } finally {
+      setChoosingImages(false);
     }
   }
 
@@ -71,8 +98,8 @@ export function PortfolioItemForm({
 
     if (!normalizedTitle || !normalizedDescription) {
       Alert.alert(
-        "Campos obrigatorios",
-        "Preencha o titulo e a descricao do trabalho."
+        "Campos obrigatórios",
+        "Preencha o título e a descrição do trabalho."
       );
       return;
     }
@@ -80,50 +107,64 @@ export function PortfolioItemForm({
     onSubmit({
       title: normalizedTitle,
       description: normalizedDescription,
-      imageUri,
+      images,
     });
   }
 
   return (
     <View style={styles.container}>
-      <AppText style={styles.label}>Imagem do trabalho</AppText>
+      <View style={styles.photoHeader}>
+        <AppText style={styles.label}>Fotos do trabalho</AppText>
+        <AppText color={colors.text.secondary}>
+          {images.length}/{MAX_PORTFOLIO_IMAGES}
+        </AppText>
+      </View>
 
-      <Pressable
-        accessibilityLabel="Escolher imagem do trabalho"
-        accessibilityRole="button"
-        disabled={submitting}
-        onPress={handleChooseImage}
-        style={({ pressed }) => [
-          styles.imagePicker,
-          pressed && styles.pressed,
-          submitting && styles.disabled,
-        ]}
-      >
-        {imageUri ? (
-          <Image
-            resizeMode="contain"
-            source={{ uri: imageUri }}
-            style={styles.image}
-          />
-        ) : (
-          <View style={styles.imagePlaceholder}>
-            <Ionicons
-              name="image-outline"
-              size={36}
-              color={colors.primary}
-            />
-            <AppText style={styles.imagePlaceholderText}>
-              Escolher imagem
-            </AppText>
+      <View style={styles.photoGrid}>
+        {images.map((image, index) => (
+          <View key={image.id ?? image.uri} style={styles.photoSlot}>
+            <View style={styles.photo}>
+              <Image
+                accessibilityLabel={`Foto ${index + 1} do trabalho`}
+                resizeMode="contain"
+                source={{ uri: image.uri }}
+                style={styles.image}
+              />
+              <Pressable
+                accessibilityLabel={`Remover foto ${index + 1}`}
+                accessibilityRole="button"
+                disabled={submitting || choosingImages}
+                hitSlop={4}
+                onPress={() => setImages((current) => current.filter((_, position) => position !== index))}
+                style={styles.removePhotoButton}
+              >
+                <Ionicons name="close" size={20} color={colors.white} />
+              </Pressable>
+            </View>
           </View>
-        )}
+        ))}
+      </View>
 
-        <View style={styles.imageAction}>
-          <Ionicons name="images-outline" size={18} color={colors.white} />
-        </View>
-      </Pressable>
+      {images.length < MAX_PORTFOLIO_IMAGES ? (
+        <Pressable
+          accessibilityLabel="Adicionar fotos ao trabalho"
+          accessibilityRole="button"
+          disabled={submitting || choosingImages}
+          onPress={handleChooseImages}
+          style={({ pressed }) => [
+            styles.addPhotosButton,
+            pressed && styles.pressed,
+            (submitting || choosingImages) && styles.disabled,
+          ]}
+        >
+          <Ionicons name="images-outline" size={22} color={colors.primary} />
+          <AppText style={styles.addPhotosText}>
+            {choosingImages ? "Abrindo fotos..." : "Adicionar fotos"}
+          </AppText>
+        </Pressable>
+      ) : null}
 
-      <AppText style={styles.label}>Titulo</AppText>
+      <AppText style={styles.label}>Título</AppText>
       <TextInput
         editable={!submitting}
         maxLength={255}
@@ -134,7 +175,7 @@ export function PortfolioItemForm({
         value={title}
       />
 
-      <AppText style={styles.label}>Descricao</AppText>
+      <AppText style={styles.label}>Descrição</AppText>
       <TextInput
         editable={!submitting}
         multiline
@@ -148,17 +189,17 @@ export function PortfolioItemForm({
 
       <View style={styles.actions}>
         <Pressable
-          disabled={submitting}
+          disabled={submitting || choosingImages}
           onPress={onCancel}
-          style={[styles.cancelButton, submitting && styles.disabled]}
+          style={[styles.cancelButton, (submitting || choosingImages) && styles.disabled]}
         >
           <AppText style={styles.cancelButtonText}>Cancelar</AppText>
         </Pressable>
 
         <Pressable
-          disabled={submitting}
+          disabled={submitting || choosingImages}
           onPress={handleSubmit}
-          style={[styles.submitButton, submitting && styles.disabled]}
+          style={[styles.submitButton, (submitting || choosingImages) && styles.disabled]}
         >
           <Ionicons name="checkmark" size={20} color={colors.white} />
           <AppText style={styles.submitButtonText}>
@@ -183,10 +224,25 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
 
-  imagePicker: {
-    width: "100%",
-    aspectRatio: 4 / 3,
-    maxHeight: 280,
+  photoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  photoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -4,
+  },
+
+  photoSlot: {
+    width: "33.333%",
+    padding: 4,
+  },
+
+  photo: {
+    aspectRatio: 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -199,28 +255,34 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 
-  imagePlaceholder: {
-    flex: 1,
+  removePhotoButton: {
+    position: "absolute",
+    right: spacing.sm,
+    top: spacing.xs,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  addPhotosButton: {
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
 
-  imagePlaceholderText: {
+  addPhotosText: {
     color: colors.primary,
     fontWeight: "700",
-  },
-
-  imageAction: {
-    position: "absolute",
-    right: spacing.sm,
-    bottom: spacing.sm,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
+    flexShrink: 1,
   },
 
   input: {
