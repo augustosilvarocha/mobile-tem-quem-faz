@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
+import { CategoryIcon } from "@/components/atoms/CategoryIcon";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
 import { PortfolioGallery } from "@/components/molecules/PortfolioGallery";
 import { ProviderLocationMap } from "@/components/molecules/ProviderLocationMap";
@@ -27,6 +28,7 @@ import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { sanitizePhone } from "@/utils/phone";
 
+const PROFILE_AVATAR_SIZE = 144;
 const WHATSAPP_DEFAULT_MESSAGE =
   "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";
 
@@ -39,7 +41,7 @@ type ProviderWithMapLocation = Provider & {
 function getProviderCategories(provider: Provider) {
   return provider.category_names?.length
     ? provider.category_names
-    : ["Prestador de servico"];
+    : ["Prestador de serviço"];
 }
 
 function getProviderLocation(provider: Provider) {
@@ -131,7 +133,7 @@ export default function ProviderDetails() {
         }
 
         console.log("Erro ao carregar detalhes do prestador:", error);
-        setError("Nao foi possivel carregar o prestador.");
+        setError("Não foi possível carregar o prestador.");
       } finally {
         if (isActive) {
           setLoading(false);
@@ -155,7 +157,7 @@ export default function ProviderDetails() {
         }
 
         console.log("Erro ao carregar portfolio:", error);
-        setPortfolioError("Nao foi possivel carregar o portfolio.");
+        setPortfolioError("Não foi possível carregar o portfólio.");
       } finally {
         if (isActive) {
           setPortfolioLoading(false);
@@ -185,7 +187,7 @@ export default function ProviderDetails() {
     const whatsAppNumber = getWhatsAppNumber(provider.user.phone);
 
     if (!whatsAppNumber) {
-      Alert.alert("WhatsApp", "Este prestador ainda nao possui telefone.");
+      Alert.alert("WhatsApp", "Este prestador ainda não possui telefone.");
       return;
     }
 
@@ -196,7 +198,7 @@ export default function ProviderDetails() {
       setWhatsAppModalVisible(false);
     } catch (error) {
       console.log("Erro ao abrir WhatsApp:", error);
-      Alert.alert("WhatsApp", "Nao foi possivel abrir o WhatsApp.");
+      Alert.alert("WhatsApp", "Não foi possível abrir o WhatsApp.");
     }
   }
 
@@ -209,7 +211,7 @@ export default function ProviderDetails() {
       await Linking.openURL(getProviderMapUrl(provider));
     } catch (error) {
       console.log("Erro ao abrir mapa:", error);
-      Alert.alert("Mapa", "Nao foi possivel abrir o mapa.");
+      Alert.alert("Mapa", "Não foi possível abrir o mapa.");
     }
   }
 
@@ -227,7 +229,7 @@ export default function ProviderDetails() {
         ) : error || !provider ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary}>
-              {error ?? "Prestador nao encontrado."}
+              {error ?? "Prestador não encontrado."}
             </AppText>
           </View>
         ) : (
@@ -250,16 +252,17 @@ export default function ProviderDetails() {
                 </Pressable>
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={32} color={colors.text.secondary} />
+                  <Ionicons name="person" size={64} color={colors.text.secondary} />
                 </View>
               )}
 
               <View style={styles.cardInfo}>
-                <AppText style={styles.providerName} numberOfLines={2}>
+                <AppText
+                  variant="title"
+                  style={styles.providerName}
+                  numberOfLines={2}
+                >
                   {provider.name}
-                </AppText>
-                <AppText style={styles.providerCategory} numberOfLines={2}>
-                  {getProviderCategories(provider)[0]}
                 </AppText>
 
                 <View style={styles.locationRow}>
@@ -272,29 +275,27 @@ export default function ProviderDetails() {
             </View>
 
             <AppText style={styles.sectionTitle}>Descrição do serviço</AppText>
-            <View style={styles.descriptionBox}>
-              <AppText style={styles.description}>
-                {provider.description ||
-                  "Este prestador ainda nao adicionou uma descricao."}
-              </AppText>
-            </View>
+            <AppText style={styles.description}>
+              {provider.description ||
+                "Este prestador ainda não adicionou uma descrição."}
+            </AppText>
 
             <AppText style={styles.sectionTitle}>Categorias</AppText>
             <View style={styles.chips}>
               {getProviderCategories(provider).map((category) => (
                 <View key={category} style={styles.chip}>
-                  <Ionicons name="construct" size={18} color={colors.primary} />
+                  <CategoryIcon categoryName={category} size={18} />
                   <AppText style={styles.chipText}>{category}</AppText>
                 </View>
               ))}
             </View>
 
             <AppText style={[styles.sectionTitle, styles.portfolioSectionTitle]}>
-              Portfolio
+              Portfólio
             </AppText>
             {portfolioLoading ? (
               <AppText style={styles.portfolioFeedback}>
-                Carregando portfolio...
+                Carregando portfólio...
               </AppText>
             ) : portfolioError ? (
               <AppText style={styles.portfolioFeedback}>
@@ -304,10 +305,10 @@ export default function ProviderDetails() {
               <PortfolioGallery items={portfolio} />
             )}
 
+            <AppText style={styles.sectionTitle}>Localização</AppText>
+
             {hasProviderMapLocation(provider) ? (
               <>
-                <AppText style={styles.sectionTitle}>Localizacao</AppText>
-
                 {providerAddress ? (
                   <AppText style={styles.mapAddress}>{providerAddress}</AppText>
                 ) : null}
@@ -329,7 +330,11 @@ export default function ProviderDetails() {
                   <AppText style={styles.mapButtonText}>Abrir no mapa</AppText>
                 </Pressable>
               </>
-            ) : null}
+            ) : (
+              <AppText style={styles.mapAddress}>
+                Localização não informada
+              </AppText>
+            )}
 
             <Pressable
               accessibilityLabel={`Conversar com ${provider.name} pelo WhatsApp`}
@@ -363,7 +368,7 @@ export default function ProviderDetails() {
           variant="primary"
           iconName="logo-whatsapp"
           title="Abrir conversa no WhatsApp?"
-          description={`Voce sera redirecionado para o WhatsApp para conversar com ${provider.name}.`}
+          description={`Você será redirecionado para o WhatsApp para conversar com ${provider.name}.`}
           confirmText="Abrir Whatsapp"
           onCancel={() => setWhatsAppModalVisible(false)}
           onConfirm={handleOpenWhatsApp}
@@ -403,27 +408,21 @@ const styles = StyleSheet.create({
   },
 
   profileCard: {
-    minHeight: 124,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    flexDirection: "row",
+    paddingVertical: spacing.md,
     alignItems: "center",
     gap: spacing.md,
   },
 
   avatar: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
+    width: PROFILE_AVATAR_SIZE,
+    height: PROFILE_AVATAR_SIZE,
+    borderRadius: PROFILE_AVATAR_SIZE / 2,
   },
 
   avatarButton: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
+    width: PROFILE_AVATAR_SIZE,
+    height: PROFILE_AVATAR_SIZE,
+    borderRadius: PROFILE_AVATAR_SIZE / 2,
   },
 
   avatarPressed: {
@@ -431,39 +430,40 @@ const styles = StyleSheet.create({
   },
 
   avatarPlaceholder: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
+    width: PROFILE_AVATAR_SIZE,
+    height: PROFILE_AVATAR_SIZE,
+    borderRadius: PROFILE_AVATAR_SIZE / 2,
     backgroundColor: colors.background.card,
     alignItems: "center",
     justifyContent: "center",
   },
 
   cardInfo: {
-    flex: 1,
+    width: "100%",
     minWidth: 0,
+    alignItems: "center",
   },
 
   providerName: {
+    width: "100%",
     color: colors.text.primary,
     fontWeight: "800",
-  },
-
-  providerCategory: {
-    color: colors.text.secondary,
-    marginTop: 2,
+    textAlign: "center",
   },
 
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    marginTop: spacing.xs,
+    justifyContent: "center",
+    maxWidth: "100%",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
   },
 
   location: {
-    color: colors.primary,
-    fontWeight: "700",
+    flexShrink: 1,
+    color: colors.text.secondary,
+    textAlign: "center",
   },
 
   sectionTitle: {
@@ -473,15 +473,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontSize: 18,
     lineHeight: 22,
-  },
-
-  descriptionBox: {
-    minHeight: 86,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    padding: spacing.md,
   },
 
   description: {

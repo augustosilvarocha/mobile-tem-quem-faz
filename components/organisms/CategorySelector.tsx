@@ -8,6 +8,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
+import { CategoryIcon } from "@/components/atoms/CategoryIcon";
 import { SearchInput } from "@/components/molecules/SearchInput";
 import { useCategories } from "@/hooks/useCategories";
 import { colors, radius, spacing, typography } from "@/theme";
@@ -110,7 +111,7 @@ export function CategorySelector({
                   color={isSelected ? colors.primary : colors.text.primary}
                 />
 
-                <Ionicons name="construct" size={22} color={colors.primary} />
+                <CategoryIcon categoryName={category.name} size={22} />
 
                 <AppText variant="field" style={styles.categoryText}>
                   {category.name}

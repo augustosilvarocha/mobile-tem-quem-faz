@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
+import { CategoryIcon } from "@/components/atoms/CategoryIcon";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
@@ -26,7 +27,7 @@ function getFirstName(name: string) {
 function getProviderCategories(provider: Provider) {
   return provider.category_names?.length
     ? provider.category_names
-    : ["Prestador de servico"];
+    : ["Prestador de serviço"];
 }
 
 function formatProviderSince(createdAt: string) {
@@ -96,7 +97,7 @@ export default function OwnProviderProfile() {
         }
 
         console.log("Erro ao carregar perfil:", error);
-        setError("Nao foi possivel carregar seu perfil.");
+        setError("Não foi possível carregar seu perfil.");
       } finally {
         if (isActive) {
           setLoading(false);
@@ -189,13 +190,13 @@ export default function OwnProviderProfile() {
         ) : error || !provider ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary} style={styles.feedbackText}>
-              {error ?? "Perfil nao encontrado."}
+              {error ?? "Perfil não encontrado."}
             </AppText>
           </View>
         ) : (
           <>
             <AppText variant="title" style={styles.greeting}>
-              Ola, {getFirstName(provider.name)}!
+              Olá, {getFirstName(provider.name)}!
             </AppText>
             <AppText style={styles.memberSince} color={colors.text.secondary}>
               {formatProviderSince(provider.created_at)}
@@ -233,7 +234,7 @@ export default function OwnProviderProfile() {
             <View style={styles.chips}>
               {getProviderCategories(provider).map((category) => (
                 <View key={category} style={styles.chip}>
-                  <Ionicons name="construct" size={18} color={colors.primary} />
+                  <CategoryIcon categoryName={category} size={18} />
                   <AppText style={styles.chipText}>{category}</AppText>
                 </View>
               ))}
@@ -247,7 +248,7 @@ export default function OwnProviderProfile() {
               <View style={styles.actionText}>
                 <AppText style={styles.actionTitle}>Editar perfil</AppText>
                 <AppText style={styles.actionDescription} color={colors.text.secondary}>
-                  Altere suas informacoes.
+                  Altere suas informações.
                 </AppText>
               </View>
 
@@ -263,7 +264,7 @@ export default function OwnProviderProfile() {
               </View>
 
               <View style={styles.actionText}>
-                <AppText style={styles.actionTitle}>Gerenciar portfolio</AppText>
+                <AppText style={styles.actionTitle}>Gerenciar portfólio</AppText>
                 <AppText style={styles.actionDescription} color={colors.text.secondary}>
                   Adicione e organize seus trabalhos.
                 </AppText>
@@ -277,7 +278,7 @@ export default function OwnProviderProfile() {
               onPress={() =>
                 Alert.alert(
                   "Indique amigos",
-                  "Em breve voce podera compartilhar seu convite."
+                  "Em breve você poderá compartilhar seu convite."
                 )
               }
             >
@@ -313,7 +314,7 @@ export default function OwnProviderProfile() {
         visible={logoutModalVisible}
         iconName="log-out-outline"
         title="Deseja realmente sair da conta?"
-        description="Voce precisara fazer login novamente para acessar sua conta."
+        description="Você precisará fazer login novamente para acessar sua conta."
         confirmText="Sair da conta"
         loading={loggingOut}
         onCancel={() => setLogoutModalVisible(false)}

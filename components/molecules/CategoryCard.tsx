@@ -2,6 +2,7 @@ import { Image, Pressable, StyleSheet, View, ViewStyle, TextStyle, ImageStyle } 
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
+import { CategoryIcon } from "@/components/atoms/CategoryIcon";
 import { colors, radius, spacing } from "@/theme";
 
 type CategoryCardProps = {
@@ -44,7 +45,9 @@ export function CategoryCard({
           resizeMode="contain"
         />
       ) : (
-        <View style={styles.imagePlaceholder} />
+        <View style={styles.imagePlaceholder}>
+          <CategoryIcon categoryName={title} size={64} />
+        </View>
       )}
 
       <AppText
@@ -102,6 +105,8 @@ const styles = StyleSheet.create<{
     height: 116,
     borderRadius: radius.md,
     backgroundColor: colors.background.card,
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   moreIconArea: {
