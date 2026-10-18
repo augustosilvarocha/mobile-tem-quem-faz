@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import * as Location from "expo-location";
 
+import {
+  PreferredCity,
+  useLocationPreference,
+} from "@/contexts/LocationPreferenceContext";
 import {
   getCachedProviders,
   getProviders,
   Provider,
-  ProviderCityFilter,
   ProviderFilter,
   searchProviders,
 } from "@/services/provider.service";
+import { getProviderDistanceKm } from "@/utils/providerDistance";
 
 export type ProviderCardData = {
   id: number;
@@ -17,6 +20,10 @@ export type ProviderCardData = {
   categoryNames: string[];
   city: string;
   photo?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  show_location_on_map?: boolean | null;
+  distanceKm?: number | null;
 };
 
 type UseProvidersOptions = {
@@ -27,109 +34,19 @@ type UseProvidersOptions = {
   uf?: string | null;
 };
 
-const USER_CITY_FILTER_CACHE_TTL_MS = 5 * 60 * 1000;
-
-let cachedUserCityFilter: ProviderCityFilter | undefined;
-let cachedUserCityFilterAt = 0;
-let hasCachedUserCityFilter = false;
-let pendingUserCityFilterRequest: Promise<ProviderCityFilter | undefined> | null = null;
-
-function getStateFilter(region?: string | null): Pick<ProviderCityFilter, "state" | "uf"> {
-  const normalizedRegion = region?.trim();
-
-  if (!normalizedRegion) {
-    return {};
-  }
-
-  if (normalizedRegion.length === 2) {
-    return { uf: normalizedRegion.toUpperCase() };
-  }
-
-  return { state: normalizedRegion };
-}
-
-async function loadUserCityFilter(): Promise<ProviderCityFilter | undefined> {
-  try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-
-    if (status !== Location.PermissionStatus.GRANTED) {
-      return undefined;
-    }
-
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-
-    const [address] = await Location.reverseGeocodeAsync({
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    });
-
-    const city = address?.city ?? address?.subregion;
-
-    if (!city) {
-      return undefined;
-    }
-
-    return {
-      city,
-      ...getStateFilter(address.region),
-    };
-  } catch (error) {
-    console.log("Erro ao obter cidade pela localizacao:", error);
-    return undefined;
-  }
-}
-
-function hasFreshUserCityFilter() {
-  return (
-    hasCachedUserCityFilter &&
-    Date.now() - cachedUserCityFilterAt < USER_CITY_FILTER_CACHE_TTL_MS
-  );
-}
-
-function getCachedUserCityFilter() {
-  if (!hasFreshUserCityFilter()) {
-    return undefined;
-  }
-
-  return cachedUserCityFilter;
-}
-
-async function getUserCityFilter(): Promise<ProviderCityFilter | undefined> {
-  if (hasFreshUserCityFilter()) {
-    return cachedUserCityFilter;
-  }
-
-  if (pendingUserCityFilterRequest) {
-    return pendingUserCityFilterRequest;
-  }
-
-  pendingUserCityFilterRequest = loadUserCityFilter()
-    .then((cityFilter) => {
-      cachedUserCityFilter = cityFilter;
-      cachedUserCityFilterAt = Date.now();
-      hasCachedUserCityFilter = true;
-
-      return cityFilter;
-    })
-    .finally(() => {
-      pendingUserCityFilterRequest = null;
-    });
-
-  return pendingUserCityFilterRequest;
-}
-
 function formatProvider(provider: Provider): ProviderCardData {
   const categoryNames = provider.category_names ?? [];
 
   return {
     id: provider.id,
     name: provider.name,
-    category: categoryNames.join(", ") || "Prestador de servico",
+    category: categoryNames.join(", ") || "Prestador de serviço",
     categoryNames,
     city: `${provider.city_name} - ${provider.uf}`,
     photo: provider.photo || undefined,
+    latitude: provider.latitude,
+    longitude: provider.longitude,
+    show_location_on_map: provider.show_location_on_map,
   };
 }
 
@@ -141,14 +58,17 @@ function normalizeText(value?: string | null) {
     .toLowerCase();
 }
 
-function getLocationPriority(provider: Provider, cityFilter?: ProviderCityFilter) {
-  if (!cityFilter?.city) {
+function getLocationPriority(
+  provider: Provider,
+  preferredCity: PreferredCity | null
+) {
+  if (!preferredCity) {
     return 0;
   }
 
-  const userCity = normalizeText(cityFilter.city);
-  const userState = normalizeText(cityFilter.state);
-  const userUf = normalizeText(cityFilter.uf);
+  const userCity = normalizeText(preferredCity.name);
+  const userState = normalizeText(preferredCity.stateName);
+  const userUf = normalizeText(preferredCity.uf);
   const providerCity = normalizeText(provider.city_name);
   const providerState = normalizeText(provider.state_name);
   const providerUf = normalizeText(provider.uf);
@@ -173,10 +93,13 @@ function getLocationPriority(provider: Provider, cityFilter?: ProviderCityFilter
   return 3;
 }
 
-function sortProvidersByLocation(providers: Provider[], cityFilter?: ProviderCityFilter) {
+function sortProvidersByLocation(
+  providers: Provider[],
+  preferredCity: PreferredCity | null
+) {
   return [...providers].sort((currentProvider, nextProvider) => {
-    const currentPriority = getLocationPriority(currentProvider, cityFilter);
-    const nextPriority = getLocationPriority(nextProvider, cityFilter);
+    const currentPriority = getLocationPriority(currentProvider, preferredCity);
+    const nextPriority = getLocationPriority(nextProvider, preferredCity);
 
     if (currentPriority !== nextPriority) {
       return currentPriority - nextPriority;
@@ -208,7 +131,8 @@ function getCachedProviderCards(
     city?: string;
     uf?: string;
   },
-  enabled: boolean
+  enabled: boolean,
+  preferredCity: PreferredCity | null
 ) {
   if (!enabled) {
     return [];
@@ -220,13 +144,17 @@ function getCachedProviderCards(
     return null;
   }
 
-  return sortProvidersByLocation(
-    cachedProviders,
-    getCachedUserCityFilter()
-  ).map(formatProvider);
+  return sortProvidersByLocation(cachedProviders, preferredCity).map(
+    formatProvider
+  );
 }
 
 export function useProviders(options: UseProvidersOptions = {}) {
+  const {
+    loading: loadingLocationPreference,
+    preferredCity,
+    userLocation,
+  } = useLocationPreference();
   const categoryFilter = options.category?.trim();
   const cityFilter = options.city?.trim();
   const searchText = options.searchText?.trim();
@@ -241,9 +169,13 @@ export function useProviders(options: UseProvidersOptions = {}) {
     }),
     [categoryFilter, cityFilter, ufFilter]
   );
-  const cachedProviderCards = isSearchMode
+  const cachedProviderCards = isSearchMode || loadingLocationPreference
     ? null
-    : getCachedProviderCards(providerFilterOptions, enabled);
+    : getCachedProviderCards(
+        providerFilterOptions,
+        enabled,
+        preferredCity
+      );
   const [providers, setProviders] = useState<ProviderCardData[]>(
     () => cachedProviderCards ?? []
   );
@@ -262,6 +194,11 @@ export function useProviders(options: UseProvidersOptions = {}) {
       return;
     }
 
+    if (loadingLocationPreference) {
+      setLoading(true);
+      return;
+    }
+
     async function loadProviders() {
       try {
         if (isSearchMode) {
@@ -270,7 +207,8 @@ export function useProviders(options: UseProvidersOptions = {}) {
         } else {
           const cachedProviderCards = getCachedProviderCards(
             providerFilterOptions,
-            enabled
+            enabled,
+            preferredCity
           );
 
           if (cachedProviderCards) {
@@ -283,11 +221,10 @@ export function useProviders(options: UseProvidersOptions = {}) {
 
         setError(null);
 
-        const cityFilter = await getUserCityFilter();
         const data = isSearchMode
           ? await searchProviders(searchText ?? "")
           : await getProviders(getProviderFilter(providerFilterOptions));
-        const sortedProviders = sortProvidersByLocation(data, cityFilter);
+        const sortedProviders = sortProvidersByLocation(data, preferredCity);
 
         if (!isActive) {
           return;
@@ -302,8 +239,8 @@ export function useProviders(options: UseProvidersOptions = {}) {
         console.log("Erro ao buscar prestadores:", error);
         setError(
           isSearchMode
-            ? "Nao foi possivel buscar prestadores."
-            : "Nao foi possivel carregar os prestadores."
+            ? "Não foi possível buscar prestadores."
+            : "Não foi possível carregar os prestadores."
         );
       } finally {
         if (isActive) {
@@ -317,7 +254,22 @@ export function useProviders(options: UseProvidersOptions = {}) {
     return () => {
       isActive = false;
     };
-  }, [enabled, isSearchMode, providerFilterOptions, searchText]);
+  }, [
+    enabled,
+    isSearchMode,
+    loadingLocationPreference,
+    preferredCity,
+    providerFilterOptions,
+    searchText,
+  ]);
 
-  return { providers, loading, error };
+  const providersWithDistance = useMemo(
+    () => providers.map((provider) => ({
+      ...provider,
+      distanceKm: getProviderDistanceKm(provider, userLocation),
+    })),
+    [providers, userLocation]
+  );
+
+  return { providers: providersWithDistance, loading, error };
 }

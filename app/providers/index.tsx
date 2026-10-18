@@ -214,7 +214,7 @@ export default function ProvidersScreen() {
         value={search}
         onChangeText={setSearch}
         onSubmitEditing={isSearchMode ? handleSearchSubmit : undefined}
-        placeholder={isSearchMode ? "Buscar servico" : "Buscar prestador"}
+        placeholder={isSearchMode ? "Buscar serviço" : "Buscar prestador"}
         returnKeyType={isSearchMode ? "search" : undefined}
         actionAccessibilityLabel="Pesquisar prestadores"
         onPressAction={isSearchMode ? handleSearchSubmit : undefined}
@@ -260,6 +260,7 @@ export default function ProvidersScreen() {
               category={provider.category}
               city={provider.city}
               photo={provider.photo}
+              distanceKm={provider.distanceKm}
               onPress={() =>
                 router.push({
                   pathname: "/providers/[id]",

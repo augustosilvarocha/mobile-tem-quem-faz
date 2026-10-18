@@ -15,6 +15,8 @@ import {
   useFonts,
 } from "@expo-google-fonts/inter";
 
+import { LocationPreferenceProvider } from "@/contexts/LocationPreferenceContext";
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -31,11 +33,13 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <Stack screenOptions={{ headerShown: false }} />
-        </SafeAreaView>
-      </ThemeProvider>
+      <LocationPreferenceProvider>
+        <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <SafeAreaView style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </SafeAreaView>
+        </ThemeProvider>
+      </LocationPreferenceProvider>
     </SafeAreaProvider>
   );
 }

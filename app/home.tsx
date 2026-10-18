@@ -1,5 +1,6 @@
 import {
   Alert,
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -7,7 +8,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -17,15 +18,14 @@ import { SearchInput } from "@/components/molecules/SearchInput";
 import { Section } from "@/components/molecules/Section";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
 import { CategoryGrid } from "@/components/organisms/CategoryGrid";
+import { CityPreferenceModal } from "@/components/organisms/CityPreferenceModal";
+import { useLocationPreference } from "@/contexts/LocationPreferenceContext";
 import { useCategories } from "@/hooks/useCategories";
 import { useProviders } from "@/hooks/useProviders";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
+import { searchCategories, type Category } from "@/services/category.service";
 import { colors, radius, spacing } from "@/theme";
-import {
-  clearAuthSession,
-  getProviderId,
-  getProviderName,
-} from "@/utils/authStorage";
+import { getProviderName } from "@/utils/authStorage";
 import {
   getOneProviderPerCategory,
 } from "@/utils/providerDisplay";
@@ -33,18 +33,39 @@ import { formatRecordingDuration } from "@/utils/time";
 
 const GUEST_GREETING = "Olá, seja bem-vindo ao TemQuemFaz";
 
+function normalizeSearchText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 export default function Home() {
   const { categories } = useCategories();
   const { providers } = useProviders();
+  const {
+    loading: loadingLocationPreference,
+    preferredCity,
+    userLocation,
+  } = useLocationPreference();
 
   const [providerName, setProviderName] = useState<string | null>(null);
-  const [isGuest, setIsGuest] = useState(false);
+  const [cityModalVisible, setCityModalVisible] = useState(false);
   const [search, setSearch] = useState("");
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
+  const [matchedCategories, setMatchedCategories] = useState<{
+    query: string;
+    categories: Category[];
+  } | null>(null);
+  const selectingSuggestion = useRef(false);
   
   const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
     onTranscript: (text) => {
       setSearch(text);
+      setSuggestionsVisible(false);
       router.push({
         pathname: "/providers",
         params: {
@@ -58,14 +79,10 @@ export default function Home() {
     let isMounted = true;
 
     async function loadProviderName() {
-      const [storedProviderId, storedProviderName] = await Promise.all([
-        getProviderId(),
-        getProviderName(),
-      ]);
+      const storedProviderName = await getProviderName();
 
       if (isMounted) {
         setProviderName(storedProviderName);
-        setIsGuest(!storedProviderId);
       }
     }
 
@@ -93,17 +110,79 @@ export default function Home() {
       ? "Finalizar"
       : "Falar serviço";
 
-  const featuredProviders = useMemo(
-    () => getOneProviderPerCategory(providers),
-    [providers]
-  );
+  const featuredProviders = useMemo(() => {
+    const ranked = [...providers];
 
-  function handleSearchSubmit() {
-    const query = search.trim();
+    if (userLocation) {
+      ranked.sort((a, b) =>
+        (a.distanceKm ?? Number.MAX_SAFE_INTEGER) -
+        (b.distanceKm ?? Number.MAX_SAFE_INTEGER)
+      );
+    }
+    return getOneProviderPerCategory(ranked);
+  }, [providers, userLocation]);
+  const locationLabel = loadingLocationPreference
+    ? "Carregando cidade..."
+    : preferredCity
+      ? `${preferredCity.name} - ${preferredCity.uf}`
+      : "Escolha sua cidade";
+
+  useEffect(() => {
+    const query = normalizeSearchText(search);
+
+    if (!suggestionsVisible || !query) {
+      return;
+    }
+
+    let isActive = true;
+    const timeout = setTimeout(() => {
+      searchCategories(search)
+        .then((matches) => {
+          if (isActive) {
+            setMatchedCategories({ query, categories: matches });
+          }
+        })
+        .catch(() => {
+          if (isActive) {
+            setMatchedCategories(null);
+          }
+        });
+    }, 250);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [search, suggestionsVisible]);
+
+  const searchSuggestions = useMemo(() => {
+    const query = normalizeSearchText(search);
+
+    if (!suggestionsVisible || !query) {
+      return [];
+    }
+
+    if (matchedCategories?.query === query) {
+      return matchedCategories.categories;
+    }
+
+    return categories.filter((category) => {
+      const name = normalizeSearchText(category.name);
+
+      return query.length === 1 ? name.startsWith(query) : name.includes(query);
+    });
+  }, [categories, search, suggestionsVisible, matchedCategories]);
+
+  function handleSearchSubmit(value: string) {
+    const query = value.trim();
 
     if (!query) {
       return;
     }
+
+    setSearch(query);
+    setSuggestionsVisible(false);
+    Keyboard.dismiss();
 
     router.push({
       pathname: "/providers",
@@ -113,9 +192,17 @@ export default function Home() {
     });
   }
 
-  async function handleGuestExit() {
-    await clearAuthSession();
-    router.replace("/");
+  function handleSearchBlur() {
+    // Keep the list mounted while a tap moves focus to a suggestion.
+    if (!selectingSuggestion.current) {
+      setSuggestionsVisible(false);
+    }
+  }
+
+  function handleHomeVoiceSearch() {
+    setSuggestionsVisible(false);
+    Keyboard.dismiss();
+    return handleVoiceSearch();
   }
 
   function handleOpenOwnProfile() {
@@ -124,25 +211,34 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.locationRow}>
-          <Ionicons name="location" size={16} color={colors.text.primary} />
-          <AppText style={styles.location}>Pau dos Ferros - RN</AppText>
+          <Pressable
+            accessibilityLabel={
+              preferredCity
+                ? `Cidade escolhida: ${locationLabel}. Toque para alterar.`
+                : "Escolha sua cidade"
+            }
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loadingLocationPreference }}
+            disabled={loadingLocationPreference}
+            style={styles.locationSelector}
+            onPress={() => setCityModalVisible(true)}
+          >
+            <Ionicons name="location" size={18} color={colors.primary} />
+            <AppText style={styles.location} numberOfLines={2}>
+              {locationLabel}
+            </AppText>
+            <Ionicons
+              name="chevron-down"
+              size={20}
+              color={colors.text.secondary}
+            />
+          </Pressable>
 
-          {isGuest && (
-            <Pressable
-              accessibilityLabel="Sair do modo convidado e voltar à tela inicial"
-              onPress={handleGuestExit}
-              style={styles.guestExitButton}
-            >
-              <Ionicons
-                name="log-out-outline"
-                size={18}
-                color={colors.primary}
-              />
-              <AppText style={styles.guestExitText}>Sair</AppText>
-            </Pressable>
-          )}
         </View>
 
         <AppText style={styles.greeting}>{greeting}</AppText>
@@ -151,8 +247,14 @@ export default function Home() {
 
         <SearchInput
           value={search}
-          onChangeText={setSearch}
-          onSubmitEditing={handleSearchSubmit}
+          onChangeText={(text) => {
+            setSearch(text);
+            setSuggestionsVisible(true);
+          }}
+          onFocus={() => setSuggestionsVisible(true)}
+          onBlur={handleSearchBlur}
+          onSubmitEditing={() => handleSearchSubmit(search)}
+          accessibilityLabel="Buscar serviço"
           placeholder="Ex.: eletricista, pedreiro..."
           returnKeyType="search"
           iconSize={22}
@@ -160,8 +262,48 @@ export default function Home() {
           inputStyle={styles.searchInput}
           actionAccessibilityLabel="Pesquisar prestadores"
           actionDisabled={!search.trim()}
-          onPressAction={handleSearchSubmit}
+          onPressAction={() => handleSearchSubmit(search)}
         />
+
+        {searchSuggestions.length > 0 ? (
+          <ScrollView
+            style={styles.suggestions}
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+          >
+            {searchSuggestions.map((category, index) => (
+              <Pressable
+                accessibilityLabel={`Buscar ${category.name}`}
+                accessibilityRole="button"
+                key={category.id}
+                onPressIn={() => {
+                  selectingSuggestion.current = true;
+                }}
+                onPressOut={() => {
+                  selectingSuggestion.current = false;
+                }}
+                onPress={() => handleSearchSubmit(category.name)}
+                style={({ pressed }) => [
+                  styles.suggestion,
+                  index > 0 && styles.suggestionBorder,
+                  pressed && styles.suggestionPressed,
+                ]}
+              >
+                <Ionicons
+                  name="search-outline"
+                  size={20}
+                  color={colors.text.secondary}
+                />
+                <AppText style={styles.suggestionText}>{category.name}</AppText>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.primary}
+                />
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
 
         <Pressable
           accessibilityHint={
@@ -173,7 +315,7 @@ export default function Home() {
           accessibilityRole="button"
           accessibilityState={{ disabled: isTranscribing }}
           disabled={isTranscribing}
-          onPress={handleVoiceSearch}
+          onPress={handleHomeVoiceSearch}
           style={[
             styles.voiceButton,
             isRecording && styles.voiceButtonRecording,
@@ -208,7 +350,11 @@ export default function Home() {
         />
 
         <Section
-          title="Prestadores perto de você"
+          title={
+            userLocation
+              ? "Prestadores mais próximos"
+              : "Prestadores em destaque"
+          }
           actionText="Ver todos"
           onPressAction={() => router.push("/providers" as never)}
         />
@@ -220,6 +366,7 @@ export default function Home() {
             category={provider.category}
             city={provider.city}
             photo={provider.photo}
+            distanceKm={provider.distanceKm}
             onPress={() =>
               router.push({
                 pathname: "/providers/[id]",
@@ -235,13 +382,20 @@ export default function Home() {
       <BottomNavigation
         active="home"
         onPressHome={() => router.replace("/home")}
-        onPressVoice={handleVoiceSearch}
+        onPressVoice={handleHomeVoiceSearch}
         onPressProfile={handleOpenOwnProfile}
         voiceActive={isRecording}
         voiceDisabled={isTranscribing}
         voiceIconName={isRecording ? "stop" : "mic"}
         voiceLabel={voiceNavigationLabel}
       />
+
+      {cityModalVisible ? (
+        <CityPreferenceModal
+          visible
+          onClose={() => setCityModalVisible(false)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -250,13 +404,17 @@ const styles = StyleSheet.create<{
   container: ViewStyle;
   content: ViewStyle;
   locationRow: ViewStyle;
+  locationSelector: ViewStyle;
   location: TextStyle;
-  guestExitButton: ViewStyle;
-  guestExitText: TextStyle;
   greeting: TextStyle;
   title: TextStyle;
   searchBox: ViewStyle;
   searchInput: TextStyle;
+  suggestions: ViewStyle;
+  suggestion: ViewStyle;
+  suggestionBorder: ViewStyle;
+  suggestionPressed: ViewStyle;
+  suggestionText: TextStyle;
   voiceButton: ViewStyle;
   voiceButtonDisabled: ViewStyle;
   voiceButtonRecording: ViewStyle;
@@ -277,26 +435,23 @@ const styles = StyleSheet.create<{
     marginTop: spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: spacing.sm,
   },
 
-  location: {
-    color: colors.text.primary,
-    fontWeight: "700",
-  },
-
-  guestExitButton: {
-    minHeight: 40,
-    marginLeft: "auto",
-    paddingHorizontal: spacing.xs,
+  locationSelector: {
+    minHeight: 44,
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
   },
 
-  guestExitText: {
-    color: colors.primary,
+  location: {
+    flexShrink: 1,
+    color: colors.text.primary,
     fontWeight: "700",
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   greeting: {
@@ -326,6 +481,41 @@ const styles = StyleSheet.create<{
     color: colors.text.primary,
     fontSize: 16,
     lineHeight: 20,
+  },
+
+  suggestions: {
+    maxHeight: 240,
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    backgroundColor: colors.white,
+    overflow: "hidden",
+  },
+
+  suggestion: {
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+
+  suggestionBorder: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+
+  suggestionPressed: {
+    backgroundColor: colors.background.card,
+  },
+
+  suggestionText: {
+    flex: 1,
+    color: colors.text.primary,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   voiceButton: {

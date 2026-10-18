@@ -11,12 +11,14 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, radius, spacing } from "@/theme";
+import { formatProviderDistance } from "@/utils/providerDistance";
 
 type ProviderCardProps = {
   name: string;
   category: string;
   city: string;
   photo?: string;
+  distanceKm?: number | null;
   onPress?: () => void;
 };
 
@@ -25,8 +27,11 @@ export function ProviderCard({
   category,
   city,
   photo,
+  distanceKm,
   onPress,
 }: ProviderCardProps) {
+  const distanceLabel = formatProviderDistance(distanceKm);
+
   return (
     <Pressable
       accessibilityLabel={`Ver perfil de ${name}`}
@@ -57,6 +62,11 @@ export function ProviderCard({
               {city}
             </AppText>
           </View>
+          {distanceLabel ? (
+            <AppText style={styles.category}>
+              {distanceLabel}
+            </AppText>
+          ) : null}
         </View>
       </View>
 

@@ -97,6 +97,7 @@ export default function CategoryProvidersScreen() {
               category={provider.category}
               city={provider.city}
               photo={provider.photo}
+              distanceKm={provider.distanceKm}
               onPress={() =>
                 router.push({
                   pathname: "/providers/[id]",

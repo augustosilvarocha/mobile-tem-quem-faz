@@ -16,8 +16,11 @@ type CategoryResponse = {
 
 const categoriesCache = createMemoryCache<Category[]>();
 
-async function loadCategories(): Promise<Category[]> {
-  const categories = await api<CategoryResponse[]>("/categories/");
+async function loadCategories(search?: string): Promise<Category[]> {
+  const endpoint = search
+    ? `/categories/?search=${encodeURIComponent(search)}`
+    : "/categories/";
+  const categories = await api<CategoryResponse[]>(endpoint);
 
   return categories.map((category) => ({
     id: category.id,
@@ -36,4 +39,10 @@ export function clearCategoriesCache() {
 
 export async function getCategories(): Promise<Category[]> {
   return categoriesCache.get(loadCategories);
+}
+
+export async function searchCategories(text: string): Promise<Category[]> {
+  const query = text.trim();
+
+  return query ? loadCategories(query) : [];
 }
