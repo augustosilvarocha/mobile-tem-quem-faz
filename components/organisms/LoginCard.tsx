@@ -8,7 +8,11 @@ import { colors, radius, spacing, typography } from "@/theme";
 import { sanitizePhone, isValidPhone } from "@/utils/phone";
 import { requestOtp } from "@/services/auth.service";
 
-export function LoginCard() {
+type LoginCardProps = {
+  onPhoneFocus?: () => void;
+};
+
+export function LoginCard({ onPhoneFocus }: LoginCardProps) {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,6 +68,7 @@ export function LoginCard() {
 
         <TextInput
           value={phone}
+          onFocus={onPhoneFocus}
           onChangeText={(text) => {
             setPhone(sanitizePhone(text));
             setError("");
