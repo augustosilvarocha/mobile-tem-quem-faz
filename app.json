@@ -55,7 +55,8 @@
       "expo-font",
       "expo-secure-store",
       "expo-audio",
-      "expo-asset"
+      "expo-asset",
+      "./plugins/withHttpApi.js"
     ],
     "experiments": {
       "typedRoutes": true,
