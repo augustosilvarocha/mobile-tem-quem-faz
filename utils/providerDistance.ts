@@ -8,7 +8,7 @@ type ProviderLocation = {
   show_location_on_map?: boolean | null;
 };
 
-function hasValidCoordinates(
+export function hasValidCoordinates(
   location: Pick<ProviderLocation, "latitude" | "longitude">
 ): location is Coordinates {
   return (

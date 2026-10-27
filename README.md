@@ -72,7 +72,7 @@ Nesse modo, a API e o MinIO continuam precisando estar acessíveis pela rede loc
 
 ## Testar com o backend na EC2
 
-Para o deploy atual, use `EXPO_PUBLIC_API_URL=http://56.124.73.229/api`
+Para o deploy atual, use `EXPO_PUBLIC_API_URL=http://56.125.88.0/api`
 no `.env` e reinicie o Expo. O perfil `preview` do `eas.json` usa esse
 mesmo endereço. O plugin `plugins/withHttpApi.js` permite HTTP no APK
 Android quando a URL configurada começa com `http://`.
@@ -82,6 +82,28 @@ Um APK já instalado mantém a URL usada no build. Ele abre sem Expo ou Metro
 no computador, mas as funções de login, busca e fotos precisam do backend
 acessível na EC2. HTTP é temporário para testes; a configuração de domínio
 e HTTPS está no guia `docker/DEPLOY.md` do backend.
+
+## Mapas no APK Android
+
+O `app.config.js` aceita `GOOGLE_MAPS_API_KEY` e a coloca em
+`android.config.googleMaps.apiKey`. Para habilitar o mapa dentro do APK,
+configure uma chave com Maps SDK for Android habilitado e restrita ao pacote
+`com.temquemfaz.app` e ao SHA-1 do certificado que assina o APK. A variável
+deve estar disponível também no ambiente usado pelo build EAS.
+
+Quando a chave não está configurada, o aplicativo usa o botão **Abrir no mapa**
+para consultar a posição no aplicativo de mapas ou no navegador. O perfil,
+a obtenção da localização pelo GPS e o cálculo de distância continuam disponíveis.
+Os formulários também evitam montar o mapa nativo nessa situação.
+
+No Expo Go, o mapa usa a configuração fornecida pelo próprio Expo Go. Alterações
+no código e na configuração deste recurso precisam entrar em um novo APK para
+atualizar a versão já instalada. A confirmação de um fechamento inesperado
+no aparelho exige consultar o log do Android; a proteção por configuração
+não substitui esse diagnóstico.
+
+Referência da versão usada no projeto:
+[react-native-maps no Expo SDK 54](https://github.com/expo/expo/blob/sdk-54/docs/pages/versions/v54.0.0/sdk/map-view.mdx).
 
 ## Login durante o desenvolvimento
 

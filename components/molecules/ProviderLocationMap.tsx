@@ -1,7 +1,11 @@
 import { StyleSheet, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import { Ionicons } from "@expo/vector-icons";
 
+import { AppText } from "@/components/atoms/AppText";
 import { colors, radius } from "@/theme";
+import { canRenderNativeMap } from "@/utils/nativeMaps";
+import { hasValidCoordinates } from "@/utils/providerDistance";
 
 const PROVIDER_MAP_DELTA = 0.005;
 
@@ -18,6 +22,21 @@ export function ProviderLocationMap({
   longitude,
   title,
 }: ProviderLocationMapProps) {
+  if (!hasValidCoordinates({ latitude, longitude })) {
+    return null;
+  }
+
+  if (!canRenderNativeMap()) {
+    return (
+      <View style={[styles.mapContainer, styles.mapFallback]}>
+        <Ionicons name="location" size={32} color={colors.primary} />
+        <AppText style={styles.fallbackText}>
+          Consulte a localização em “Abrir no mapa”.
+        </AppText>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.mapContainer}>
       <MapView
@@ -55,5 +74,17 @@ const styles = StyleSheet.create({
 
   map: {
     flex: 1,
+  },
+
+  mapFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+    padding: 20,
+  },
+
+  fallbackText: {
+    textAlign: "center",
+    color: colors.text.secondary,
   },
 });

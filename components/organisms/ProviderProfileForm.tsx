@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Alert,
   Image,
+  Linking,
   Pressable,
   StyleSheet,
   TextInput,
@@ -23,6 +24,8 @@ import { CreateProviderPayload } from "@/services/provider.service";
 import { colors, radius, spacing, typography } from "@/theme";
 import { isValidPhone, sanitizePhone } from "@/utils/phone";
 import { persistLocalImage } from "@/utils/persistLocalImage";
+import { canRenderNativeMap } from "@/utils/nativeMaps";
+import { hasValidCoordinates } from "@/utils/providerDistance";
 
 export type ProviderProfileFormInitialValues = {
   categoryIds?: number[];
@@ -118,7 +121,8 @@ export function ProviderProfileForm({
       .filter((city) => city.uf === selectedState.id)
       .map((city) => ({ id: city.id, label: city.name }));
   }, [cities, selectedState]);
-  const hasSelectedLocation = latitude !== null && longitude !== null;
+  const nativeMapsAvailable = canRenderNativeMap();
+  const hasSelectedLocation = hasValidCoordinates({ latitude, longitude });
 
   if (!initialCityApplied && initialValues?.cityId && cities.length > 0) {
     const initialCity = cities.find((city) => city.id === initialValues.cityId);
@@ -251,6 +255,20 @@ export function ProviderProfileForm({
       longitudeDelta: mapRegion.longitudeDelta,
     });
     setMapPickerVisible(true);
+  }
+
+  async function handleOpenLocationExternally() {
+    if (!hasValidCoordinates({ latitude, longitude })) {
+      return;
+    }
+
+    try {
+      await Linking.openURL(
+        `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+      );
+    } catch {
+      Alert.alert("Mapa", "Não foi possível abrir a localização.");
+    }
   }
 
   function handleSelectMapLocation(coordinate: {
@@ -602,17 +620,17 @@ export function ProviderProfileForm({
               </AppText>
             </Pressable>
 
-            <Pressable
-              accessibilityLabel="Escolher a localização no mapa"
+            {nativeMapsAvailable || hasSelectedLocation ? <Pressable
+              accessibilityLabel={nativeMapsAvailable ? "Escolher a localização no mapa" : "Abrir localização no mapa"}
               accessibilityRole="button"
               style={styles.locationButton}
-              onPress={handleOpenMapPicker}
+              onPress={nativeMapsAvailable ? handleOpenMapPicker : handleOpenLocationExternally}
             >
               <Ionicons name="map" size={20} color={colors.primary} />
               <AppText variant="profession" color={colors.primary}>
-                Escolher no mapa
+                {nativeMapsAvailable ? "Escolher no mapa" : "Abrir no mapa"}
               </AppText>
-            </Pressable>
+            </Pressable> : null}
 
             {hasSelectedLocation && latitude !== null && longitude !== null ? (
               <View style={styles.locationPreviewContainer}>
@@ -620,9 +638,11 @@ export function ProviderProfileForm({
                   Confira se o ponto está correto
                 </AppText>
                 <AppText style={styles.previewHelp} color={colors.text.secondary}>
-                  Se estiver errado, toque em “Escolher no mapa” para ajustar.
+                  {nativeMapsAvailable
+                    ? "Se estiver errado, toque em “Escolher no mapa” para ajustar."
+                    : "Use “Abrir no mapa” para conferir sua localização."}
                 </AppText>
-                <MapView
+                {nativeMapsAvailable ? <MapView
                   accessibilityLabel="Prévia da localização marcada"
                   pitchEnabled={false}
                   rotateEnabled={false}
@@ -638,7 +658,7 @@ export function ProviderProfileForm({
                   }}
                 >
                   <Marker coordinate={{ latitude, longitude }} />
-                </MapView>
+                </MapView> : <AppText color={colors.text.secondary}>Localização registrada.</AppText>}
               </View>
             ) : (
               <AppText variant="profession" style={styles.locationStatus}>
@@ -708,7 +728,7 @@ export function ProviderProfileForm({
         ) : null}
       </View>
 
-      <Modal
+      {nativeMapsAvailable && mapPickerVisible ? <Modal
         visible={mapPickerVisible}
         animationType="slide"
         onRequestClose={() => setMapPickerVisible(false)}
@@ -761,7 +781,7 @@ export function ProviderProfileForm({
             ) : null}
           </MapView>
         </View>
-      </Modal>
+      </Modal> : null}
     </>
   );
 }

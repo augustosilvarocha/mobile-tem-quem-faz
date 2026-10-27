@@ -26,6 +26,7 @@ import {
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { sanitizePhone } from "@/utils/phone";
+import { hasValidCoordinates } from "@/utils/providerDistance";
 
 const WHATSAPP_DEFAULT_MESSAGE =
   "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";
@@ -63,9 +64,7 @@ function hasProviderMapLocation(
   provider: Provider
 ): provider is ProviderWithMapLocation {
   return (
-    provider.show_location_on_map &&
-    typeof provider.latitude === "number" &&
-    typeof provider.longitude === "number"
+    provider.show_location_on_map === true && hasValidCoordinates(provider)
   );
 }
 
