@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import { PortfolioPostModal } from "@/components/molecules/PortfolioPostModal";
+import { getProviderById, Provider } from "@/services/provider.service";
 import { AppText } from "@/components/atoms/AppText";
 import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
@@ -31,6 +33,8 @@ function getErrorMessage(error: unknown, fallback: string) {
 
 export default function ManagePortfolio() {
   const [providerId, setProviderId] = useState<string | null>(null);
+  const [author, setAuthor] = useState<Provider | null>(null);
+  const [previewItem, setPreviewItem] = useState<PortfolioItem | null>(null);
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<PortfolioItem | null>(null);
@@ -66,9 +70,10 @@ export default function ManagePortfolio() {
           throw new Error("Entre como prestador para gerenciar o portfólio.");
         }
 
-        const portfolioItems = await getPortfolio(currentProviderId);
+        const [portfolioItems, provider] = await Promise.all([getPortfolio(currentProviderId), getProviderById(currentProviderId)]);
 
         if (isActive) {
+          setAuthor(provider);
           setProviderId(currentProviderId);
           setItems(portfolioItems);
         }
@@ -218,7 +223,7 @@ export default function ManagePortfolio() {
                 {items.map((item) => (
                   <View key={item.id} style={styles.item}>
                     {getPortfolioImageUris(item).length > 0 ? (
-                      <View style={styles.image}>
+                      <Pressable accessibilityRole="button" accessibilityLabel={`Ver fotos de ${item.title}`} onPress={() => setPreviewItem(item)} style={styles.image}>
                         <Image
                           resizeMode="contain"
                           source={{ uri: getPortfolioImageUris(item)[0] }}
@@ -232,7 +237,7 @@ export default function ManagePortfolio() {
                             </AppText>
                           </View>
                         ) : null}
-                      </View>
+                      </Pressable>
                     ) : (
                       <View style={styles.imagePlaceholder}>
                         <Ionicons
@@ -244,6 +249,7 @@ export default function ManagePortfolio() {
                     )}
 
                     <View style={styles.itemContent}>
+                      <Pressable accessibilityRole="button" accessibilityLabel={`Ver publicação: ${item.title}`} onPress={() => setPreviewItem(item)}>
                       <AppText style={styles.itemTitle} numberOfLines={2}>
                         {item.title}
                       </AppText>
@@ -251,7 +257,11 @@ export default function ManagePortfolio() {
                         {item.description}
                       </AppText>
 
+                      </Pressable>
                       <View style={styles.itemActions}>
+                        <Pressable accessibilityRole="button" accessibilityLabel={`Visualizar ${item.title}`} onPress={() => setPreviewItem(item)} style={styles.iconButton}>
+                          <Ionicons name="eye-outline" size={22} color={colors.primary} />
+                        </Pressable>
                         <Pressable
                           accessibilityLabel={`Editar ${item.title}`}
                           accessibilityRole="button"
@@ -288,6 +298,8 @@ export default function ManagePortfolio() {
           </>
         )}
       </ScrollView>
+
+      {previewItem && author ? <PortfolioPostModal item={previewItem} author={author} onClose={() => setPreviewItem(null)} /> : null}
 
       <ConfirmActionModal
         confirmText="Excluir trabalho"

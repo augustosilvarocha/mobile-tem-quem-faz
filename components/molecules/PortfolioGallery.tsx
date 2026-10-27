@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
@@ -8,17 +8,16 @@ import { colors, radius, spacing } from "@/theme";
 import { getPortfolioImageUris } from "@/utils/portfolioImages";
 
 import { PortfolioImageCarousel } from "./PortfolioImageCarousel";
-import { ZoomableImageModal } from "./ZoomableImageModal";
+import { PortfolioPostModal } from "./PortfolioPostModal";
+import { Provider } from "@/services/provider.service";
 
 type PortfolioGalleryProps = {
   items: PortfolioItem[];
+  author: Pick<Provider, "name" | "photo">;
 };
 
-export function PortfolioGallery({ items }: PortfolioGalleryProps) {
-  const [selectedImages, setSelectedImages] = useState<{
-    uris: string[];
-    index: number;
-  } | null>(null);
+export function PortfolioGallery({ items, author }: PortfolioGalleryProps) {
+  const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
 
   if (items.length === 0) {
     return (
@@ -43,33 +42,22 @@ export function PortfolioGallery({ items }: PortfolioGalleryProps) {
             <PortfolioImageCarousel
               imageUris={getPortfolioImageUris(item)}
               title={item.title}
-              onPressImage={(index) => setSelectedImages({
-                uris: getPortfolioImageUris(item),
-                index,
-              })}
+              onPressImage={() => setSelectedItem(item)}
             />
 
-            <View style={styles.itemContent}>
+            <Pressable accessibilityRole="button" accessibilityLabel={`Ver publicação: ${item.title}`} onPress={() => setSelectedItem(item)} style={styles.itemContent}>
               <AppText style={styles.title} numberOfLines={2}>
                 {item.title}
               </AppText>
               <AppText style={styles.description} numberOfLines={3}>
                 {item.description}
               </AppText>
-            </View>
+            </Pressable>
           </View>
         ))}
       </View>
 
-      {selectedImages ? (
-        <ZoomableImageModal
-          imageUri={selectedImages.uris[selectedImages.index]}
-          imageUris={selectedImages.uris}
-          initialIndex={selectedImages.index}
-          onClose={() => setSelectedImages(null)}
-          visible
-        />
-      ) : null}
+      {selectedItem ? <PortfolioPostModal item={selectedItem} author={author} onClose={() => setSelectedItem(null)} /> : null}
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Alert,
   Image,
@@ -8,6 +8,10 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { PortfolioGallery } from "@/components/molecules/PortfolioGallery";
+import { ProviderProfileHeader } from "@/components/molecules/ProviderProfileHeader";
+import { getPortfolio, PortfolioItem } from "@/services/portfolio.service";
 import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
@@ -19,10 +23,6 @@ import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { clearAuthSession, getProviderId } from "@/utils/authStorage";
-
-function getFirstName(name: string) {
-  return name.trim().split(/\s+/)[0] || name;
-}
 
 function getProviderCategories(provider: Provider) {
   return provider.category_names?.length
@@ -47,6 +47,8 @@ function formatProviderSince(createdAt: string) {
 
 export default function OwnProviderProfile() {
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  const [portfolioError, setPortfolioError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
@@ -68,7 +70,7 @@ export default function OwnProviderProfile() {
       ? "Finalizar"
       : "Falar serviço";
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isActive = true;
 
     async function loadProvider() {
@@ -76,6 +78,7 @@ export default function OwnProviderProfile() {
         setLoading(true);
         setError(null);
         setIsGuest(false);
+        setPortfolioError(null);
 
         const providerId = await getProviderId();
 
@@ -90,6 +93,12 @@ export default function OwnProviderProfile() {
 
         if (isActive) {
           setProvider(data);
+        }
+        try {
+          const items = await getPortfolio(providerId);
+          if (isActive) setPortfolio(items);
+        } catch {
+          if (isActive) setPortfolioError("Não foi possível carregar suas publicações.");
         }
       } catch (error) {
         if (!isActive) {
@@ -110,7 +119,7 @@ export default function OwnProviderProfile() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, []));
 
   async function handleLogout() {
     try {
@@ -195,38 +204,12 @@ export default function OwnProviderProfile() {
           </View>
         ) : (
           <>
-            <AppText variant="title" style={styles.greeting}>
-              Olá, {getFirstName(provider.name)}!
-            </AppText>
+            <ProviderProfileHeader provider={provider} />
             <AppText style={styles.memberSince} color={colors.text.secondary}>
               {formatProviderSince(provider.created_at)}
             </AppText>
-
-            <View style={styles.profileCard}>
-              {provider.photo ? (
-                <Image source={{ uri: provider.photo }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={34} color={colors.text.secondary} />
-                </View>
-              )}
-
-              <View style={styles.cardInfo}>
-                <AppText style={styles.providerName} numberOfLines={2}>
-                  {provider.name}
-                </AppText>
-                <AppText style={styles.providerCategory} numberOfLines={2}>
-                  {getProviderCategories(provider)[0]}
-                </AppText>
-
-                <View style={styles.infoRow}>
-                  <Ionicons name="location" size={14} color={colors.primary} />
-                  <AppText style={styles.infoText} numberOfLines={2}>
-                    {provider.city_name} - {provider.uf}
-                  </AppText>
-                </View>
-              </View>
-            </View>
+            <AppText variant="subtitle" style={styles.sectionTitle}>Descrição do serviço</AppText>
+            <AppText style={styles.description}>{provider.description || "Você ainda não adicionou uma descrição."}</AppText>
 
             <AppText variant="subtitle" style={styles.sectionTitle}>
               Minhas categorias
@@ -272,6 +255,9 @@ export default function OwnProviderProfile() {
 
               <Ionicons name="chevron-forward" size={24} color={colors.primary} />
             </Pressable>
+
+            <AppText variant="subtitle" style={styles.sectionTitle}>Minhas publicações</AppText>
+            {portfolioError ? <AppText>{portfolioError}</AppText> : <PortfolioGallery items={portfolio} author={provider} />}
 
             <Pressable
               style={[styles.actionCard, styles.inviteCard]}
@@ -403,71 +389,22 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  greeting: {
-    color: colors.text.primary,
-    fontWeight: "800",
-    fontSize: 18,
-    lineHeight: 22,
-  },
 
   memberSince: {
+    textAlign: "center",
     marginTop: 2,
     marginBottom: spacing.md,
   },
 
-  profileCard: {
-    minHeight: 112,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
 
-  avatar: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-  },
 
-  avatarPlaceholder: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    backgroundColor: colors.background.card,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 
-  cardInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
 
-  providerName: {
-    color: colors.text.primary,
-    fontWeight: "800",
-  },
 
-  providerCategory: {
-    color: colors.text.secondary,
-    marginTop: 2,
-  },
 
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: spacing.xs,
-  },
 
-  infoText: {
-    color: colors.primary,
-    fontWeight: "700",
-  },
+
+  description: { color: colors.text.primary, fontSize: 16, lineHeight: 22 },
 
   sectionTitle: {
     marginTop: spacing.lg,

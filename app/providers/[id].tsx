@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Alert,
-  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -17,7 +16,7 @@ import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
 import { PortfolioGallery } from "@/components/molecules/PortfolioGallery";
 import { ProviderLocationMap } from "@/components/molecules/ProviderLocationMap";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
-import { ZoomableImageModal } from "@/components/molecules/ZoomableImageModal";
+import { ProviderProfileHeader } from "@/components/molecules/ProviderProfileHeader";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import {
@@ -28,7 +27,6 @@ import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { sanitizePhone } from "@/utils/phone";
 
-const PROFILE_AVATAR_SIZE = 144;
 const WHATSAPP_DEFAULT_MESSAGE =
   "Olá, vim pelo aplicativo TemQuemFaz estou precisando dos seus serviços";
 
@@ -95,7 +93,6 @@ export default function ProviderDetails() {
   const [portfolioLoading, setPortfolioLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [portfolioError, setPortfolioError] = useState<string | null>(null);
-  const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [whatsAppModalVisible, setWhatsAppModalVisible] = useState(false);
   const { handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
@@ -234,45 +231,7 @@ export default function ProviderDetails() {
           </View>
         ) : (
           <>
-            <View style={styles.profileCard}>
-              {provider.photo ? (
-                <Pressable
-                  accessibilityLabel={`Ampliar foto de ${provider.name}`}
-                  accessibilityRole="button"
-                  onPress={() => setPhotoModalVisible(true)}
-                  style={({ pressed }) => [
-                    styles.avatarButton,
-                    pressed && styles.avatarPressed,
-                  ]}
-                >
-                  <Image
-                    source={{ uri: provider.photo }}
-                    style={styles.avatar}
-                  />
-                </Pressable>
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={64} color={colors.text.secondary} />
-                </View>
-              )}
-
-              <View style={styles.cardInfo}>
-                <AppText
-                  variant="title"
-                  style={styles.providerName}
-                  numberOfLines={2}
-                >
-                  {provider.name}
-                </AppText>
-
-                <View style={styles.locationRow}>
-                  <Ionicons name="location" size={14} color={colors.primary} />
-                  <AppText style={styles.location} numberOfLines={2}>
-                    {getProviderLocation(provider)}
-                  </AppText>
-                </View>
-              </View>
-            </View>
+            <ProviderProfileHeader provider={provider} />
 
             <AppText style={styles.sectionTitle}>Descrição do serviço</AppText>
             <AppText style={styles.description}>
@@ -302,7 +261,7 @@ export default function ProviderDetails() {
                 {portfolioError}
               </AppText>
             ) : (
-              <PortfolioGallery items={portfolio} />
+              <PortfolioGallery items={portfolio} author={provider} />
             )}
 
             <AppText style={styles.sectionTitle}>Localização</AppText>
@@ -375,13 +334,7 @@ export default function ProviderDetails() {
         />
       ) : null}
 
-      {provider?.photo ? (
-        <ZoomableImageModal
-          imageUri={provider.photo}
-          onClose={() => setPhotoModalVisible(false)}
-          visible={photoModalVisible}
-        />
-      ) : null}
+
     </View>
   );
 }
@@ -407,64 +360,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  profileCard: {
-    paddingVertical: spacing.md,
-    alignItems: "center",
-    gap: spacing.md,
-  },
 
-  avatar: {
-    width: PROFILE_AVATAR_SIZE,
-    height: PROFILE_AVATAR_SIZE,
-    borderRadius: PROFILE_AVATAR_SIZE / 2,
-  },
 
-  avatarButton: {
-    width: PROFILE_AVATAR_SIZE,
-    height: PROFILE_AVATAR_SIZE,
-    borderRadius: PROFILE_AVATAR_SIZE / 2,
-  },
 
-  avatarPressed: {
-    opacity: 0.75,
-  },
 
-  avatarPlaceholder: {
-    width: PROFILE_AVATAR_SIZE,
-    height: PROFILE_AVATAR_SIZE,
-    borderRadius: PROFILE_AVATAR_SIZE / 2,
-    backgroundColor: colors.background.card,
-    alignItems: "center",
-    justifyContent: "center",
-  },
 
-  cardInfo: {
-    width: "100%",
-    minWidth: 0,
-    alignItems: "center",
-  },
 
-  providerName: {
-    width: "100%",
-    color: colors.text.primary,
-    fontWeight: "800",
-    textAlign: "center",
-  },
 
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    maxWidth: "100%",
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
 
-  location: {
-    flexShrink: 1,
-    color: colors.text.secondary,
-    textAlign: "center",
-  },
 
   sectionTitle: {
     marginTop: spacing.lg,
