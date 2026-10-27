@@ -1,25 +1,38 @@
 import { Image, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/atoms/AppText";
-import { colors, spacing } from "@/theme";
+import { colors } from "@/theme";
+import type { WelcomeLayout } from "@/utils/welcomeLayout";
 
 type WelcomeHeaderProps = {
+  layout: WelcomeLayout;
   showIllustration?: boolean;
 };
 
 export function WelcomeHeader({
+  layout,
   showIllustration = true,
 }: WelcomeHeaderProps) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingHorizontal: layout.horizontalPadding }]}>
       <Image
         source={require("../../assets/images/logo.png")}
-        style={styles.logo}
+        style={[styles.logo, { width: layout.logoWidth, height: layout.logoHeight }]}
         resizeMode="contain"
       />
 
-      <AppText variant="subtitle" style={styles.subtitle}>
+      <AppText
+        variant="subtitle"
+        style={[
+          styles.subtitle,
+          { fontSize: layout.subtitleFontSize, lineHeight: layout.subtitleLineHeight },
+        ]}
+      >
         Encontre prestadores de serviço{"\n"}
-        <AppText variant="subtitle" color={colors.primary}>
+        <AppText
+          variant="subtitle"
+          color={colors.primary}
+          style={{ fontSize: layout.subtitleFontSize, lineHeight: layout.subtitleLineHeight }}
+        >
           perto de você.
         </AppText>
       </AppText>
@@ -27,7 +40,10 @@ export function WelcomeHeader({
       {showIllustration && (
         <Image
           source={require("../../assets/images/auth-banner.png")}
-          style={styles.illustration}
+          style={[
+            styles.illustration,
+            { maxHeight: layout.illustrationMaxHeight, marginTop: layout.gap },
+          ]}
           resizeMode="contain"
         />
       )}
@@ -37,24 +53,24 @@ export function WelcomeHeader({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    minHeight: 0,
     alignItems: "center",
-    paddingHorizontal: spacing.screen,
+    justifyContent: "center",
   },
 
   logo: {
-    width: 250,
-    height: 140,
+    flexShrink: 1,
+    maxWidth: "100%",
   },
   subtitle: {
     color: colors.secondary,
     textAlign: "center",
-    marginBottom: spacing.sm,
   },
 
   illustration: {
+    flex: 1,
+    minHeight: 0,
     width: "100%",
-    height: 250,
-    marginTop: spacing.md,
-    transform: [{ translateY: spacing.sm }],
   },
 });

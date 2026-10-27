@@ -6,20 +6,42 @@ import { AppText } from "@/components/atoms/AppText";
 import { FeatureCard } from "@/components/molecules/FeatureCard";
 import { colors, radius, spacing } from "@/theme";
 import { clearAuthSession } from "@/utils/authStorage";
+import type { WelcomeLayout } from "@/utils/welcomeLayout";
 
-export function WelcomeActions() {
+type WelcomeActionsProps = {
+  layout: WelcomeLayout;
+};
+
+export function WelcomeActions({ layout }: WelcomeActionsProps) {
+  const buttonStyle = {
+    minHeight: layout.buttonMinHeight,
+    marginTop: layout.gap,
+    paddingVertical: layout.gap,
+    paddingHorizontal: layout.horizontalPadding,
+  };
+  const buttonTextStyle = {
+    fontSize: layout.buttonFontSize,
+    lineHeight: layout.buttonLineHeight,
+  };
+
   async function handleVisitorPress() {
     await clearAuthSession();
     router.push("/home");
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.featuresBox}>
+    <View
+      style={[
+        styles.container,
+        { paddingHorizontal: layout.horizontalPadding, paddingBottom: layout.gap },
+      ]}
+    >
+      <View style={[styles.featuresBox, { paddingVertical: layout.gap }]}>
         <FeatureCard
           icon="search-outline"
           title="Buscar fácil"
-          description={"Encontre o serviço\nque você precisa\nem poucos toques."}
+          description="Encontre o serviço que você precisa em poucos toques."
+          layout={layout}
         />
 
         <View style={styles.divider} />
@@ -27,7 +49,8 @@ export function WelcomeActions() {
         <FeatureCard
           icon="location-outline"
           title="Perto de você"
-          description={"Profissionais da\nsua região, prontos\npara te atender."}
+          description="Profissionais da sua região, prontos para te atender."
+          layout={layout}
         />
 
         <View style={styles.divider} />
@@ -35,49 +58,60 @@ export function WelcomeActions() {
         <FeatureCard
           icon="logo-whatsapp"
           title="Contato rápido"
-          description={"Fale diretamente\ncom o prestador\nde forma rápida."}
+          description="Fale diretamente com o prestador de forma rápida."
+          layout={layout}
         />
       </View>
 
-      <Pressable style={styles.visitorButton} onPress={handleVisitorPress}>
-        <Ionicons name="person-outline" size={28} color={colors.white} />
+      <Pressable style={[styles.visitorButton, buttonStyle]} onPress={handleVisitorPress}>
+        <Ionicons name="person-outline" size={layout.buttonIconSize} color={colors.white} />
 
         <AppText
           variant="button"
           color={colors.white}
-          style={styles.mainButtonText}
+          style={[styles.buttonText, buttonTextStyle]}
         >
           Entrar como visitante
         </AppText>
       </Pressable>
 
       <Link href="/(auth)/login" asChild>
-        <Pressable style={styles.providerButton}>
-          <Ionicons name="briefcase-outline" size={26} color={colors.primary} />
+        <Pressable style={StyleSheet.flatten([styles.providerButton, buttonStyle])}>
+          <Ionicons name="briefcase-outline" size={layout.buttonIconSize} color={colors.primary} />
 
           <AppText
             variant="button"
             color={colors.primary}
-            style={styles.providerButtonText}
+            style={[styles.buttonText, buttonTextStyle]}
           >
             Entrar como prestador
           </AppText>
         </Pressable>
       </Link>
 
-      <View style={styles.dashedLine} />
+      <View style={[styles.dashedLine, { marginTop: layout.gap }]} />
 
       <AppText
         variant="profession"
         color={colors.text.secondary}
-        style={styles.registerLabel}
+        style={[
+          styles.registerLabel,
+          { fontSize: layout.registerLabelFontSize, lineHeight: layout.registerLabelLineHeight },
+        ]}
       >
         Ainda não é prestador?
       </AppText>
 
       <Link href="/(auth)/register-provider" asChild>
         <Pressable style={styles.registerButton}>
-          <AppText variant="subtitle" color={colors.primary}>
+          <AppText
+            variant="subtitle"
+            color={colors.primary}
+            style={[
+              styles.registerButtonText,
+              { fontSize: layout.registerFontSize, lineHeight: layout.registerLineHeight },
+            ]}
+          >
             Cadastre-se como prestador
           </AppText>
 
@@ -94,7 +128,7 @@ export function WelcomeActions() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.screen,
+    flexShrink: 0,
   },
 
   featuresBox: {
@@ -103,8 +137,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.lg,
-    paddingVertical: spacing.sm,
-    marginTop: -spacing.sm,
   },
 
   divider: {
@@ -114,42 +146,34 @@ const styles = StyleSheet.create({
   },
 
   visitorButton: {
-    height: 62,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
-    marginTop: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
   },
 
-  mainButtonText: {
-    fontSize: 18,
+  buttonText: {
+    flexShrink: 1,
+    textAlign: "center",
   },
 
   providerButton: {
-    height: 62,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.primary,
     backgroundColor: colors.white,
-    marginTop: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.sm,
-  },
-
-  providerButtonText: {
-    fontSize: 18,
   },
 
   dashedLine: {
     borderTopWidth: 1,
     borderStyle: "dashed",
     borderColor: colors.border,
-    marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
 
@@ -159,10 +183,15 @@ const styles = StyleSheet.create({
   },
 
   registerButton: {
-    minHeight: 40,
+    minHeight: 44,
+    paddingVertical: spacing.xs,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.xs,
+  },
+  registerButtonText: {
+    flexShrink: 1,
+    textAlign: "center",
   },
 });
