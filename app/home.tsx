@@ -113,14 +113,14 @@ export default function Home() {
   const featuredProviders = useMemo(() => {
     const ranked = [...providers];
 
-    if (userLocation) {
+    if (userLocation && !preferredCity) {
       ranked.sort((a, b) =>
         (a.distanceKm ?? Number.MAX_SAFE_INTEGER) -
         (b.distanceKm ?? Number.MAX_SAFE_INTEGER)
       );
     }
     return getOneProviderPerCategory(ranked);
-  }, [providers, userLocation]);
+  }, [providers, userLocation, preferredCity]);
   const locationLabel = loadingLocationPreference
     ? "Carregando cidade..."
     : preferredCity
@@ -351,7 +351,9 @@ export default function Home() {
 
         <Section
           title={
-            userLocation
+            preferredCity
+              ? `Prestadores em destaque · ${preferredCity.name}`
+              : userLocation
               ? "Prestadores mais próximos"
               : "Prestadores em destaque"
           }
