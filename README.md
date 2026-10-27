@@ -1,142 +1,131 @@
-# TemQuemFaz - Mobile
+# TemQuemFaz — Mobile
 
-Aplicativo mobile em Expo/React Native para buscar prestadores de servicos locais, pesquisar por texto ou voz, visualizar perfis, falar pelo WhatsApp e cadastrar/gerenciar perfil de prestador.
+O TemQuemFaz ajuda a encontrar prestadores de serviços locais. Pelo aplicativo, você pode buscar um serviço por texto ou voz, conhecer o profissional, ver seus trabalhos e entrar em contato pelo WhatsApp.
+
+Quem presta serviços também pode se cadastrar, editar o perfil e publicar fotos dos trabalhos realizados.
+
+## O que o aplicativo oferece
+
+- Acesso como visitante e cadastro de prestadores.
+- Busca por texto ou voz e filtros por categoria, estado e cidade.
+- Perfil com foto, descrição, categorias e localização opcional no mapa.
+- Portfólio com até dez fotos por publicação, título e descrição.
+- Visualização das próprias publicações, com opções para editar e excluir.
+- Publicações com autor, data, descrição completa e fotos ampliáveis.
+- Contato com o prestador pelo WhatsApp.
+
+A cidade escolhida fica salva no dispositivo e tem prioridade nos destaques. Prestadores de outras cidades ainda podem aparecer depois. Sem uma cidade escolhida, o app prioriza os mais próximos quando a localização está disponível.
+
+As distâncias usam a posição real do celular, mesmo quando você escolhe outra cidade. Elas aparecem apenas para prestadores que compartilham coordenadas válidas.
 
 ## Tecnologias
 
-- Expo 54
-- React Native 0.81
-- React 19
-- TypeScript
-- Expo Router
-- expo-location
-- expo-audio
-- expo-image-picker
-- expo-secure-store
-- React Native Reanimated
-- React Native Gesture Handler
-- Inter como fonte principal
-
-## Pre-requisitos
-
-- Node.js
-- npm
-- Expo CLI via `npx expo`
-- Backend do TemQuemFaz rodando
-- Celular com Expo Go ou emulador Android/iOS
+O aplicativo usa Expo 54, React Native 0.81, React 19 e TypeScript, com navegação pelo Expo Router. Também usa bibliotecas do Expo para localização, áudio, fotos e armazenamento da sessão, além de React Native Maps, geolib, Reanimated e Gesture Handler.
 
 ## Como rodar
 
-### 1. Instale as dependencias
+Você precisa de Node.js, npm, um celular com Expo Go compatível com o SDK 54 ou um emulador configurado, além do backend em execução.
+
+Execute os comandos na pasta `mobile-tem-quem-faz`.
+
+### 1. Instale as dependências
 
 ```bash
 npm install
 ```
 
-### 2. Configure a URL da API
+### 2. Configure o endereço da API
 
-O app usa `EXPO_PUBLIC_API_URL` quando a variavel existe. Crie um arquivo `.env.local` na raiz do mobile:
+Crie um `.env` na raiz do mobile:
 
 ```env
 EXPO_PUBLIC_API_URL=http://SEU_IP:8000/api
 ```
 
-Exemplo em rede local:
+Substitua `SEU_IP` pelo IPv4 do computador que executa o backend. No Windows, use `ipconfig` e procure o adaptador Wi-Fi. Evite o endereço virtual do WSL/Hyper-V.
 
-```env
-EXPO_PUBLIC_API_URL=http://192.168.1.2:8000/api
-```
+Mantenha o celular e o computador na mesma rede. No celular, `localhost` e `127.0.0.1` apontam para o próprio aparelho.
 
-Se estiver usando celular fisico, `127.0.0.1` aponta para o proprio celular, nao para o computador. Use o IP da maquina que esta rodando o backend e inicie o Django com:
+O `.env` do mobile é separado do `.env` do backend. Se houver um `.env.local`, confira se ele não está sobrescrevendo a URL. Configure o endereço mesmo que exista um IP padrão em `services/api.ts`, pois ele pode ser de outra rede.
 
-```bash
-python manage.py runserver 0.0.0.0:8000
-```
+Se o backend estiver rodando sem Docker, inicie-o com `python manage.py runserver 0.0.0.0:8000`. O Compose já faz isso.
 
-### 3. Inicie o Expo
+### 3. Inicie o aplicativo
 
 ```bash
 npm start
 ```
 
-Tambem existem atalhos:
+Abra o Expo Go e leia o QR code da sessão atual. Ao mudar o `.env`, pare o Expo e reinicie com o cache limpo:
 
 ```bash
-npm run android
-npm run ios
-npm run web
+npm start -- -c
 ```
 
-## Scripts
+Para iniciar sem consultas aos serviços do Expo:
 
-| Comando | Descricao |
+```bash
+npm start -- --offline -c
+```
+
+Nesse modo, a API e o MinIO continuam precisando estar acessíveis pela rede local.
+
+## Testar com o backend na EC2
+
+Para o deploy atual, use `EXPO_PUBLIC_API_URL=http://56.124.73.229/api`
+no `.env` e reinicie o Expo. O perfil `preview` do `eas.json` usa esse
+mesmo endereço. O plugin `plugins/withHttpApi.js` permite HTTP no APK
+Android quando a URL configurada começa com `http://`.
+
+Gere um novo APK com `npx eas-cli build --platform android --profile preview`.
+Um APK já instalado mantém a URL usada no build. Ele abre sem Expo ou Metro
+no computador, mas as funções de login, busca e fotos precisam do backend
+acessível na EC2. HTTP é temporário para testes; a configuração de domínio
+e HTTPS está no guia `docker/DEPLOY.md` do backend.
+
+## Login durante o desenvolvimento
+
+O prestador entra com um código de verificação de telefone. Atualmente, o backend mostra esse código nos logs; ainda não há envio automático pelo WhatsApp.
+
+Se estiver usando Docker, consulte o código na pasta do backend:
+
+```bash
+docker compose logs --tail 50 api
+```
+
+A opção de contato pelo WhatsApp, no perfil público, funciona separadamente do login.
+
+## Comandos úteis
+
+| Comando | Para que serve |
 | --- | --- |
-| `npm start` | Inicia o Expo. |
-| `npm run android` | Abre no Android. |
-| `npm run ios` | Abre no iOS. |
-| `npm run web` | Abre no navegador. |
-| `npm run lint` | Executa lint do Expo. |
-| `npx tsc --noEmit` | Verifica TypeScript sem gerar arquivos. |
+| `npm run android` | Abre o projeto no Android. |
+| `npm run ios` | Abre no simulador iOS, em um Mac configurado. |
+| `npm run web` | Inicia a versão para navegador. |
+| `npm run lint` | Verifica o estilo do código. |
+| `npx tsc --noEmit` | Verifica os tipos do TypeScript. |
+| `node --test scripts/tests/*.test.cjs` | Testa as regras de fotos do portfólio e distância. |
 
-## Funcionalidades
+## Organização do projeto
 
-- Entrada como visitante.
-- Login de prestador por codigo enviado ao WhatsApp.
-- Cadastro e edicao de perfil de prestador.
-- Listagem de categorias.
-- Listagem e filtros de prestadores por categoria, estado e cidade.
-- Busca textual por linguagem natural usando a API.
-- Busca por voz com gravacao de audio e transcricao no backend.
-- Visualizacao de perfil do prestador.
-- Abertura de conversa no WhatsApp.
-- Armazenamento seguro de tokens e dados do prestador.
+| Pasta | Conteúdo |
+| --- | --- |
+| `app/` | Telas e rotas de autenticação, início, categorias e prestadores. |
+| `components/` | Componentes reutilizáveis, organizados em atoms, molecules e organisms. |
+| `contexts/` | Cidade escolhida e localização do dispositivo. |
+| `hooks/` | Carregamento de dados, busca e gravação de voz. |
+| `services/` | Chamadas à API e cache de dados. |
+| `theme/` | Cores, fontes, espaçamentos e bordas. |
+| `utils/` | Funções de apoio, sessão, fotos e distância. |
+| `scripts/tests/` | Testes automatizados. |
+| `assets/` | Imagens, ícones e fontes. |
 
-## Estrutura
+As telas usam hooks e serviços para conversar com a API Django. O arquivo `services/api.ts` centraliza o endereço do backend. O serviço de portfólio cuida dos uploads, e `services/mediaUrl.ts` adapta endereços locais de imagens ao host configurado na API.
 
-```text
-mobile-tem-quem-faz/
-+-- app/                  # Rotas e telas do Expo Router
-|   +-- (auth)/           # Login, cadastro e verificacao
-|   +-- categories/       # Lista e detalhe de categorias
-|   +-- providers/        # Lista, detalhe, perfil e edicao de prestadores
-|   +-- home.tsx          # Tela principal
-+-- assets/               # Imagens, icones e fontes
-+-- components/           # Componentes reutilizaveis
-|   +-- atoms/
-|   +-- molecules/
-|   +-- organisms/
-|   +-- ui/
-+-- hooks/                # Regras de carregamento, busca e voz
-+-- services/             # Comunicacao com a API e cache
-+-- theme/                # Cores, espacamentos, bordas e tipografia
-+-- utils/                # Funcoes auxiliares
-+-- app.json
-+-- package.json
-+-- tsconfig.json
-```
+## Se algo não funcionar
 
-## Camadas principais
-
-- `services/api.ts`: centraliza URL da API e chamadas HTTP.
-- `services/provider.service.ts`: busca, cadastra, edita e remove prestadores.
-- `services/category.service.ts`, `city.service.ts` e `state.service.ts`: carregam dados basicos com cache.
-- `services/voice-search.service.ts`: envia audio para `/api/search/audio/`.
-- `hooks/useProviders.ts`: busca prestadores, aplica filtros e organiza dados para cards.
-- `hooks/useVoiceSearch.ts`: controla gravacao, transcricao e retorno da busca por voz.
-- `utils/authStorage.ts`: salva tokens e dados do prestador no SecureStore.
-- `theme/`: mantem identidade visual reutilizavel.
-- `components/`: monta a interface em atoms, molecules e organisms.
-
-## Fluxo de comunicacao
-
-```text
-Tela -> Hook -> Service -> API Django -> Banco/MinIO -> Service -> Hook -> Tela
-```
-
-Exemplo: na Home, a busca chama `useProviders`, que usa `provider.service.ts`, que chama a API Django e devolve prestadores prontos para os cards.
-
-## Observacoes
-
-- Para imagens vindas do MinIO, `services/mediaUrl.ts` normaliza URLs como `localhost`, `127.0.0.1`, `0.0.0.0` e `minio` para o host configurado na API.
-- Para busca por voz, o app envia `multipart/form-data` para `/api/search/audio/`.
-- Para login/cadastro de prestador, o app usa `/api/auth/request-code/` e `/api/auth/verify-code/`.
+- **A API não carrega:** teste `http://SEU_IP:8000/api/docs/` no navegador do celular. Confira o IP, a rede e se o backend está iniciado.
+- **As fotos não aparecem:** confira se o MinIO está acessível, normalmente pela porta 9000. Adaptar a URL não recupera arquivos que não foram salvos.
+- **Publicações antigas ficaram sem foto:** atualize o backend, aplique as migrações e reenvie as fotos salvas como `null` pela versão anterior.
+- **O app mostra telas antigas:** confira a pasta e a branch, execute `npm install` e reinicie com `npm start -- -c`.
+- **O PowerShell bloqueia `npm.ps1`:** use `npm.cmd` no lugar de `npm` nos comandos.
