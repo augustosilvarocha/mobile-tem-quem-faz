@@ -146,6 +146,7 @@ export default function EditProviderProfile() {
           <>
             <ProviderProfileForm
               initialValues={{
+                gender: provider.gender,
                 categoryIds: provider.categories,
                 cityId: provider.city,
                 description: provider.description,

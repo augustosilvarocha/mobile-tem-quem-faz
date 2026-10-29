@@ -26,8 +26,10 @@ import { isValidPhone, sanitizePhone } from "@/utils/phone";
 import { persistLocalImage } from "@/utils/persistLocalImage";
 import { canRenderNativeMap } from "@/utils/nativeMaps";
 import { hasValidCoordinates } from "@/utils/providerDistance";
+import { GENDER_OPTIONS, ProviderGender } from "@/utils/gender";
 
 export type ProviderProfileFormInitialValues = {
+  gender?: ProviderGender;
   categoryIds?: number[];
   cityId?: number;
   description?: string;
@@ -66,6 +68,7 @@ export function ProviderProfileForm({
   submittingLabel,
 }: ProviderProfileFormProps) {
   const [name, setName] = useState(initialValues?.name ?? "");
+  const [gender, setGender] = useState<ProviderGender>(initialValues?.gender ?? "");
   const [description, setDescription] = useState(
     initialValues?.description ?? ""
   );
@@ -363,6 +366,7 @@ export function ProviderProfileForm({
       setSubmitting(true);
 
       await onSubmit({
+        gender,
         phone,
         name,
         city: Number(selectedCity.id),
@@ -471,6 +475,20 @@ export function ProviderProfileForm({
               loading={loadingCities}
               searchPlaceholder="Buscar cidade"
             />
+
+            <AppText variant="name" style={styles.label}>
+              Gênero (opcional)
+            </AppText>
+            <SelectField
+              placeholder="Selecione o gênero"
+              value={GENDER_OPTIONS.find((option) => option.id === gender) ?? null}
+              options={GENDER_OPTIONS}
+              onSelect={(option) => setGender(option.id as ProviderGender)}
+              searchPlaceholder="Buscar gênero"
+            />
+            <AppText variant="profession" color={colors.text.secondary}>
+              Se informado, será exibido no seu perfil público.
+            </AppText>
 
             <CategorySelector
               selectedCategories={selectedCategories}

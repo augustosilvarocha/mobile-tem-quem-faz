@@ -3,8 +3,10 @@ import { createKeyedMemoryCache } from "./memoryCache";
 import { normalizeRemoteImageUrl } from "./mediaUrl";
 import { getAccessToken } from "@/utils/authStorage";
 import { File } from "expo-file-system";
+import { ProviderGender } from "@/utils/gender";
 
 export type CreateProviderPayload = {
+  gender?: ProviderGender;
   phone: string;
   name: string;
   city: number;
@@ -24,6 +26,7 @@ export type CreateProviderPayload = {
 export type UpdateProviderPayload = CreateProviderPayload;
 
 export type Provider = {
+  gender?: ProviderGender;
   id: number;
   user: {
     id: number;
@@ -244,6 +247,9 @@ function appendProviderFormData(
   payload: CreateProviderPayload
 ) {
   appendOptionalFormField(formData, "name", payload.name);
+  if (payload.gender !== undefined) {
+    formData.append("gender", payload.gender);
+  }
   appendOptionalFormField(formData, "user.phone", payload.phone);
   appendOptionalFormField(formData, "city", payload.city);
   appendOptionalFormField(formData, "description", payload.description);

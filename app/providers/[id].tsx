@@ -26,6 +26,7 @@ import {
 import { getProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
 import { sanitizePhone } from "@/utils/phone";
+import { getGenderLabel } from "@/utils/gender";
 import { hasValidCoordinates } from "@/utils/providerDistance";
 
 const WHATSAPP_DEFAULT_MESSAGE =
@@ -231,6 +232,15 @@ export default function ProviderDetails() {
         ) : (
           <>
             <ProviderProfileHeader provider={provider} />
+
+            {getGenderLabel(provider.gender) ? (
+              <>
+                <AppText style={styles.sectionTitle}>Gênero</AppText>
+                <AppText style={styles.description}>
+                  {getGenderLabel(provider.gender)}
+                </AppText>
+              </>
+            ) : null}
 
             <AppText style={styles.sectionTitle}>Descrição do serviço</AppText>
             <AppText style={styles.description}>
