@@ -75,7 +75,7 @@ export function LoginCard({ onPhoneFocus }: LoginCardProps) {
           }}
           keyboardType="number-pad"
           maxLength={11}
-          placeholder="99999999999"
+          placeholder="84999999999"
           placeholderTextColor={colors.text.placeholder}
           style={styles.input}
         />

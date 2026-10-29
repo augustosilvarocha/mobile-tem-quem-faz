@@ -86,7 +86,9 @@ export function ProviderProfileForm({
   const [submitting, setSubmitting] = useState(false);
   const [neighborhood, setNeighborhood] = useState(initialValues?.neighborhood ?? "");
   const [street, setStreet] = useState(initialValues?.street ?? "");
-  const [number, setNumber] = useState(initialValues?.number ?? "");
+  const [number, setNumber] = useState(
+    (initialValues?.number ?? "").replace(/\D/g, "")
+  );
   const [addressComplement, setAddressComplement] = useState(initialValues?.address_complement ?? "");
   const [referencePoint, setReferencePoint] = useState(initialValues?.reference_point ?? "");
   const [latitude, setLatitude] = useState(initialValues?.latitude ?? null);
@@ -422,12 +424,16 @@ export function ProviderProfileForm({
                 setPhone(sanitizePhone(text));
                 setPhoneError("");
               }}
-              placeholder="Digite somente os números"
+              placeholder="Ex.: 84999999999"
               placeholderTextColor={colors.text.placeholder}
               keyboardType="phone-pad"
               maxLength={11}
               style={styles.input}
             />
+
+            <AppText variant="profession" color={colors.text.secondary}>
+              Informe o DDD + número, sem o código do país (55).
+            </AppText>
 
             {phoneError ? (
               <AppText
@@ -561,7 +567,7 @@ export function ProviderProfileForm({
             <TextInput
               accessibilityLabel="Número do endereço opcional"
               value={number}
-              onChangeText={setNumber}
+              onChangeText={(text) => setNumber(text.replace(/\D/g, ""))}
               placeholder="Ex.: 120"
               placeholderTextColor={colors.text.placeholder}
               keyboardType="numeric"
