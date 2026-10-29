@@ -76,11 +76,13 @@ export function VerificationCard({
 
       const result = await verifyOtp(phone, code);
 
-      if (result.account_exists) {
-        if (result.access && result.refresh) {
-          await saveTokens(result.access, result.refresh);
-        }
+      if (!result.verified || !result.access || !result.refresh) {
+        throw new Error("Não foi possível autenticar. Solicite um novo código.");
+      }
 
+      await saveTokens(result.access, result.refresh);
+
+      if (result.account_exists) {
         await saveProviderName(result.provider_name ?? "");
         if (result.provider_id) {
           await saveProviderId(result.provider_id);

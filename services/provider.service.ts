@@ -1,7 +1,7 @@
 import { api, apiDelete, apiPost, apiUpload } from "./api";
 import { createKeyedMemoryCache } from "./memoryCache";
 import { normalizeRemoteImageUrl } from "./mediaUrl";
-import { getAccessToken } from "@/utils/authStorage";
+import { getAccessToken, getRequiredAccessToken } from "@/utils/authStorage";
 import { File } from "expo-file-system";
 import { ProviderGender } from "@/utils/gender";
 
@@ -233,10 +233,13 @@ function appendOptionalFormField(
 export async function createProvider(
   payload: CreateProviderPayload
 ): Promise<Provider> {
+  const accessToken = await getRequiredAccessToken();
   const formData = new FormData();
 
   appendProviderFormData(formData, payload);
-  const provider = await apiUpload<Provider>("/providers/", formData);
+  const provider = await apiUpload<Provider>("/providers/", formData, {
+    accessToken,
+  });
   clearProvidersCache();
 
   return normalizeProvider(provider);
