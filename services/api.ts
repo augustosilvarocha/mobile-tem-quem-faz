@@ -11,7 +11,7 @@ async function parseJsonResponse(response: Response) {
 }
 
 function getParsedErrorMessage(data: any, fallback: string) {
-  return data?.error || data?.detail || fallback;
+  return data?.error || data?.detail || data?.cpf?.[0] || fallback;
 }
 
 async function getErrorMessage(response: Response, fallback: string) {
@@ -24,8 +24,10 @@ export const BASE_URL = normalizeBaseUrl(
   process.env.EXPO_PUBLIC_API_URL || DEFAULT_BASE_URL
 );
 
-export async function api<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${BASE_URL}${endpoint}`);
+export async function api<T>(endpoint: string, accessToken?: string): Promise<T> {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
 
   if (!response.ok) {
     throw new Error(

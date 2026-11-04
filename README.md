@@ -126,7 +126,6 @@ A opção de contato pelo WhatsApp, no perfil público, funciona separadamente d
 | `npm run web` | Inicia a versão para navegador. |
 | `npm run lint` | Verifica o estilo do código. |
 | `npx tsc --noEmit` | Verifica os tipos do TypeScript. |
-| `node --test scripts/tests/*.test.cjs` | Testa as regras de fotos do portfólio e distância. |
 
 ## Organização do projeto
 
@@ -139,7 +138,6 @@ A opção de contato pelo WhatsApp, no perfil público, funciona separadamente d
 | `services/` | Chamadas à API e cache de dados. |
 | `theme/` | Cores, fontes, espaçamentos e bordas. |
 | `utils/` | Funções de apoio, sessão, fotos e distância. |
-| `scripts/tests/` | Testes automatizados. |
 | `assets/` | Imagens, ícones e fontes. |
 
 As telas usam hooks e serviços para conversar com a API Django. O arquivo `services/api.ts` centraliza o endereço do backend. O serviço de portfólio cuida dos uploads, e `services/mediaUrl.ts` adapta endereços locais de imagens ao host configurado na API.

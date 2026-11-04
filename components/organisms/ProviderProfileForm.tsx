@@ -27,8 +27,10 @@ import { persistLocalImage } from "@/utils/persistLocalImage";
 import { canRenderNativeMap } from "@/utils/nativeMaps";
 import { hasValidCoordinates } from "@/utils/providerDistance";
 import { GENDER_OPTIONS, ProviderGender } from "@/utils/gender";
+import { formatCpf, isValidCpf, sanitizeCpf } from "@/utils/cpf";
 
 export type ProviderProfileFormInitialValues = {
+  cpf?: string;
   gender?: ProviderGender;
   categoryIds?: number[];
   cityId?: number;
@@ -68,6 +70,8 @@ export function ProviderProfileForm({
   submittingLabel,
 }: ProviderProfileFormProps) {
   const [name, setName] = useState(initialValues?.name ?? "");
+  const [cpf, setCpf] = useState(sanitizeCpf(initialValues?.cpf ?? ""));
+  const [cpfError, setCpfError] = useState("");
   const [gender, setGender] = useState<ProviderGender>(initialValues?.gender ?? "");
   const [description, setDescription] = useState(
     initialValues?.description ?? ""
@@ -317,6 +321,11 @@ export function ProviderProfileForm({
   }
 
   function validateRequiredFields() {
+    if (!isValidCpf(cpf)) {
+      setCpfError("Informe um CPF válido.");
+      return false;
+    }
+    setCpfError("");
     if (!isValidPhone(phone)) {
       setPhoneError("Número de telefone inválido.");
       return false;
@@ -366,6 +375,7 @@ export function ProviderProfileForm({
       setSubmitting(true);
 
       await onSubmit({
+        cpf,
         gender,
         phone,
         name,
@@ -406,12 +416,16 @@ export function ProviderProfileForm({
       <View style={styles.form}>
         {showRequiredFields ? (
           <>
+            <AppText variant="profession" color={colors.text.secondary}>
+              * Campos obrigatórios
+            </AppText>
             <AppText variant="name" style={styles.label}>
-              Nome completo
+              Nome completo *
             </AppText>
             <TextInput
-              accessibilityLabel="Nome completo"
+              accessibilityLabel="Nome completo obrigatório"
               value={name}
+              maxLength={100}
               onChangeText={setName}
               placeholder="Digite seu nome completo"
               placeholderTextColor={colors.text.placeholder}
@@ -419,7 +433,37 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              WhatsApp
+              CPF *
+            </AppText>
+            <TextInput
+              accessibilityLabel="CPF obrigatório"
+              value={formatCpf(cpf)}
+              onChangeText={(text) => {
+                setCpf(sanitizeCpf(text));
+                setCpfError("");
+              }}
+              placeholder="000.000.000-00"
+              placeholderTextColor={colors.text.placeholder}
+              keyboardType="number-pad"
+              maxLength={14}
+              style={styles.input}
+            />
+            <AppText variant="profession" color={colors.text.secondary}>
+              Seu CPF não será exibido no perfil público.
+            </AppText>
+            {cpfError ? (
+              <AppText
+                accessibilityLiveRegion="assertive"
+                accessibilityRole="alert"
+                variant="profession"
+                color={colors.danger}
+                style={styles.errorText}
+              >
+                {cpfError}
+              </AppText>
+            ) : null}
+            <AppText variant="name" style={styles.label}>
+              WhatsApp *
             </AppText>
             <TextInput
               accessibilityLabel="Número do WhatsApp"
@@ -452,7 +496,7 @@ export function ProviderProfileForm({
             ) : null}
 
             <AppText variant="name" style={styles.label}>
-              Estado
+              Estado *
             </AppText>
             <SelectField
               placeholder="Selecione o estado"
@@ -464,7 +508,7 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              Cidade
+              Cidade *
             </AppText>
             <SelectField
               placeholder="Selecione a cidade"

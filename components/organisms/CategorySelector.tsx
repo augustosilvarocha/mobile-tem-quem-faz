@@ -53,7 +53,7 @@ export function CategorySelector({
   return (
     <View style={styles.container}>
       <AppText variant="subtitle" style={styles.title}>
-        Categoria de serviço
+        Categoria de serviço *
       </AppText>
 
       <AppText

@@ -18,7 +18,7 @@ import { ProviderProfileForm } from "@/components/organisms/ProviderProfileForm"
 import {
   CreateProviderPayload,
   deleteProvider,
-  getProviderById,
+  getOwnProviderById,
   Provider,
   updateProvider,
 } from "@/services/provider.service";
@@ -57,7 +57,7 @@ export default function EditProviderProfile() {
           return;
         }
 
-        const data = await getProviderById(providerId);
+        const data = await getOwnProviderById(providerId);
 
         if (isActive) {
           setProvider(data);
@@ -146,6 +146,7 @@ export default function EditProviderProfile() {
           <>
             <ProviderProfileForm
               initialValues={{
+                cpf: provider.cpf ?? "",
                 gender: provider.gender,
                 categoryIds: provider.categories,
                 cityId: provider.city,

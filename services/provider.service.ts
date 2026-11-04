@@ -4,8 +4,10 @@ import { normalizeRemoteImageUrl } from "./mediaUrl";
 import { getAccessToken, getRequiredAccessToken } from "@/utils/authStorage";
 import { File } from "expo-file-system";
 import { ProviderGender } from "@/utils/gender";
+import { sanitizeCpf } from "@/utils/cpf";
 
 export type CreateProviderPayload = {
+  cpf: string;
   gender?: ProviderGender;
   phone: string;
   name: string;
@@ -26,6 +28,7 @@ export type CreateProviderPayload = {
 export type UpdateProviderPayload = CreateProviderPayload;
 
 export type Provider = {
+  cpf?: string | null;
   gender?: ProviderGender;
   id: number;
   user: {
@@ -202,6 +205,11 @@ export function clearProvidersCache() {
   searchResultsCache.clear();
 }
 
+export async function getOwnProviderById(providerId: number | string): Promise<Provider> {
+  const token = await getRequiredAccessToken();
+  return normalizeProvider(await api<Provider>(`/providers/${providerId}/`, token));
+}
+
 export async function getProviderById(providerId: number | string): Promise<Provider> {
   const endpoint = `/providers/${providerId}/`;
 
@@ -250,6 +258,7 @@ function appendProviderFormData(
   payload: CreateProviderPayload
 ) {
   appendOptionalFormField(formData, "name", payload.name);
+  appendOptionalFormField(formData, "cpf", sanitizeCpf(payload.cpf));
   if (payload.gender !== undefined) {
     formData.append("gender", payload.gender);
   }
