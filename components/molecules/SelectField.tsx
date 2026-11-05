@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
 import {
   FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/atoms/AppText";
 import { SearchInput } from "@/components/molecules/SearchInput";
@@ -38,6 +42,7 @@ export function SelectField({
 }: SelectFieldProps) {
   const [visible, setVisible] = useState(false);
   const [search, setSearch] = useState("");
+  const insets = useSafeAreaInsets();
 
   const filteredOptions = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -57,12 +62,18 @@ export function SelectField({
     }
 
     setSearch("");
+    Keyboard.dismiss();
     setVisible(true);
+  }
+
+  function handleClose() {
+    Keyboard.dismiss();
+    setVisible(false);
   }
 
   function handleSelect(option: SelectOption) {
     onSelect(option);
-    setVisible(false);
+    handleClose();
   }
 
   return (
@@ -97,68 +108,82 @@ export function SelectField({
         visible={visible}
         animationType="slide"
         transparent
-        onRequestClose={() => setVisible(false)}
+        onRequestClose={handleClose}
       >
-        <Pressable style={styles.backdrop} onPress={() => setVisible(false)} />
-
-        <View style={styles.sheet}>
-          <View style={styles.sheetHeader}>
-            <AppText variant="subtitle" style={styles.sheetTitle}>
-              {placeholder}
-            </AppText>
-
-            <Pressable
-              accessibilityLabel="Fechar lista de opções"
-              accessibilityRole="button"
-              onPress={() => setVisible(false)}
-            >
-              <Ionicons name="close" size={24} color={colors.text.primary} />
-            </Pressable>
-          </View>
-
-          <SearchInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={searchPlaceholder}
-            placeholderTextColor={colors.text.placeholder}
-            iconName="search-outline"
-            containerStyle={styles.searchBox}
-            inputStyle={styles.searchInput}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalContent}
+        >
+          <Pressable
+            accessibilityLabel="Fechar lista de opções"
+            accessibilityRole="button"
+            style={styles.backdrop}
+            onPress={handleClose}
           />
 
-          <FlatList
-            data={filteredOptions}
-            keyExtractor={(item) => String(item.id)}
-            keyboardShouldPersistTaps="handled"
-            style={styles.list}
-            renderItem={({ item }) => (
-              <Pressable
-                accessibilityLabel={item.label}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: value?.id === item.id }}
-                style={styles.optionItem}
-                onPress={() => handleSelect(item)}
-              >
-                <AppText variant="field" color={colors.text.primary}>
-                  {item.label}
-                </AppText>
-
-                {value?.id === item.id && (
-                  <Ionicons name="checkmark" size={20} color={colors.primary} />
-                )}
-              </Pressable>
-            )}
-            ListEmptyComponent={
-              <AppText
-                variant="field"
-                color={colors.text.secondary}
-                style={styles.emptyText}
-              >
-                Nenhum resultado encontrado.
+          <View style={[styles.sheet, { paddingBottom: Math.max(spacing.lg, insets.bottom) }]}>
+            <View style={styles.sheetHeader}>
+              <AppText variant="subtitle" style={styles.sheetTitle}>
+                {placeholder}
               </AppText>
-            }
-          />
-        </View>
+
+              <Pressable
+                accessibilityLabel="Fechar lista de opções"
+                accessibilityRole="button"
+                onPress={handleClose}
+              >
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </Pressable>
+            </View>
+
+            <SearchInput
+              accessibilityLabel={searchPlaceholder}
+              autoCorrect={false}
+              value={search}
+              onChangeText={setSearch}
+              placeholder={searchPlaceholder}
+              placeholderTextColor={colors.text.placeholder}
+              iconName="search-outline"
+              containerStyle={styles.searchBox}
+              inputStyle={styles.searchInput}
+              returnKeyType="done"
+              onSubmitEditing={Keyboard.dismiss}
+            />
+
+            <FlatList
+              data={filteredOptions}
+              keyExtractor={(item) => String(item.id)}
+              keyboardShouldPersistTaps="handled"
+              style={styles.list}
+              renderItem={({ item }) => (
+                <Pressable
+                  accessibilityLabel={item.label}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: value?.id === item.id }}
+                  style={styles.optionItem}
+                  onPress={() => handleSelect(item)}
+                >
+                  <AppText variant="field" color={colors.text.primary}>
+                    {item.label}
+                  </AppText>
+
+                  {value?.id === item.id && (
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                  )}
+                </Pressable>
+              )}
+              ListEmptyComponent={
+                <AppText
+                  variant="field"
+                  color={colors.text.secondary}
+                  style={styles.emptyText}
+                >
+                  Nenhum resultado encontrado.
+                </AppText>
+              }
+            />
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );
@@ -181,13 +206,19 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
 
-  backdrop: {
+  modalContent: {
     flex: 1,
+    justifyContent: "flex-end",
+  },
+
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.4)",
   },
 
   sheet: {
     maxHeight: "70%",
+    flexShrink: 1,
     backgroundColor: colors.white,
     borderTopLeftRadius: radius.md,
     borderTopRightRadius: radius.md,
@@ -220,6 +251,7 @@ const styles = StyleSheet.create({
 
   list: {
     flexGrow: 0,
+    flexShrink: 1,
   },
 
   optionItem: {

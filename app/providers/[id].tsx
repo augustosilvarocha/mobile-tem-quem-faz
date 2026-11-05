@@ -4,6 +4,7 @@ import {
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   View,
 } from "react-native";
@@ -80,7 +81,7 @@ function getWhatsAppNumber(phone: string) {
     return "";
   }
 
-  return sanitizedPhone.startsWith("55")
+  return sanitizedPhone.length === 13 && sanitizedPhone.startsWith("55")
     ? sanitizedPhone
     : `55${sanitizedPhone}`;
 }
@@ -196,6 +197,34 @@ export default function ProviderDetails() {
     } catch (error) {
       console.log("Erro ao abrir WhatsApp:", error);
       Alert.alert("WhatsApp", "Não foi possível abrir o WhatsApp.");
+    }
+  }
+
+  async function handleShareContact() {
+    if (!provider) {
+      return;
+    }
+
+    const whatsAppNumber = getWhatsAppNumber(provider.user.phone);
+
+    try {
+      await Share.share(
+        {
+          title: `Contato de ${provider.name}`,
+          message: [
+            `${provider.name} — ${getProviderCategories(provider).join(", ")}`,
+            "Encontrei este profissional no TemQuemFaz!",
+            "Fale com ele pelo WhatsApp:",
+            `https://wa.me/${whatsAppNumber}`,
+          ].join("\n"),
+        },
+        { dialogTitle: "Compartilhar contato" }
+      );
+    } catch {
+      Alert.alert(
+        "Compartilhar contato",
+        "Não foi possível abrir o compartilhamento. Tente novamente."
+      );
     }
   }
 
@@ -315,6 +344,15 @@ export default function ProviderDetails() {
                 Falar no Whatsapp
               </AppText>
             </Pressable>
+            <Pressable
+              accessibilityLabel={`Compartilhar contato de ${provider.name}`}
+              accessibilityRole="button"
+              style={styles.mapButton}
+              onPress={handleShareContact}
+            >
+              <Ionicons name="share-social-outline" size={24} color={colors.primary} />
+              <AppText style={styles.mapButtonText}>Compartilhar contato</AppText>
+            </Pressable>
           </>
         )}
       </ScrollView>
@@ -368,15 +406,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     alignItems: "center",
   },
-
-
-
-
-
-
-
-
-
 
   sectionTitle: {
     marginTop: spacing.lg,

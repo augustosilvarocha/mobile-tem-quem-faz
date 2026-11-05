@@ -460,7 +460,7 @@ const styles = StyleSheet.create<{
     marginTop: spacing.lg,
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 18,
+    fontSize: 22,
     lineHeight: 22,
   },
 
