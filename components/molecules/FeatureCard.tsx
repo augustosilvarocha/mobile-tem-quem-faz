@@ -12,27 +12,24 @@ type FeatureCardProps = {
 };
 
 export function FeatureCard({ icon, title, description, layout }: FeatureCardProps) {
+  const responsiveStyles = layout ? createResponsiveStyles(layout) : undefined;
   return (
     <View style={styles.container}>
       <View
         style={[
           styles.iconCircle,
-          layout && {
-            width: layout.featureCircleSize,
-            height: layout.featureCircleSize,
-            marginBottom: layout.gap,
-          },
+          responsiveStyles?.iconCircle,
         ]}
       >
         <Ionicons name={icon} size={layout?.featureIconSize ?? 32} color={colors.primary} />
       </View>
 
-      <View style={[styles.titleArea, layout && { minHeight: layout.featureTitleLineHeight * 2 }]}>
+      <View style={[styles.titleArea, responsiveStyles?.titleArea]}>
         <AppText
           variant="name"
           style={[
             styles.title,
-            layout && { fontSize: layout.featureTitleFontSize, lineHeight: layout.featureTitleLineHeight },
+            responsiveStyles?.title,
           ]}
           numberOfLines={2}
         >
@@ -45,11 +42,7 @@ export function FeatureCard({ icon, title, description, layout }: FeatureCardPro
         color={colors.text.secondary}
         style={[
           styles.description,
-          layout && {
-            minHeight: layout.featureDescriptionLineHeight * 3,
-            fontSize: layout.featureDescriptionFontSize,
-            lineHeight: layout.featureDescriptionLineHeight,
-          },
+          responsiveStyles?.description,
         ]}
       >
         {description}
@@ -95,3 +88,23 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+function createResponsiveStyles(layout: WelcomeLayout) {
+  return StyleSheet.create({
+    iconCircle: {
+      width: layout.featureCircleSize,
+      height: layout.featureCircleSize,
+      marginBottom: layout.gap,
+    },
+    titleArea: { minHeight: layout.featureTitleLineHeight * 2 },
+    title: {
+      fontSize: layout.featureTitleFontSize,
+      lineHeight: layout.featureTitleLineHeight,
+    },
+    description: {
+      minHeight: layout.featureDescriptionLineHeight * 3,
+      fontSize: layout.featureDescriptionFontSize,
+      lineHeight: layout.featureDescriptionLineHeight,
+    },
+  });
+}

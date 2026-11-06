@@ -12,11 +12,12 @@ export function WelcomeHeader({
   layout,
   showIllustration = true,
 }: WelcomeHeaderProps) {
+  const responsiveStyles = createResponsiveStyles(layout);
   return (
-    <View style={[styles.container, { paddingHorizontal: layout.horizontalPadding }]}>
+    <View style={[styles.container, responsiveStyles.container]}>
       <Image
         source={require("../../assets/images/logo.png")}
-        style={[styles.logo, { width: layout.logoWidth, height: layout.logoHeight }]}
+        style={[styles.logo, responsiveStyles.logo]}
         resizeMode="contain"
       />
 
@@ -24,14 +25,14 @@ export function WelcomeHeader({
         variant="subtitle"
         style={[
           styles.subtitle,
-          { fontSize: layout.subtitleFontSize, lineHeight: layout.subtitleLineHeight },
+          responsiveStyles.subtitle,
         ]}
       >
         Encontre prestadores de serviço{"\n"}
         <AppText
           variant="subtitle"
           color={colors.primary}
-          style={{ fontSize: layout.subtitleFontSize, lineHeight: layout.subtitleLineHeight }}
+          style={responsiveStyles.subtitle}
         >
           perto de você.
         </AppText>
@@ -42,7 +43,7 @@ export function WelcomeHeader({
           source={require("../../assets/images/auth-banner.png")}
           style={[
             styles.illustration,
-            { maxHeight: layout.illustrationMaxHeight, marginTop: layout.gap },
+            responsiveStyles.illustration,
           ]}
           resizeMode="contain"
         />
@@ -53,10 +54,8 @@ export function WelcomeHeader({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    minHeight: 0,
+    flexShrink: 0,
     alignItems: "center",
-    justifyContent: "center",
   },
 
   logo: {
@@ -69,8 +68,25 @@ const styles = StyleSheet.create({
   },
 
   illustration: {
-    flex: 1,
-    minHeight: 0,
     width: "100%",
+    marginBottom: -16,
+    borderWidth: 1,
+    borderColor: colors.background.primary,
+    borderRadius: 16,
   },
 });
+
+function createResponsiveStyles(layout: WelcomeLayout) {
+  return StyleSheet.create({
+    container: { paddingHorizontal: layout.horizontalPadding },
+    logo: { width: layout.logoWidth, height: layout.logoHeight },
+    subtitle: {
+      fontSize: layout.subtitleFontSize,
+      lineHeight: layout.subtitleLineHeight,
+    },
+    illustration: {
+      height: layout.illustrationMaxHeight,
+      marginTop: layout.gap,
+    },
+  });
+}

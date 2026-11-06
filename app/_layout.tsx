@@ -4,7 +4,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { useColorScheme } from "react-native";
+import { StyleSheet, useColorScheme } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import {
@@ -35,7 +35,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <LocationPreferenceProvider>
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-          <SafeAreaView style={{ flex: 1 }}>
+          <SafeAreaView style={styles.container}>
             <Stack screenOptions={{ headerShown: false }} />
           </SafeAreaView>
         </ThemeProvider>
@@ -43,3 +43,7 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});

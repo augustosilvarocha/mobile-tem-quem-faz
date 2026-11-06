@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { WelcomeHeader } from "@/components/organisms/WelcomeHeader";
 import { WelcomeActions } from "@/components/organisms/WelcomeActions";
 import { colors } from "@/theme";
@@ -26,8 +26,10 @@ export default function Welcome() {
           );
         }}
       >
-        <WelcomeHeader layout={layout} />
-        <WelcomeActions layout={layout} />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <WelcomeHeader layout={layout} />
+          <WelcomeActions layout={layout} />
+        </ScrollView>
       </View>
     </View>
   );
