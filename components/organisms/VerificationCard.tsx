@@ -5,9 +5,10 @@ import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, radius, spacing } from "@/theme";
-import { requestOtp, verifyOtp } from "@/services/auth.service";
-import { createProvider, CreateProviderPayload } from "@/services/provider.service";
-import { saveProviderId, saveProviderName, saveTokens } from "@/utils/authStorage";
+import { requestOtp, verifyOtp, type VerifyOtpResponse } from "@/services/auth.service";
+import { ApiError } from "@/services/api";
+import { clearProvidersCache, createProvider, CreateProviderPayload } from "@/services/provider.service";
+import { clearAuthSession, saveProviderId, saveUserName, saveUserPhone, saveTokens } from "@/utils/authStorage";
 
 const CODE_LENGTH = 6;
 const CODE_EXPIRATION_SECONDS = 5 * 60;
@@ -15,23 +16,28 @@ const CODE_EXPIRATION_SECONDS = 5 * 60;
 type VerificationCardProps = {
   onCodeFocus?: () => void;
   phone: string;
+  initialName?: string;
   registrationData?: CreateProviderPayload;
 };
 
 export function VerificationCard({
   onCodeFocus,
   phone,
+  initialName,
   registrationData,
 }: VerificationCardProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [name, setName] = useState(initialName ?? "");
+  const [needsName, setNeedsName] = useState(false);
   const [resending, setResending] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(
     CODE_EXPIRATION_SECONDS
   );
 
   const inputRef = useRef<TextInput>(null);
+  const verifiedSession = useRef<VerifyOtpResponse | null>(null);
 
   useEffect(() => {
     if (remainingSeconds <= 0) {
@@ -59,12 +65,19 @@ export function VerificationCard({
   }
 
   async function handleConfirm() {
-    if (remainingSeconds === 0) {
+    if (loading || resending) return;
+
+    if (needsName && !name.trim()) {
+      setError("Informe seu nome para concluir o cadastro.");
+      return;
+    }
+
+    if (!verifiedSession.current && remainingSeconds === 0) {
       setError("O código expirou. Peça um novo código.");
       return;
     }
 
-    if (code.length !== CODE_LENGTH) {
+    if (!verifiedSession.current && code.length !== CODE_LENGTH) {
       setError("Digite o código de 6 dígitos.");
       return;
     }
@@ -74,16 +87,20 @@ export function VerificationCard({
     try {
       setLoading(true);
 
-      const result = await verifyOtp(phone, code);
+      const result = verifiedSession.current ?? await verifyOtp(phone, code, registrationData?.name ?? name.trim());
 
       if (!result.verified || !result.access || !result.refresh) {
         throw new Error("Não foi possível autenticar. Solicite um novo código.");
       }
+      verifiedSession.current = result;
 
+      await clearAuthSession();
       await saveTokens(result.access, result.refresh);
+      await saveUserName(result.user_name ?? result.provider_name ?? registrationData?.name ?? name);
+      await saveUserPhone(phone);
+      clearProvidersCache();
 
       if (result.account_exists) {
-        await saveProviderName(result.provider_name ?? "");
         if (result.provider_id) {
           await saveProviderId(result.provider_id);
         }
@@ -93,7 +110,7 @@ export function VerificationCard({
       }
 
       if (!registrationData) {
-        setError("Conta de prestador não encontrada. Realize o cadastro.");
+        router.replace("/home");
         return;
       }
 
@@ -103,11 +120,14 @@ export function VerificationCard({
         await saveTokens(provider.access, provider.refresh);
       }
 
-      await saveProviderName(provider.name);
+      await saveUserName(provider.user.name);
       await saveProviderId(provider.id);
 
       router.replace("/home");
     } catch (err: any) {
+      if (err instanceof ApiError && err.fields.name && !registrationData) {
+        setNeedsName(true);
+      }
       console.log("Erro ao verificar código:", err);
       setError(err.message || "Código inválido ou expirado.");
     } finally {
@@ -116,6 +136,7 @@ export function VerificationCard({
   }
 
   async function handleResend() {
+    if (loading || resending || verifiedSession.current) return;
     try {
       setResending(true);
       await requestOtp(phone);
@@ -141,6 +162,27 @@ export function VerificationCard({
       <AppText style={styles.instructions} color={colors.text.secondary}>
         Digite ou cole os 6 números enviados para o seu WhatsApp.
       </AppText>
+
+      {needsName && !registrationData ? (
+        <View style={styles.nameContainer}>
+          <AppText style={styles.instructions}>Primeiro acesso? Informe seu nome para criar sua conta.</AppText>
+          <TextInput
+            accessibilityLabel="Seu nome"
+            autoCapitalize="words"
+            autoComplete="name"
+            editable={!loading}
+            maxLength={100}
+            onChangeText={(text) => { setName(text); setError(""); }}
+            onFocus={onCodeFocus}
+            onSubmitEditing={handleConfirm}
+            placeholder="Seu nome"
+            placeholderTextColor={colors.text.placeholder}
+            style={styles.nameInput}
+            textContentType="name"
+            value={name}
+          />
+        </View>
+      ) : null}
 
       <Pressable
         accessible={false}
@@ -245,7 +287,7 @@ export function VerificationCard({
         accessibilityLabel={resending ? "Reenviando código" : "Reenviar código"}
         accessibilityRole="button"
         accessibilityState={{ disabled: resending }}
-        disabled={resending}
+        disabled={resending || loading || verifiedSession.current !== null}
         style={[styles.resendButton, resending && styles.buttonDisabled]}
         onPress={handleResend}
       >
@@ -260,6 +302,16 @@ export function VerificationCard({
 }
 
 const styles = StyleSheet.create({
+  nameContainer: { marginBottom: spacing.md },
+  nameInput: {
+    minHeight: 56,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    color: colors.text.primary,
+    fontSize: 16,
+  },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.xl,

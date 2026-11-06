@@ -18,9 +18,10 @@ export default function Verification() {
   const scrollRef = useRef<ScrollView>(null);
   const cardOffsetY = useRef(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const { phone, registration } = useLocalSearchParams<{
+  const { phone, registration, name } = useLocalSearchParams<{
     phone: string;
     registration?: string;
+    name?: string;
   }>();
 
   let registrationData: CreateProviderPayload | undefined;
@@ -83,6 +84,7 @@ export default function Verification() {
         >
           <VerificationCard
             phone={phone}
+            initialName={name}
             registrationData={registrationData}
             onCodeFocus={handleCodeFocus}
           />

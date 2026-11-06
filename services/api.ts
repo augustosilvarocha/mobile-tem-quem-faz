@@ -2,6 +2,13 @@ import { fetch as expoFetch } from "expo/fetch";
 
 const DEFAULT_BASE_URL = "http://192.168.1.6:8000/api";
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly fields: Record<string, unknown>, public readonly status?: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.replace(/\/+$/, "");
 }
@@ -30,19 +37,18 @@ export async function api<T>(endpoint: string, accessToken?: string): Promise<T>
   });
 
   if (!response.ok) {
-    throw new Error(
-      await getErrorMessage(response, "Erro ao realizar requisicao")
-    );
+    throw new ApiError(await getErrorMessage(response, "Erro ao realizar requisicao"), {}, response.status);
   }
 
   return response.json();
 }
 
-export async function apiPost<T>(endpoint: string, body: unknown): Promise<T> {
+export async function apiPost<T>(endpoint: string, body: unknown, accessToken?: string): Promise<T> {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
     body: JSON.stringify(body),
   });
@@ -50,7 +56,7 @@ export async function apiPost<T>(endpoint: string, body: unknown): Promise<T> {
   const data = await parseJsonResponse(response);
 
   if (!response.ok) {
-    throw new Error(getParsedErrorMessage(data, "Erro na requisição"));
+    throw new ApiError(getParsedErrorMessage(data, "Erro na requisição"), data ?? {}, response.status);
   }
 
   return data as T;
@@ -97,8 +103,6 @@ export async function apiDelete(
   });
 
   if (!response.ok) {
-    throw new Error(
-      await getErrorMessage(response, "Erro ao excluir os dados")
-    );
+    throw new ApiError(await getErrorMessage(response, "Erro ao excluir os dados"), {}, response.status);
   }
 }

@@ -11,7 +11,7 @@ export function ProviderProfileHeader({ provider }: { provider: Provider }) {
   return (
     <View style={styles.container}>
       {provider.photo ? (
-        <Pressable accessibilityRole="button" accessibilityLabel={`Ampliar foto de ${provider.name}`} onPress={() => setPhotoVisible(true)}>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Ampliar foto de ${provider.user.name}`} onPress={() => setPhotoVisible(true)}>
           <Image source={{ uri: provider.photo }} style={styles.avatar} />
         </Pressable>
       ) : (
@@ -19,7 +19,7 @@ export function ProviderProfileHeader({ provider }: { provider: Provider }) {
           <Ionicons name="person" size={64} color={colors.text.secondary} />
         </View>
       )}
-      <AppText variant="title" style={styles.name}>{provider.name}</AppText>
+      <AppText variant="title" style={styles.name}>{provider.user.name}</AppText>
       <View style={styles.location}>
         <Ionicons name="location" size={16} color={colors.primary} />
         <AppText style={styles.city}>{provider.city_name} - {provider.uf}</AppText>

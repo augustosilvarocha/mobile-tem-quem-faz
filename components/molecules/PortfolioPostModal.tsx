@@ -10,7 +10,7 @@ import { getPortfolioImageUris } from "@/utils/portfolioImages";
 import { PortfolioImageCarousel } from "./PortfolioImageCarousel";
 import { ZoomableImageModal } from "./ZoomableImageModal";
 
-type Props = { item: PortfolioItem; author: Pick<Provider, "name" | "photo">; onClose: () => void };
+type Props = { item: PortfolioItem; author: Pick<Provider, "user" | "photo">; onClose: () => void };
 
 export function PortfolioPostModal({ item, author, onClose }: Props) {
   const [zoomIndex, setZoomIndex] = useState<number | null>(null);
@@ -29,7 +29,7 @@ export function PortfolioPostModal({ item, author, onClose }: Props) {
           <View style={styles.authorRow}>
             {author.photo ? <Image source={{ uri: author.photo }} style={styles.avatar} /> : <View style={[styles.avatar, styles.placeholder]}><Ionicons name="person" size={24} color={colors.text.secondary} /></View>}
             <View style={styles.authorInfo}>
-              <AppText style={styles.author}>{author.name}</AppText>
+              <AppText style={styles.author}>{author.user.name}</AppText>
               <AppText style={styles.date}>{Number.isNaN(date.getTime()) ? "Portfólio" : date.toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" })}</AppText>
             </View>
           </View>

@@ -33,10 +33,10 @@ export type Provider = {
   id: number;
   user: {
     id: number;
+    name: string;
     phone: string;
     created_at: string;
   };
-  name: string;
   city: number;
   city_name: string;
   state_name: string;
@@ -81,9 +81,18 @@ function normalizePhotoUrl(photo: string | null) {
   return normalizeRemoteImageUrl(photo);
 }
 
-function normalizeProvider(provider: Provider): Provider {
+type ProviderResponse = Omit<Provider, "user"> & {
+  name?: string;
+  user: Omit<Provider["user"], "name"> & { name?: string };
+};
+
+function normalizeProvider(provider: ProviderResponse): Provider {
   return {
     ...provider,
+    user: {
+      ...provider.user,
+      name: provider.user.name ?? provider.name ?? "",
+    },
     photo: normalizePhotoUrl(provider.photo),
   };
 }
@@ -194,9 +203,10 @@ export async function searchProviders(text: string): Promise<Provider[]> {
 }
 
 export function getCachedProviders(filter?: ProviderFilter) {
-  return providersCache.getCached(getProvidersEndpoint(filter), {
+  const cached = providersCache.getCached(getProvidersEndpoint(filter), {
     ttlMs: PROVIDERS_CACHE_TTL_MS,
   });
+  return cached?.map(normalizeProvider) ?? null;
 }
 
 export function clearProvidersCache() {
@@ -257,6 +267,8 @@ function appendProviderFormData(
   formData: FormData,
   payload: CreateProviderPayload
 ) {
+  appendOptionalFormField(formData, "user.name", payload.name);
+  // Compatibilidade com o backend publicado antes da mudança para user.name.
   appendOptionalFormField(formData, "name", payload.name);
   appendOptionalFormField(formData, "cpf", sanitizeCpf(payload.cpf));
   if (payload.gender !== undefined) {

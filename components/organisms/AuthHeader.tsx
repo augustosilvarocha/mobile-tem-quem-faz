@@ -7,9 +7,10 @@ import { colors, spacing } from "@/theme";
 
 type AuthHeaderProps = {
   compact?: boolean;
+  registering?: boolean;
 };
 
-export function AuthHeader({ compact = false }: AuthHeaderProps) {
+export function AuthHeader({ compact = false, registering = false }: AuthHeaderProps) {
   return (
     <View style={[styles.container, compact && styles.compactContainer]}>
       <Pressable
@@ -32,10 +33,7 @@ export function AuthHeader({ compact = false }: AuthHeaderProps) {
         variant="title"
         style={[styles.title, compact && styles.compactTitle]}
       >
-        Login do{" "}
-        <AppText variant="title" color={colors.primary}>
-          prestador
-        </AppText>
+        {registering ? "Crie sua conta" : "Bem-vindo de volta"}
       </AppText>
 
       {!compact ? (
@@ -45,8 +43,9 @@ export function AuthHeader({ compact = false }: AuthHeaderProps) {
             color={colors.text.secondary}
             style={styles.description}
           >
-            Entre para gerenciar seus serviços,{"\n"}
-            atendimentos e seu perfil.
+            {registering
+              ? "Informe seu nome e WhatsApp para começar."
+              : "Entre com seu WhatsApp para acessar sua conta."}
           </AppText>
 
           <Image

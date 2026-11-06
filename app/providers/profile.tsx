@@ -20,9 +20,9 @@ import { ConfirmActionModal } from "@/components/molecules/ConfirmActionModal";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { BottomNavigation } from "@/components/organisms/BottomNavigation";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
-import { getProviderById, Provider } from "@/services/provider.service";
+import { clearProvidersCache, getOwnProviderById, Provider } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
-import { clearAuthSession, getProviderId } from "@/utils/authStorage";
+import { clearAuthSession, getAccessToken, getProviderId, getUserName, getUserPhone } from "@/utils/authStorage";
 
 function getProviderCategories(provider: Provider) {
   return provider.category_names?.length
@@ -52,6 +52,9 @@ export default function OwnProviderProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGuest, setIsGuest] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userPhone, setUserPhone] = useState<string | null>(null);
+  const [isCustomer, setIsCustomer] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const { handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
@@ -78,18 +81,32 @@ export default function OwnProviderProfile() {
         setLoading(true);
         setError(null);
         setIsGuest(false);
+        setIsCustomer(false);
+        setProvider(null);
         setPortfolioError(null);
 
         const providerId = await getProviderId();
+        const accessToken = await getAccessToken();
+        const storedName = accessToken ? await getUserName() : null;
+        const storedPhone = accessToken ? await getUserPhone() : null;
+        if (isActive) {
+          setUserName(storedName);
+          setUserPhone(storedPhone);
+        }
+
+        if (!accessToken) {
+          if (isActive) setIsGuest(true);
+          return;
+        }
 
         if (!providerId) {
           if (isActive) {
-            setIsGuest(true);
+            setIsCustomer(true);
           }
           return;
         }
 
-        const data = await getProviderById(providerId);
+        const data = await getOwnProviderById(providerId);
 
         if (isActive) {
           setProvider(data);
@@ -125,6 +142,7 @@ export default function OwnProviderProfile() {
     try {
       setLoggingOut(true);
       await clearAuthSession();
+      clearProvidersCache();
       setLogoutModalVisible(false);
       router.replace("/");
     } finally {
@@ -149,7 +167,7 @@ export default function OwnProviderProfile() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader
-          right={
+          right={!isGuest && !loading ? (
             <Pressable
               style={styles.logoutButton}
               onPress={() => setLogoutModalVisible(true)}
@@ -157,7 +175,7 @@ export default function OwnProviderProfile() {
               <Ionicons name="log-out-outline" size={16} color={colors.danger} />
               <AppText style={styles.logoutText}>Sair</AppText>
             </Pressable>
-          }
+          ) : undefined}
           style={styles.header}
           title="Perfil"
         />
@@ -165,6 +183,28 @@ export default function OwnProviderProfile() {
         {loading ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary}>Carregando perfil...</AppText>
+          </View>
+        ) : isCustomer ? (
+          <View style={styles.customerContent}>
+            <View style={styles.customerAvatar}>
+              <Ionicons name="person" size={56} color={colors.primary} />
+            </View>
+            <AppText variant="title" style={styles.customerName}>{userName || "Minha conta"}</AppText>
+            {userPhone ? <AppText color={colors.text.secondary}>WhatsApp: {userPhone}</AppText> : null}
+            <AppText color={colors.text.secondary} style={styles.feedbackText}>
+              Sua conta para encontrar profissionais e salvar seus favoritos.
+            </AppText>
+            <Pressable accessibilityRole="button" style={styles.primaryButton} onPress={() => router.replace("/home")}>
+              <AppText color={colors.white} style={styles.primaryButtonText}>Encontrar profissionais</AppText>
+            </Pressable>
+            <Pressable accessibilityRole="button" style={styles.actionCard} onPress={() => router.push("/(auth)/register-provider")}>
+              <Ionicons name="briefcase-outline" size={24} color={colors.primary} />
+              <View style={styles.actionText}>
+                <AppText style={styles.actionTitle}>Quer oferecer serviços?</AppText>
+                <AppText color={colors.text.secondary}>Cadastre seu perfil de prestador.</AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+            </Pressable>
           </View>
         ) : isGuest ? (
           <View style={styles.feedback}>
@@ -181,10 +221,12 @@ export default function OwnProviderProfile() {
             />
 
             <AppText style={styles.guestTitle}>
-              Faça parte do TemQuemFaz
+              {userName ? `Olá, ${userName}!` : "Faça parte do TemQuemFaz"}
             </AppText>
             <AppText color={colors.text.secondary} style={styles.feedbackText}>
-              Cadastre seu perfil, mostre seus trabalhos e encontre novos clientes.
+              {userName
+                ? "Você já pode buscar e compartilhar profissionais. Quer também oferecer seus serviços? Cadastre seu perfil de prestador."
+                : "Cadastre seu perfil, mostre seus trabalhos e encontre novos clientes."}
             </AppText>
 
             <Pressable
@@ -311,6 +353,9 @@ export default function OwnProviderProfile() {
 }
 
 const styles = StyleSheet.create({
+  customerContent: { alignItems: "center", gap: spacing.md, paddingVertical: spacing.lg },
+  customerAvatar: { width: 112, height: 112, borderRadius: 56, backgroundColor: colors.background.card, alignItems: "center", justifyContent: "center" },
+  customerName: { textAlign: "center", color: colors.text.primary },
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,

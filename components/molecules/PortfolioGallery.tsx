@@ -13,7 +13,7 @@ import { Provider } from "@/services/provider.service";
 
 type PortfolioGalleryProps = {
   items: PortfolioItem[];
-  author: Pick<Provider, "name" | "photo">;
+  author: Pick<Provider, "user" | "photo">;
 };
 
 export function PortfolioGallery({ items, author }: PortfolioGalleryProps) {

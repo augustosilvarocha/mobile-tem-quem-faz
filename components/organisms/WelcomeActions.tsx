@@ -1,9 +1,11 @@
 import { Pressable, StyleSheet, View } from "react-native";
+import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { FeatureCard } from "@/components/molecules/FeatureCard";
+import { RegistrationChoiceModal } from "@/components/molecules/RegistrationChoiceModal";
 import { colors, radius, spacing } from "@/theme";
 import { clearAuthSession } from "@/utils/authStorage";
 import type { WelcomeLayout } from "@/utils/welcomeLayout";
@@ -13,16 +15,8 @@ type WelcomeActionsProps = {
 };
 
 export function WelcomeActions({ layout }: WelcomeActionsProps) {
-  const buttonStyle = {
-    minHeight: layout.buttonMinHeight,
-    marginTop: layout.gap,
-    paddingVertical: layout.gap,
-    paddingHorizontal: layout.horizontalPadding,
-  };
-  const buttonTextStyle = {
-    fontSize: layout.buttonFontSize,
-    lineHeight: layout.buttonLineHeight,
-  };
+  const [registrationVisible, setRegistrationVisible] = useState(false);
+  const responsiveStyles = createResponsiveStyles(layout);
 
   async function handleVisitorPress() {
     await clearAuthSession();
@@ -33,10 +27,10 @@ export function WelcomeActions({ layout }: WelcomeActionsProps) {
     <View
       style={[
         styles.container,
-        { paddingHorizontal: layout.horizontalPadding, paddingBottom: layout.gap },
+        responsiveStyles.container,
       ]}
     >
-      <View style={[styles.featuresBox, { paddingVertical: layout.gap }]}>
+      <View style={[styles.featuresBox, responsiveStyles.featuresBox]}>
         <FeatureCard
           icon="search-outline"
           title="Buscar fácil"
@@ -63,65 +57,54 @@ export function WelcomeActions({ layout }: WelcomeActionsProps) {
         />
       </View>
 
-      <Pressable style={[styles.visitorButton, buttonStyle]} onPress={handleVisitorPress}>
+      <Pressable style={[styles.visitorButton, responsiveStyles.button]} onPress={handleVisitorPress}>
         <Ionicons name="person-outline" size={layout.buttonIconSize} color={colors.white} />
 
         <AppText
           variant="button"
           color={colors.white}
-          style={[styles.buttonText, buttonTextStyle]}
+          style={[styles.buttonText, responsiveStyles.buttonText]}
         >
           Entrar como visitante
         </AppText>
       </Pressable>
 
       <Link href="/(auth)/login" asChild>
-        <Pressable style={StyleSheet.flatten([styles.providerButton, buttonStyle])}>
-          <Ionicons name="briefcase-outline" size={layout.buttonIconSize} color={colors.primary} />
+        <Pressable style={StyleSheet.flatten([styles.providerButton, responsiveStyles.button])}>
+          <Ionicons name="log-in-outline" size={layout.buttonIconSize} color={colors.primary} />
 
           <AppText
             variant="button"
             color={colors.primary}
-            style={[styles.buttonText, buttonTextStyle]}
+            style={[styles.buttonText, responsiveStyles.buttonText]}
           >
-            Entrar como prestador
+            Faça login
           </AppText>
         </Pressable>
       </Link>
 
-      <View style={[styles.dashedLine, { marginTop: layout.gap }]} />
-
-      <AppText
-        variant="profession"
-        color={colors.text.secondary}
-        style={[
-          styles.registerLabel,
-          { fontSize: layout.registerLabelFontSize, lineHeight: layout.registerLabelLineHeight },
-        ]}
-      >
-        Ainda não é prestador?
+      <AppText color={colors.text.secondary} style={[styles.registerLabel, responsiveStyles.registerLabel]}>
+        Ainda não tem uma conta?
       </AppText>
 
-      <Link href="/(auth)/register-provider" asChild>
-        <Pressable style={styles.registerButton}>
+        <Pressable accessibilityRole="button" onPress={() => setRegistrationVisible(true)} style={styles.registerButton}>
+          <View style={styles.registerLink}>
           <AppText
             variant="subtitle"
             color={colors.primary}
             style={[
               styles.registerButtonText,
-              { fontSize: layout.registerFontSize, lineHeight: layout.registerLineHeight },
+              responsiveStyles.registerButtonText,
             ]}
           >
-            Cadastre-se como prestador
+            Cadastre-se aqui
           </AppText>
+          </View>
 
-          <Ionicons
-            name="chevron-forward"
-            size={28}
-            color={colors.primary}
-          />
+          <Ionicons name="chevron-forward" size={28} color={colors.primary} />
+
         </Pressable>
-      </Link>
+      <RegistrationChoiceModal visible={registrationVisible} onClose={() => setRegistrationVisible(false)} />
     </View>
   );
 }
@@ -170,18 +153,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 
-  dashedLine: {
-    borderTopWidth: 1,
-    borderStyle: "dashed",
-    borderColor: colors.border,
-    marginBottom: spacing.xs,
-  },
-
-  registerLabel: {
-    textAlign: "center",
-    marginBottom: 2,
-  },
-
   registerButton: {
     minHeight: 44,
     paddingVertical: spacing.xs,
@@ -190,8 +161,47 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: spacing.xs,
   },
+  registerLink: {
+    flexShrink: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.primary,
+  },
   registerButtonText: {
     flexShrink: 1,
     textAlign: "center",
   },
+  registerLabel: {
+    textAlign: "center",
+  },
 });
+
+function createResponsiveStyles(layout: WelcomeLayout) {
+  return StyleSheet.create({
+    container: {
+      paddingHorizontal: layout.horizontalPadding,
+      paddingBottom: layout.gap,
+    },
+    featuresBox: {
+      paddingVertical: layout.gap,
+    },
+    button: {
+      minHeight: layout.buttonMinHeight,
+      marginTop: layout.buttonSpacing,
+      paddingVertical: layout.gap,
+      paddingHorizontal: layout.horizontalPadding,
+    },
+    buttonText: {
+      fontSize: layout.buttonFontSize,
+      lineHeight: layout.buttonLineHeight,
+    },
+    registerLabel: {
+      marginTop: layout.gap + spacing.xs,
+      fontSize: layout.registerLabelFontSize,
+      lineHeight: layout.registerLabelLineHeight,
+    },
+    registerButtonText: {
+      fontSize: layout.registerFontSize,
+      lineHeight: layout.registerLineHeight,
+    },
+  });
+}

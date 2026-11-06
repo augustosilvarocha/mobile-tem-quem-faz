@@ -39,7 +39,7 @@ function formatProvider(provider: Provider): ProviderCardData {
 
   return {
     id: provider.id,
-    name: provider.name,
+    name: provider.user.name,
     category: categoryNames.join(", ") || "Prestador de serviço",
     categoryNames,
     city: `${provider.city_name} - ${provider.uf}`,
@@ -105,7 +105,7 @@ function sortProvidersByLocation(
       return currentPriority - nextPriority;
     }
 
-    return currentProvider.name.localeCompare(nextProvider.name);
+    return (currentProvider.user.name ?? "").localeCompare(nextProvider.user.name ?? "");
   });
 }
 

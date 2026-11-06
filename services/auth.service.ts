@@ -7,6 +7,8 @@ export async function requestOtp(phone: string): Promise<{ message: string }> {
 export type VerifyOtpResponse = {
   verified: boolean;
   account_exists: boolean;
+  user_id?: number;
+  user_name?: string;
   provider_id?: number;
   provider_name?: string;
   access?: string;
@@ -15,7 +17,8 @@ export type VerifyOtpResponse = {
 
 export async function verifyOtp(
   phone: string,
-  code: string
+  code: string,
+  name?: string
 ): Promise<VerifyOtpResponse> {
-  return apiPost("/auth/verify-code/", { phone, code });
+  return apiPost("/auth/verify-code/", { phone, code, ...(name ? { name: name.trim() } : {}) });
 }

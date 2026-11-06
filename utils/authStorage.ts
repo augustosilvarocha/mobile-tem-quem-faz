@@ -4,6 +4,24 @@ const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 const PROVIDER_ID_KEY = "provider_id";
 const PROVIDER_NAME_KEY = "provider_name";
+const USER_NAME_KEY = "user_name";
+const USER_PHONE_KEY = "user_phone";
+
+export async function saveUserPhone(phone: string) {
+  await SecureStore.setItemAsync(USER_PHONE_KEY, phone);
+}
+
+export async function getUserPhone() {
+  return SecureStore.getItemAsync(USER_PHONE_KEY);
+}
+
+export async function saveUserName(name: string) {
+  await SecureStore.setItemAsync(USER_NAME_KEY, name.trim());
+}
+
+export async function getUserName() {
+  return (await SecureStore.getItemAsync(USER_NAME_KEY)) ?? getProviderName();
+}
 
 export async function saveTokens(access: string, refresh: string) {
   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access);
@@ -67,4 +85,6 @@ export async function clearAuthSession() {
   await clearTokens();
   await SecureStore.deleteItemAsync(PROVIDER_ID_KEY);
   await SecureStore.deleteItemAsync(PROVIDER_NAME_KEY);
+  await SecureStore.deleteItemAsync(USER_NAME_KEY);
+  await SecureStore.deleteItemAsync(USER_PHONE_KEY);
 }

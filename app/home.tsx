@@ -8,7 +8,8 @@ import {
   type TextStyle,
   type ViewStyle,
 } from "react-native";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -25,7 +26,7 @@ import { useProviders } from "@/hooks/useProviders";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { searchCategories, type Category } from "@/services/category.service";
 import { colors, radius, spacing } from "@/theme";
-import { getProviderName } from "@/utils/authStorage";
+import { getUserName } from "@/utils/authStorage";
 import {
   getOneProviderPerCategory,
 } from "@/utils/providerDisplay";
@@ -75,11 +76,11 @@ export default function Home() {
     },
   });
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isMounted = true;
 
     async function loadProviderName() {
-      const storedProviderName = await getProviderName();
+      const storedProviderName = await getUserName();
 
       if (isMounted) {
         setProviderName(storedProviderName);
@@ -91,7 +92,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, []));
 
   const greeting = providerName ? `Olá, ${providerName}!` : GUEST_GREETING;
 

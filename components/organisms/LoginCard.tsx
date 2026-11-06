@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
@@ -10,14 +10,21 @@ import { requestOtp } from "@/services/auth.service";
 
 type LoginCardProps = {
   onPhoneFocus?: () => void;
+  registering?: boolean;
 };
 
-export function LoginCard({ onPhoneFocus }: LoginCardProps) {
+export function LoginCard({ onPhoneFocus, registering = false }: LoginCardProps) {
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
+    if (loading) return;
+    if (registering && !name.trim()) {
+      setError("Informe seu nome.");
+      return;
+    }
     if (!isValidPhone(phone)) {
       setError("Número de telefone inválido");
       return;
@@ -32,7 +39,7 @@ export function LoginCard({ onPhoneFocus }: LoginCardProps) {
 
       router.push({
         pathname: "/(auth)/verification",
-        params: { phone },
+        params: { phone, ...(registering ? { name: name.trim() } : {}) },
       });
     } catch (err: any) {
       console.log("Erro ao solicitar código:", err);
@@ -45,7 +52,7 @@ export function LoginCard({ onPhoneFocus }: LoginCardProps) {
   return (
     <View style={styles.card}>
       <AppText variant="subtitle" style={styles.title}>
-        Entrar com WhatsApp
+        {registering ? "Crie sua conta" : "Faça login"}
       </AppText>
 
       <AppText
@@ -56,6 +63,26 @@ export function LoginCard({ onPhoneFocus }: LoginCardProps) {
         Informe o número do seu WhatsApp para{"\n"}
         receber um código de verificação.
       </AppText>
+
+      {registering ? (
+        <View style={styles.inputBox}>
+          <FontAwesome name="user-o" size={28} color={colors.primary} />
+          <TextInput
+            accessibilityLabel="Seu nome"
+            autoCapitalize="words"
+            autoComplete="name"
+            editable={!loading}
+            maxLength={100}
+            onChangeText={(text) => { setName(text); setError(""); }}
+            onFocus={onPhoneFocus}
+            placeholder="Seu nome"
+            placeholderTextColor={colors.text.placeholder}
+            style={[styles.input, styles.nameInput]}
+            textContentType="name"
+            value={name}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.inputBox}>
         <Ionicons name="logo-whatsapp" size={32} color={colors.primary} />
@@ -116,6 +143,7 @@ export function LoginCard({ onPhoneFocus }: LoginCardProps) {
 }
 
 const styles = StyleSheet.create({
+  nameInput: { marginLeft: spacing.sm },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.xl,

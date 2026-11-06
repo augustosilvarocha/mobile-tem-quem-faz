@@ -27,7 +27,7 @@ import {
   clearAuthSession,
   getProviderId,
   saveProviderId,
-  saveProviderName,
+  saveUserName,
 } from "@/utils/authStorage";
 
 export default function EditProviderProfile() {
@@ -90,7 +90,7 @@ export default function EditProviderProfile() {
 
     const updatedProvider = await updateProvider(provider.id, payload);
 
-    await saveProviderName(updatedProvider.name);
+    await saveUserName(updatedProvider.user.name);
     await saveProviderId(updatedProvider.id);
 
     router.replace("/providers/profile");
@@ -151,7 +151,7 @@ export default function EditProviderProfile() {
                 categoryIds: provider.categories,
                 cityId: provider.city,
                 description: provider.description,
-                name: provider.name,
+                name: provider.user.name,
                 phone: provider.user.phone,
                 photoUri: provider.photo,
                 neighborhood: provider.neighborhood,

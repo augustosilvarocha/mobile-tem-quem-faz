@@ -210,9 +210,9 @@ export default function ProviderDetails() {
     try {
       await Share.share(
         {
-          title: `Contato de ${provider.name}`,
+          title: `Contato de ${provider.user.name}`,
           message: [
-            `${provider.name} — ${getProviderCategories(provider).join(", ")}`,
+            `${provider.user.name} — ${getProviderCategories(provider).join(", ")}`,
             "Encontrei este profissional no TemQuemFaz!",
             "Fale com ele pelo WhatsApp:",
             `https://wa.me/${whatsAppNumber}`,
@@ -313,7 +313,7 @@ export default function ProviderDetails() {
                 <ProviderLocationMap
                   latitude={provider.latitude}
                   longitude={provider.longitude}
-                  title={provider.name}
+                  title={provider.user.name}
                   description={getProviderLocation(provider)}
                 />
 
@@ -334,7 +334,7 @@ export default function ProviderDetails() {
             )}
 
             <Pressable
-              accessibilityLabel={`Conversar com ${provider.name} pelo WhatsApp`}
+              accessibilityLabel={`Conversar com ${provider.user.name} pelo WhatsApp`}
               accessibilityRole="button"
               style={styles.whatsAppButton}
               onPress={() => setWhatsAppModalVisible(true)}
@@ -345,7 +345,7 @@ export default function ProviderDetails() {
               </AppText>
             </Pressable>
             <Pressable
-              accessibilityLabel={`Compartilhar contato de ${provider.name}`}
+              accessibilityLabel={`Compartilhar contato de ${provider.user.name}`}
               accessibilityRole="button"
               style={styles.mapButton}
               onPress={handleShareContact}
@@ -374,7 +374,7 @@ export default function ProviderDetails() {
           variant="primary"
           iconName="logo-whatsapp"
           title="Abrir conversa no WhatsApp?"
-          description={`Você será redirecionado para o WhatsApp para conversar com ${provider.name}.`}
+          description={`Você será redirecionado para o WhatsApp para conversar com ${provider.user.name}.`}
           confirmText="Abrir Whatsapp"
           onCancel={() => setWhatsAppModalVisible(false)}
           onConfirm={handleOpenWhatsApp}
