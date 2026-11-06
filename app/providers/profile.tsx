@@ -194,8 +194,13 @@ export default function OwnProviderProfile() {
             <AppText color={colors.text.secondary} style={styles.feedbackText}>
               Sua conta para encontrar profissionais e salvar seus favoritos.
             </AppText>
-            <Pressable accessibilityRole="button" style={styles.primaryButton} onPress={() => router.replace("/home")}>
-              <AppText color={colors.white} style={styles.primaryButtonText}>Encontrar profissionais</AppText>
+            <Pressable accessibilityRole="button" style={styles.actionCard} onPress={() => router.push({ pathname: "/providers", params: { favorites: "true" } })}>
+              <Ionicons name="star-outline" size={24} color={colors.primary} />
+              <View style={styles.actionText}>
+                <AppText style={styles.actionTitle}>Meus favoritos</AppText>
+                <AppText color={colors.text.secondary}>Veja os profissionais que você salvou.</AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
             </Pressable>
             <Pressable accessibilityRole="button" style={styles.actionCard} onPress={() => router.push("/(auth)/register-provider")}>
               <Ionicons name="briefcase-outline" size={24} color={colors.primary} />

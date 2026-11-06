@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   Alert,
   Linking,
@@ -24,7 +25,9 @@ import {
   getPortfolio,
   PortfolioItem,
 } from "@/services/portfolio.service";
-import { getProviderById, Provider } from "@/services/provider.service";
+import { getProviderById, setProviderFavorite, Provider } from "@/services/provider.service";
+import { ApiError } from "@/services/api";
+import { getAccessToken } from "@/utils/authStorage";
 import { colors, radius, spacing } from "@/theme";
 import { sanitizePhone } from "@/utils/phone";
 import { getGenderLabel } from "@/utils/gender";
@@ -95,6 +98,9 @@ export default function ProviderDetails() {
   const [error, setError] = useState<string | null>(null);
   const [portfolioError, setPortfolioError] = useState<string | null>(null);
   const [whatsAppModalVisible, setWhatsAppModalVisible] = useState(false);
+  const [savingFavorite, setSavingFavorite] = useState(false);
+  const [favoriteFeedback, setFavoriteFeedback] = useState<{ name: string; saved: boolean } | null>(null);
+  const favoriteRequest = useRef(false);
   const { handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
     onTranscript: (text) =>
@@ -112,7 +118,7 @@ export default function ProviderDetails() {
       : "Falar serviço";
   const providerAddress = provider ? getProviderAddress(provider) : "";
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isActive = true;
 
     async function loadProvider() {
@@ -171,7 +177,38 @@ export default function ProviderDetails() {
     return () => {
       isActive = false;
     };
-  }, [id]);
+  }, [id]));
+
+  function promptFavoriteLogin() {
+    Alert.alert("Entre na sua conta", "Faça login para salvar profissionais nos seus favoritos.", [
+      { text: "Agora não", style: "cancel" },
+      { text: "Fazer login", onPress: () => router.push("/(auth)/login") },
+    ]);
+  }
+
+  async function handleFavorite() {
+    if (!provider || loading || favoriteRequest.current) return;
+    favoriteRequest.current = true;
+    setSavingFavorite(true);
+    try {
+      if (!await getAccessToken()) {
+        promptFavoriteLogin();
+        return;
+      }
+      const isFavorite = await setProviderFavorite(provider.id, !provider.is_favorite);
+      setProvider((current) => current?.id === provider.id ? { ...current, is_favorite: isFavorite } : current);
+      setFavoriteFeedback({ name: provider.user.name, saved: isFavorite });
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        promptFavoriteLogin();
+      } else {
+        Alert.alert("Favoritos", "Não foi possível atualizar o favorito. Tente novamente.");
+      }
+    } finally {
+      favoriteRequest.current = false;
+      setSavingFavorite(false);
+    }
+  }
 
   function handleOpenOwnProfile() {
     router.push("/providers/profile");
@@ -244,7 +281,22 @@ export default function ProviderDetails() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader title="Detalhes do Prestador" style={styles.header} />
+        <ScreenHeader
+          title="Detalhes do Prestador"
+          style={styles.header}
+          right={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={provider?.is_favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+              accessibilityState={{ disabled: loading || !provider || savingFavorite, busy: savingFavorite, selected: Boolean(provider?.is_favorite) }}
+              disabled={loading || !provider || savingFavorite}
+              onPress={handleFavorite}
+              style={[styles.favoriteButton, savingFavorite && styles.favoriteButtonBusy]}
+            >
+              <Ionicons name={provider?.is_favorite ? "star" : "star-outline"} size={28} color={colors.primary} />
+            </Pressable>
+          }
+        />
 
         {loading ? (
           <View style={styles.feedback}>
@@ -368,6 +420,20 @@ export default function ProviderDetails() {
         voiceLabel={voiceNavigationLabel}
       />
 
+      <ConfirmActionModal
+        visible={favoriteFeedback !== null}
+        variant="primary"
+        iconName={favoriteFeedback?.saved ? "star" : "star-outline"}
+        title={favoriteFeedback?.saved ? "Adicionado aos favoritos" : "Removido dos favoritos"}
+        description={favoriteFeedback?.saved
+          ? `Você favoritou ${favoriteFeedback.name}. Encontre este profissional em Meus favoritos, no seu perfil.`
+          : `${favoriteFeedback?.name ?? "O prestador"} foi removido dos seus favoritos.`}
+        confirmText="Entendi"
+        showCancel={false}
+        onCancel={() => setFavoriteFeedback(null)}
+        onConfirm={() => setFavoriteFeedback(null)}
+      />
+
       {provider ? (
         <ConfirmActionModal
           visible={whatsAppModalVisible}
@@ -387,6 +453,8 @@ export default function ProviderDetails() {
 }
 
 const styles = StyleSheet.create({
+  favoriteButton: { minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" },
+  favoriteButtonBusy: { opacity: 0.5 },
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,

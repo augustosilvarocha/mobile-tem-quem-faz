@@ -65,11 +65,13 @@ function matchesSelectedFilters(
 }
 
 export default function ProvidersScreen() {
-  const { search: searchParam } = useLocalSearchParams<{
+  const { search: searchParam, favorites } = useLocalSearchParams<{
     search?: string;
+    favorites?: string;
   }>();
+  const favoritesOnly = favorites === "true";
   const routeSearch = searchParam?.trim() ?? "";
-  const isSearchMode = Boolean(routeSearch);
+  const isSearchMode = !favoritesOnly && Boolean(routeSearch);
   const [search, setSearch] = useState(routeSearch);
   const [previousRouteSearch, setPreviousRouteSearch] = useState(routeSearch);
   const [filtersVisible, setFiltersVisible] = useState(false);
@@ -84,7 +86,9 @@ export default function ProvidersScreen() {
   const { states, loading: loadingStates } = useStates();
   const { cities, loading: loadingCities } = useCities();
   const { providers, loading, error } = useProviders(
-    isSearchMode
+    favoritesOnly
+      ? { favoritesOnly: true }
+      : isSearchMode
       ? {
           searchText: routeSearch,
         }
@@ -121,14 +125,14 @@ export default function ProvidersScreen() {
   }, [cities, draftState]);
 
   const filteredProviders = useMemo(() => {
-    if (isSearchMode) {
+    if (isSearchMode || favoritesOnly) {
       return providers.filter((provider) =>
         matchesSelectedFilters(
           provider,
           selectedCategory,
           selectedCity,
           selectedState
-        )
+        ) && (!favoritesOnly || normalizeText(`${provider.name} ${provider.category} ${provider.city}`).includes(normalizeText(search)))
       );
     }
 
@@ -147,6 +151,7 @@ export default function ProvidersScreen() {
     });
   }, [
     isSearchMode,
+    favoritesOnly,
     providers,
     search,
     selectedCategory,
@@ -159,7 +164,7 @@ export default function ProvidersScreen() {
     selectedState,
     selectedCity,
   ].filter(Boolean).length;
-  const title = routeSearch ? "Resultados da busca" : "Todos os prestadores";
+  const title = favoritesOnly ? "Meus favoritos" : routeSearch ? "Resultados da busca" : "Todos os prestadores";
 
   function handleOpenFilters() {
     setDraftCategory(selectedCategory);
@@ -249,7 +254,11 @@ export default function ProvidersScreen() {
         ) : filteredProviders.length === 0 ? (
           <View style={styles.emptyContainer}>
             <AppText style={styles.emptyText}>
-              Nenhum prestador encontrado.
+              {favoritesOnly
+                ? providers.length === 0
+                  ? "Você ainda não tem favoritos. Toque na estrela no perfil de um prestador para salvá-lo."
+                  : "Nenhum favorito encontrado com esses filtros."
+                : "Nenhum prestador encontrado."}
             </AppText>
           </View>
         ) : (

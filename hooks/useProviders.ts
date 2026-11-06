@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 
 import {
   PreferredCity,
@@ -6,6 +7,7 @@ import {
 } from "@/contexts/LocationPreferenceContext";
 import {
   getCachedProviders,
+  getFavoriteProviders,
   getProviders,
   Provider,
   ProviderFilter,
@@ -27,6 +29,7 @@ export type ProviderCardData = {
 };
 
 type UseProvidersOptions = {
+  favoritesOnly?: boolean;
   category?: string | null;
   city?: string | null;
   enabled?: boolean;
@@ -160,6 +163,7 @@ export function useProviders(options: UseProvidersOptions = {}) {
   const searchText = options.searchText?.trim();
   const ufFilter = options.uf?.trim();
   const enabled = options.enabled ?? true;
+  const favoritesOnly = options.favoritesOnly ?? false;
   const isSearchMode = Boolean(searchText);
   const providerFilterOptions = useMemo(
     () => ({
@@ -169,7 +173,7 @@ export function useProviders(options: UseProvidersOptions = {}) {
     }),
     [categoryFilter, cityFilter, ufFilter]
   );
-  const cachedProviderCards = isSearchMode || loadingLocationPreference
+  const cachedProviderCards = isSearchMode || favoritesOnly || loadingLocationPreference
     ? null
     : getCachedProviderCards(
         providerFilterOptions,
@@ -184,7 +188,7 @@ export function useProviders(options: UseProvidersOptions = {}) {
   );
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let isActive = true;
 
     if (!enabled) {
@@ -201,7 +205,7 @@ export function useProviders(options: UseProvidersOptions = {}) {
 
     async function loadProviders() {
       try {
-        if (isSearchMode) {
+        if (isSearchMode || favoritesOnly) {
           setProviders([]);
           setLoading(true);
         } else {
@@ -221,7 +225,9 @@ export function useProviders(options: UseProvidersOptions = {}) {
 
         setError(null);
 
-        const data = isSearchMode
+        const data = favoritesOnly
+          ? await getFavoriteProviders()
+          : isSearchMode
           ? await searchProviders(searchText ?? "")
           : await getProviders(getProviderFilter(providerFilterOptions));
         const sortedProviders = sortProvidersByLocation(data, preferredCity);
@@ -238,7 +244,9 @@ export function useProviders(options: UseProvidersOptions = {}) {
 
         console.log("Erro ao buscar prestadores:", error);
         setError(
-          isSearchMode
+          favoritesOnly
+            ? "Não foi possível carregar seus favoritos. Verifique sua conexão e se você está conectado à sua conta."
+            : isSearchMode
             ? "Não foi possível buscar prestadores."
             : "Não foi possível carregar os prestadores."
         );
@@ -256,12 +264,13 @@ export function useProviders(options: UseProvidersOptions = {}) {
     };
   }, [
     enabled,
+    favoritesOnly,
     isSearchMode,
     loadingLocationPreference,
     preferredCity,
     providerFilterOptions,
     searchText,
-  ]);
+  ]));
 
   const providersWithDistance = useMemo(
     () => providers.map((provider) => ({

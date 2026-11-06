@@ -20,6 +20,7 @@ type ConfirmActionModalProps = {
   title: string;
   variant?: "danger" | "primary";
   visible: boolean;
+  showCancel?: boolean;
 };
 
 export function ConfirmActionModal({
@@ -33,6 +34,7 @@ export function ConfirmActionModal({
   title,
   variant = "danger",
   visible,
+  showCancel = true,
 }: ConfirmActionModalProps) {
   function handleCancel() {
     if (!loading) {
@@ -75,7 +77,7 @@ export function ConfirmActionModal({
             </AppText>
           </Pressable>
 
-          <Pressable
+          {showCancel ? <Pressable
             disabled={loading}
             style={[styles.cancelButton, loading && styles.disabledButton]}
             onPress={handleCancel}
@@ -83,7 +85,7 @@ export function ConfirmActionModal({
             <AppText style={[styles.cancelText, { color: actionColor }]}>
               {cancelText}
             </AppText>
-          </Pressable>
+          </Pressable> : null}
         </View>
       </View>
     </Modal>

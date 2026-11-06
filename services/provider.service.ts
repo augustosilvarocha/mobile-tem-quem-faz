@@ -31,6 +31,7 @@ export type Provider = {
   cpf?: string | null;
   gender?: ProviderGender;
   id: number;
+  is_favorite?: boolean;
   user: {
     id: number;
     name: string;
@@ -222,6 +223,12 @@ export async function getOwnProviderById(providerId: number | string): Promise<P
 
 export async function getProviderById(providerId: number | string): Promise<Provider> {
   const endpoint = `/providers/${providerId}/`;
+  const accessToken = await getAccessToken();
+
+  // O estado do favorito pertence a sessao atual e nao pode vir de um cache publico.
+  if (accessToken) {
+    return normalizeProvider(await api<Provider>(endpoint, accessToken));
+  }
 
   return providerDetailsCache.get(
     endpoint,
@@ -343,4 +350,23 @@ export async function deleteProvider(providerId: number | string): Promise<void>
   await apiDelete(`/providers/${providerId}/`, accessToken);
 
   clearProvidersCache();
+}
+
+export async function setProviderFavorite(providerId: number | string, favorite: boolean): Promise<boolean> {
+  const accessToken = await getRequiredAccessToken();
+  const endpoint = `/providers/${providerId}/favorite/`;
+  if (favorite) {
+    const response = await apiPost<{ is_favorite: boolean }>(endpoint, {}, accessToken);
+    clearProvidersCache();
+    return response.is_favorite;
+  }
+  await apiDelete(endpoint, accessToken);
+  clearProvidersCache();
+  return false;
+}
+
+export async function getFavoriteProviders(): Promise<Provider[]> {
+  const accessToken = await getRequiredAccessToken();
+  const providers = await api<Provider[]>("/users/me/favorites/", accessToken);
+  return providers.map(normalizeProvider);
 }
