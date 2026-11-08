@@ -73,7 +73,7 @@ export function CityPreferenceModal({
       preferredCity
         ? {
             id: preferredCity.uf,
-            label: `${preferredCity.stateName} - ${preferredCity.uf}`,
+            label: `${states.find((state) => state.uf === preferredCity.uf)?.name ?? preferredCity.stateName} - ${preferredCity.uf}`,
           }
         : null
     );
@@ -82,7 +82,7 @@ export function CityPreferenceModal({
         ? { id: preferredCity.id, label: preferredCity.name }
         : null
     );
-  }, [preferredCity, visible]);
+  }, [preferredCity, visible, states]);
 
   const stateOptions: SelectOption[] = useMemo(
     () =>

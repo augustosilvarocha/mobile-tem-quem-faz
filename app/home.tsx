@@ -32,7 +32,7 @@ import {
 } from "@/utils/providerDisplay";
 import { formatRecordingDuration } from "@/utils/time";
 
-const GUEST_GREETING = "Olá, seja bem-vindo ao TemQuemFaz";
+const GUEST_GREETING = "Seja bem-vindo ao TemQuemFaz";
 
 function normalizeSearchText(value: string) {
   return value
@@ -94,7 +94,7 @@ export default function Home() {
     };
   }, []));
 
-  const greeting = providerName ? `Olá, ${providerName}!` : GUEST_GREETING;
+  const greeting = providerName ? `Boas-vindas, ${providerName}!` : GUEST_GREETING;
 
   const recordingDuration = formatRecordingDuration(durationMillis);
   const voiceButtonLabel = isTranscribing
@@ -351,11 +351,9 @@ export default function Home() {
 
         <Section
           title={
-            preferredCity
-              ? `Prestadores em destaque · ${preferredCity.name}`
-              : userLocation
+            userLocation && !preferredCity
               ? "Prestadores mais próximos"
-              : "Prestadores em destaque"
+              : "Prestadores de serviço"
           }
           actionText="Ver todos"
           onPressAction={() => router.push("/providers" as never)}
@@ -460,7 +458,7 @@ const styles = StyleSheet.create<{
     marginTop: spacing.lg,
     color: colors.primary,
     fontWeight: "700",
-    fontSize: 22,
+    fontSize: 18,
     lineHeight: 22,
   },
 
@@ -469,7 +467,7 @@ const styles = StyleSheet.create<{
     marginBottom: spacing.md,
     color: colors.text.primary,
     fontWeight: "800",
-    fontSize: 26,
+    fontSize: 22,
     lineHeight: 32,
   },
 

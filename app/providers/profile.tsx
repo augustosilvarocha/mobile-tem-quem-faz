@@ -167,10 +167,11 @@ export default function OwnProviderProfile() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenHeader
-          right={!isGuest && !loading ? (
+          right={!loading ? (
             <Pressable
               style={styles.logoutButton}
-              onPress={() => setLogoutModalVisible(true)}
+              onPress={() => isGuest ? handleLogout() : setLogoutModalVisible(true)}
+              disabled={loggingOut}
             >
               <Ionicons name="log-out-outline" size={16} color={colors.danger} />
               <AppText style={styles.logoutText}>Sair</AppText>
@@ -270,6 +271,23 @@ export default function OwnProviderProfile() {
               ))}
             </View>
 
+            <Pressable
+              accessibilityRole="button"
+              style={styles.actionCard}
+              onPress={() => router.push({ pathname: "/providers", params: { favorites: "true" } })}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons name="star-outline" size={24} color={colors.primary} />
+              </View>
+              <View style={styles.actionText}>
+                <AppText style={styles.actionTitle}>Meus favoritos</AppText>
+                <AppText style={styles.actionDescription} color={colors.text.secondary}>
+                  Veja os profissionais que você salvou.
+                </AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+            </Pressable>
+
             <Pressable style={styles.actionCard} onPress={handleEditProfile}>
               <View style={styles.actionIcon}>
                 <Ionicons name="person-outline" size={24} color={colors.primary} />
@@ -306,28 +324,6 @@ export default function OwnProviderProfile() {
             <AppText variant="subtitle" style={styles.sectionTitle}>Minhas publicações</AppText>
             {portfolioError ? <AppText>{portfolioError}</AppText> : <PortfolioGallery items={portfolio} author={provider} />}
 
-            <Pressable
-              style={[styles.actionCard, styles.inviteCard]}
-              onPress={() =>
-                Alert.alert(
-                  "Indique amigos",
-                  "Em breve você poderá compartilhar seu convite."
-                )
-              }
-            >
-              <View style={styles.actionIcon}>
-                <Ionicons name="people-outline" size={24} color={colors.primary} />
-              </View>
-
-              <View style={styles.actionText}>
-                <AppText style={styles.actionTitle}>
-                  Indique amigos e ganhe mais clientes
-                </AppText>
-                <AppText style={styles.actionDescription} color={colors.text.secondary}>
-                  Compartilhe o TemQuemFaz e aumente suas oportunidades.
-                </AppText>
-              </View>
-            </Pressable>
           </>
         )}
       </ScrollView>
@@ -498,11 +494,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
     marginTop: spacing.sm,
-  },
-
-  inviteCard: {
-    minHeight: 88,
-    backgroundColor: colors.background.card,
   },
 
   actionIcon: {

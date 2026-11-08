@@ -110,7 +110,7 @@ export default function ProvidersScreen() {
   );
 
   const stateOptions: SelectOption[] = useMemo(
-    () => states.map((state) => ({ id: state.uf, label: state.uf })),
+    () => states.map((state) => ({ id: state.uf, label: `${state.name} - ${state.uf}` })),
     [states]
   );
 

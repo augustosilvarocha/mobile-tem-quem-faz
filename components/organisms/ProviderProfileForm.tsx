@@ -117,7 +117,7 @@ export function ProviderProfileForm({
   const showLocationFields = !isRegistration || registrationStep === 2;
 
   const stateOptions: SelectOption[] = useMemo(
-    () => states.map((state) => ({ id: state.uf, label: state.uf })),
+    () => states.map((state) => ({ id: state.uf, label: `${state.name} - ${state.uf}` })),
     [states]
   );
 
@@ -137,7 +137,7 @@ export function ProviderProfileForm({
     const initialCity = cities.find((city) => city.id === initialValues.cityId);
 
     if (initialCity) {
-      setSelectedState({ id: initialCity.uf, label: initialCity.uf });
+      setSelectedState({ id: initialCity.uf, label: `${initialCity.state_name} - ${initialCity.uf}` });
       setSelectedCity({ id: initialCity.id, label: initialCity.name });
     }
 

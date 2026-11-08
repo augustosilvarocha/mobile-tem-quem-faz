@@ -37,6 +37,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
+    flex: 1,
     fontWeight: "800",
     color: colors.primary,
   },
@@ -47,6 +48,7 @@ const styles = StyleSheet.create({
   },
 
   actionButton: {
+    flexShrink: 0,
     minHeight: 44,
     paddingHorizontal: spacing.sm,
     alignItems: "center",
