@@ -194,7 +194,6 @@ export default function Home() {
   }
 
   function handleSearchBlur() {
-    // Keep the list mounted while a tap moves focus to a suggestion.
     if (!selectingSuggestion.current) {
       setSuggestionsVisible(false);
     }

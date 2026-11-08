@@ -225,7 +225,6 @@ export async function getProviderById(providerId: number | string): Promise<Prov
   const endpoint = `/providers/${providerId}/`;
   const accessToken = await getAccessToken();
 
-  // O estado do favorito pertence a sessao atual e nao pode vir de um cache publico.
   if (accessToken) {
     return normalizeProvider(await api<Provider>(endpoint, accessToken));
   }
@@ -275,7 +274,6 @@ function appendProviderFormData(
   payload: CreateProviderPayload
 ) {
   appendOptionalFormField(formData, "user.name", payload.name);
-  // Compatibilidade com o backend publicado antes da mudança para user.name.
   appendOptionalFormField(formData, "name", payload.name);
   appendOptionalFormField(formData, "cpf", sanitizeCpf(payload.cpf));
   if (payload.gender !== undefined) {
