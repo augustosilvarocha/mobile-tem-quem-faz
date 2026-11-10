@@ -6,6 +6,16 @@ const PROVIDER_ID_KEY = "provider_id";
 const PROVIDER_NAME_KEY = "provider_name";
 const USER_NAME_KEY = "user_name";
 const USER_PHONE_KEY = "user_phone";
+const sessionListeners = new Set<() => void>();
+
+export function subscribeAuthSession(listener: () => void) {
+  sessionListeners.add(listener);
+  return () => { sessionListeners.delete(listener); };
+}
+
+function notifyAuthSession() {
+  sessionListeners.forEach((listener) => listener());
+}
 
 export async function saveUserPhone(phone: string) {
   await SecureStore.setItemAsync(USER_PHONE_KEY, phone);
@@ -26,6 +36,7 @@ export async function getUserName() {
 export async function saveTokens(access: string, refresh: string) {
   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access);
   await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
+  notifyAuthSession();
 }
 
 export async function saveProviderName(name: string) {
@@ -87,4 +98,5 @@ export async function clearAuthSession() {
   await SecureStore.deleteItemAsync(PROVIDER_NAME_KEY);
   await SecureStore.deleteItemAsync(USER_NAME_KEY);
   await SecureStore.deleteItemAsync(USER_PHONE_KEY);
+  notifyAuthSession();
 }

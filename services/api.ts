@@ -1,4 +1,5 @@
 import { fetch as expoFetch } from "expo/fetch";
+import { expireAuthSession } from "./session.service";
 
 const DEFAULT_BASE_URL = "http://192.168.1.6:8000/api";
 
@@ -37,6 +38,7 @@ export async function api<T>(endpoint: string, accessToken?: string): Promise<T>
   });
 
   if (!response.ok) {
+    if (response.status === 401 && accessToken) await expireAuthSession(accessToken);
     throw new ApiError(await getErrorMessage(response, "Erro ao realizar requisicao"), {}, response.status);
   }
 
@@ -56,6 +58,7 @@ export async function apiPost<T>(endpoint: string, body: unknown, accessToken?: 
   const data = await parseJsonResponse(response);
 
   if (!response.ok) {
+    if (response.status === 401 && accessToken) await expireAuthSession(accessToken);
     throw new ApiError(getParsedErrorMessage(data, "Erro na requisição"), data ?? {}, response.status);
   }
 
@@ -82,6 +85,7 @@ export async function apiUpload<T>(
   });
 
   if (!response.ok) {
+    if (response.status === 401 && options.accessToken) await expireAuthSession(options.accessToken);
     throw new Error(
       await getErrorMessage(response, "Erro ao salvar os dados")
     );
@@ -103,6 +107,7 @@ export async function apiDelete(
   });
 
   if (!response.ok) {
+    if (response.status === 401 && accessToken) await expireAuthSession(accessToken);
     throw new ApiError(await getErrorMessage(response, "Erro ao excluir os dados"), {}, response.status);
   }
 }

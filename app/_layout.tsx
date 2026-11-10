@@ -17,6 +17,7 @@ import {
 } from "@expo-google-fonts/inter";
 
 import { LocationPreferenceProvider } from "@/contexts/LocationPreferenceContext";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -27,6 +28,8 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
+
+  useAuthSession(loaded);
 
   if (!loaded) {
     return null;
