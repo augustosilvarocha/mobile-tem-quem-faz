@@ -60,13 +60,12 @@ export function LoginCard({ onPhoneFocus, registering = false }: LoginCardProps)
         color={colors.text.secondary}
         style={styles.description}
       >
-        Informe o número do seu WhatsApp para{"\n"}
-        receber um código de verificação.
+        Informe seu WhatsApp para receber um código de verificação.
       </AppText>
 
       {registering ? (
         <View style={styles.inputBox}>
-          <FontAwesome name="user-o" size={28} color={colors.primary} />
+          <FontAwesome name="user-o" size={24} color={colors.primary} />
           <TextInput
             accessibilityLabel="Seu nome"
             autoCapitalize="words"
@@ -85,7 +84,7 @@ export function LoginCard({ onPhoneFocus, registering = false }: LoginCardProps)
       ) : null}
 
       <View style={styles.inputBox}>
-        <Ionicons name="logo-whatsapp" size={32} color={colors.primary} />
+        <Ionicons name="logo-whatsapp" size={28} color={colors.primary} />
 
         <AppText variant="field" style={styles.ddi}>
           +55
@@ -123,7 +122,7 @@ export function LoginCard({ onPhoneFocus, registering = false }: LoginCardProps)
           {loading ? "Enviando..." : "Enviar código"}
         </AppText>
 
-        <Ionicons name="arrow-forward" size={30} color={colors.white} />
+        <Ionicons name="arrow-forward" size={24} color={colors.white} />
       </Pressable>
 
       <View style={styles.infoBox}>
@@ -134,8 +133,7 @@ export function LoginCard({ onPhoneFocus, registering = false }: LoginCardProps)
           color={colors.text.secondary}
           style={styles.info}
         >
-          Enviaremos um código de verificação{"\n"}
-          no seu WhatsApp para confirmar.
+          Confirme seu número pelo WhatsApp.
         </AppText>
       </View>
     </View>
@@ -147,7 +145,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.xl,
-    padding: spacing.lg,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -160,11 +158,11 @@ const styles = StyleSheet.create({
 
   description: {
     textAlign: "center",
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
 
   inputBox: {
-    height: 58,
+    height: 52,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
@@ -194,7 +192,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    height: 64,
+    height: 56,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     flexDirection: "row",
@@ -208,18 +206,21 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    fontSize: 20,
+    fontSize: 18,
   },
 
   infoBox: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     gap: spacing.sm,
   },
 
   info: {
+    flexShrink: 1,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: "center",
   },
 

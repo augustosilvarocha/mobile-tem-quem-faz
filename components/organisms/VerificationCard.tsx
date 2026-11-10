@@ -155,7 +155,7 @@ export function VerificationCard({
 
   return (
     <View style={styles.card}>
-      <AppText variant="name" style={styles.title}>
+      <AppText variant="subtitle" style={styles.title}>
         Código de verificação
       </AppText>
 
@@ -270,7 +270,7 @@ export function VerificationCard({
           {loading ? "Verificando..." : "Confirmar código"}
         </AppText>
 
-        <Ionicons name="arrow-forward" size={30} color={colors.white} />
+        <Ionicons name="arrow-forward" size={24} color={colors.white} />
       </Pressable>
 
       <View style={styles.resendBox}>
@@ -315,18 +315,20 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.xl,
-    padding: spacing.lg,
+    padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
 
   title: {
+    textAlign: "center",
     color: colors.text.primary,
     marginBottom: spacing.xs,
   },
 
   instructions: {
-    marginBottom: spacing.md,
+    textAlign: "center",
+    marginBottom: spacing.sm,
     fontSize: 16,
     lineHeight: 22,
   },
@@ -340,7 +342,7 @@ const styles = StyleSheet.create({
 
   codeBox: {
     flex: 1,
-    minWidth: 38,
+    minWidth: 0,
     maxWidth: 48,
     height: 54,
     borderWidth: 1,
@@ -360,6 +362,8 @@ const styles = StyleSheet.create({
 
   codeText: {
     color: colors.text.primary,
+    fontSize: 24,
+    lineHeight: 30,
   },
 
   hiddenInput: {
@@ -385,7 +389,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    height: 64,
+    height: 56,
     borderRadius: radius.md,
     backgroundColor: colors.primary,
     flexDirection: "row",
@@ -399,14 +403,14 @@ const styles = StyleSheet.create({
   },
 
   buttonText: {
-    fontSize: 20,
+    fontSize: 18,
   },
 
   resendBox: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
 

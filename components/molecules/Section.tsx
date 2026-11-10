@@ -1,18 +1,19 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, type StyleProp, type TextStyle } from "react-native";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, spacing } from "@/theme";
 
 type SectionProps = {
   title: string;
+  titleStyle?: StyleProp<TextStyle>;
   actionText?: string;
   onPressAction?: () => void;
 };
 
-export function Section({ title, actionText, onPressAction }: SectionProps) {
+export function Section({ title, titleStyle, actionText, onPressAction }: SectionProps) {
   return (
     <View style={styles.container}>
-      <AppText variant="subtitle" style={styles.title}>
+      <AppText variant="subtitle" style={[styles.title, titleStyle]}>
         {title}
       </AppText>
 
@@ -45,6 +46,7 @@ const styles = StyleSheet.create({
   action: {
     fontWeight: "700",
     color: colors.primary,
+    textDecorationLine: "underline",
   },
 
   actionButton: {

@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -10,6 +10,8 @@ type VerificationHeaderProps = {
 };
 
 export function VerificationHeader({ compact = false }: VerificationHeaderProps) {
+  const { height } = useWindowDimensions();
+  const smallScreen = height < 740;
   return (
     <View style={[styles.container, compact && styles.compactContainer]}>
       <Pressable
@@ -23,7 +25,7 @@ export function VerificationHeader({ compact = false }: VerificationHeaderProps)
       {!compact ? (
         <Image
           source={require("../../assets/images/logo.png")}
-          style={styles.logo}
+          style={[styles.logo, smallScreen && styles.smallLogo]}
           resizeMode="contain"
         />
       ) : null}
@@ -51,7 +53,7 @@ export function VerificationHeader({ compact = false }: VerificationHeaderProps)
 
           <Image
             source={require("../../assets/images/verification-banner.png")}
-            style={styles.verificationImage}
+            style={[styles.verificationImage, smallScreen && styles.smallVerificationImage]}
             resizeMode="contain"
           />
         </>
@@ -82,9 +84,13 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 190,
-    height: 145,
-    marginTop: spacing.lg,
+    width: 150,
+    height: 100,
+    marginTop: spacing.sm,
+  },
+
+  smallLogo: {
+    height: 80,
   },
 
   title: {
@@ -104,8 +110,12 @@ const styles = StyleSheet.create({
   },
 
   verificationImage: {
-    width: "70%",
-    height: 170,
-    marginTop: spacing.md,
+    width: "60%",
+    height: 140,
+    marginTop: spacing.sm,
+  },
+
+  smallVerificationImage: {
+    height: 100,
   },
 });

@@ -1,4 +1,4 @@
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import { Image, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -11,6 +11,8 @@ type AuthHeaderProps = {
 };
 
 export function AuthHeader({ compact = false, registering = false }: AuthHeaderProps) {
+  const { height } = useWindowDimensions();
+  const smallScreen = height < 740;
   return (
     <View style={[styles.container, compact && styles.compactContainer]}>
       <Pressable
@@ -24,7 +26,7 @@ export function AuthHeader({ compact = false, registering = false }: AuthHeaderP
       {!compact ? (
         <Image
           source={require("../../assets/images/logo.png")}
-          style={styles.logo}
+          style={[styles.logo, smallScreen && styles.smallLogo]}
           resizeMode="contain"
         />
       ) : null}
@@ -50,7 +52,7 @@ export function AuthHeader({ compact = false, registering = false }: AuthHeaderP
 
           <Image
             source={require("../../assets/images/provider-login.png")}
-            style={styles.providerImage}
+            style={[styles.providerImage, smallScreen && styles.smallProviderImage]}
             resizeMode="contain"
           />
         </>
@@ -81,9 +83,13 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 190,
-    height: 145,
-    marginTop: spacing.lg,
+    width: 150,
+    height: 100,
+    marginTop: spacing.sm,
+  },
+
+  smallLogo: {
+    height: 80,
   },
 
   title: {
@@ -103,8 +109,12 @@ const styles = StyleSheet.create({
   },
 
   providerImage: {
-    width: "75%",
-    height: 230,
+    width: "60%",
+    height: 140,
     marginTop: spacing.sm,
+  },
+
+  smallProviderImage: {
+    height: 100,
   },
 });

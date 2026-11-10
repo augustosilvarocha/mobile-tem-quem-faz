@@ -356,6 +356,7 @@ export default function Home() {
               : "Prestadores de serviço"
           }
           actionText="Ver todos"
+          titleStyle={styles.providersTitle}
           onPressAction={() => router.push("/providers" as never)}
         />
 
@@ -407,6 +408,7 @@ const styles = StyleSheet.create<{
   locationSelector: ViewStyle;
   location: TextStyle;
   greeting: TextStyle;
+  providersTitle: TextStyle;
   title: TextStyle;
   searchBox: ViewStyle;
   searchInput: TextStyle;
@@ -451,6 +453,11 @@ const styles = StyleSheet.create<{
     color: colors.text.primary,
     fontWeight: "700",
     fontSize: 16,
+    lineHeight: 22,
+  },
+
+  providersTitle: {
+    fontSize: 18,
     lineHeight: 22,
   },
 

@@ -100,10 +100,10 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  registrationSection: { marginTop: spacing.md },
+  registrationSection: { marginTop: spacing.sm },
   registerLabel: { textAlign: "center" },
   registerButton: { minHeight: 48, alignItems: "center", justifyContent: "center" },
-  registerText: { fontSize: 24, lineHeight: 24, fontWeight: "700", textDecorationLine: "underline" },
+  registerText: { fontSize: 20, lineHeight: 24, fontWeight: "700", textDecorationLine: "underline" },
   container: {
     flex: 1,
     backgroundColor: colors.background.primary,
@@ -112,6 +112,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: spacing.screen,
-    paddingBottom: spacing.xl ?? spacing.lg,
+    paddingBottom: spacing.md,
   },
 });

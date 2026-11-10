@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     paddingHorizontal: spacing.screen,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.md,
     backgroundColor: colors.background.primary,
   },
 });

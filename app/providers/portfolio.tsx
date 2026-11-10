@@ -184,9 +184,11 @@ export default function ManagePortfolio() {
       >
         <ScreenHeader
           style={styles.header}
-          subtitle="Mostre alguns dos trabalhos que você já realizou."
           title="Portfólio"
         />
+        <AppText color={colors.text.secondary} style={styles.description}>
+          Mostre alguns dos trabalhos que você já realizou.
+        </AppText>
 
         {loading ? (
           <AppText style={styles.feedback}>Carregando portfólio...</AppText>
@@ -328,6 +330,12 @@ const styles = StyleSheet.create({
   },
 
   header: {
+    marginBottom: spacing.sm,
+  },
+
+  description: {
+    fontSize: 16,
+    lineHeight: 22,
     marginBottom: spacing.lg,
   },
 
