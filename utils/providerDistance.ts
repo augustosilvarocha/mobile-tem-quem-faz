@@ -39,7 +39,7 @@ export function getProviderDistanceKm(
   return getDistance(userLocation, provider) / 1000;
 }
 
-export function formatProviderDistance(distanceKm?: number | null): string | null {
+export function formatProviderDistance(distanceKm?: number | null, fromCity = false): string | null {
   if (distanceKm == null || !Number.isFinite(distanceKm) || distanceKm < 0) {
     return null;
   }
@@ -48,5 +48,5 @@ export function formatProviderDistance(distanceKm?: number | null): string | nul
     ? `${Math.round(distanceKm * 1000)} m`
     : `${distanceKm.toFixed(1).replace(".", ",")} km`;
 
-  return `Aprox. ${distance} de voc\u00ea`;
+  return fromCity ? `Aprox. ${distance} (referência: cidade)` : `Aprox. ${distance} de voc\u00ea`;
 }

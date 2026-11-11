@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import { storage as SecureStore } from "@/utils/storage";
 import * as Location from "expo-location";
 import { AppState } from "react-native";
 import {
@@ -95,6 +95,7 @@ export function LocationPreferenceProvider({ children }: { children: ReactNode }
         }
       } catch (error) {
         if (isActive) {
+          setUserLocation(null);
           console.log("Erro ao obter localizacao para distancia:", error);
         }
       } finally {

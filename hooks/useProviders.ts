@@ -13,7 +13,8 @@ import {
   ProviderFilter,
   searchProviders,
 } from "@/services/provider.service";
-import { getProviderDistanceKm } from "@/utils/providerDistance";
+import { getCityCoordinates } from "@/utils/cityCoordinates";
+import { rankProviders } from "@/utils/providerRanking";
 
 export type ProviderCardData = {
   id: number;
@@ -26,6 +27,8 @@ export type ProviderCardData = {
   longitude?: number | null;
   show_location_on_map?: boolean | null;
   distanceKm?: number | null;
+  distanceFromCity?: boolean;
+  cityCoordinates?: { latitude: number; longitude: number } | null;
 };
 
 type UseProvidersOptions = {
@@ -41,6 +44,7 @@ function formatProvider(provider: Provider): ProviderCardData {
   const categoryNames = provider.category_names ?? [];
 
   return {
+    cityCoordinates: getCityCoordinates(provider.city_name, provider.uf),
     id: provider.id,
     name: provider.user.name,
     category: categoryNames.join(", ") || "Prestador de serviço",
@@ -273,11 +277,8 @@ export function useProviders(options: UseProvidersOptions = {}) {
   ]));
 
   const providersWithDistance = useMemo(
-    () => providers.map((provider) => ({
-      ...provider,
-      distanceKm: getProviderDistanceKm(provider, userLocation),
-    })),
-    [providers, userLocation]
+    () => rankProviders(providers, userLocation, preferredCity),
+    [providers, userLocation, preferredCity]
   );
 
   return { providers: providersWithDistance, loading, error };
