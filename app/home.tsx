@@ -1,8 +1,8 @@
+import { ScrollView } from "@/components/atoms/KeyboardAware";
 import {
   Alert,
   Keyboard,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
   type TextStyle,
@@ -25,8 +25,9 @@ import { useCategories } from "@/hooks/useCategories";
 import { useProviders } from "@/hooks/useProviders";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { searchCategories, type Category } from "@/services/category.service";
+import { clearProvidersCache } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
-import { getUserName } from "@/utils/authStorage";
+import { clearAuthSession, getUserName } from "@/utils/authStorage";
 import {
   getOneProviderPerCategory,
 } from "@/utils/providerDisplay";
@@ -54,6 +55,7 @@ export default function Home() {
 
   const [providerName, setProviderName] = useState<string | null>(null);
   const [cityModalVisible, setCityModalVisible] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [search, setSearch] = useState("");
   const [suggestionsVisible, setSuggestionsVisible] = useState(false);
   const [matchedCategories, setMatchedCategories] = useState<{
@@ -61,7 +63,6 @@ export default function Home() {
     categories: Category[];
   } | null>(null);
   const selectingSuggestion = useRef(false);
-  
   const { durationMillis, handleVoiceSearch, isRecording, isTranscribing } = useVoiceSearch({
     onError: (message) => Alert.alert("Busca por voz", message),
     onTranscript: (text) => {
@@ -209,6 +210,20 @@ export default function Home() {
     router.push("/providers/profile");
   }
 
+  async function handleLogout() {
+    if (loggingOut) return;
+    try {
+      setLoggingOut(true);
+      await clearAuthSession();
+      clearProvidersCache();
+      router.replace("/");
+    } catch {
+      Alert.alert("Sair", "Não foi possível sair. Tente novamente.");
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -216,6 +231,18 @@ export default function Home() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.locationRow}>
+          <Pressable
+            accessibilityLabel="Sair do aplicativo"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loggingOut, busy: loggingOut }}
+            disabled={loggingOut}
+            hitSlop={8}
+            onPress={handleLogout}
+            style={styles.logoutButton}
+          >
+            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+            <AppText style={styles.logoutText}>{loggingOut ? "Saindo..." : "Sair"}</AppText>
+          </Pressable>
           <Pressable
             accessibilityLabel={
               preferredCity
@@ -368,6 +395,7 @@ export default function Home() {
             city={provider.city}
             photo={provider.photo}
             distanceKm={provider.distanceKm}
+            distanceFromCity={provider.distanceFromCity}
             onPress={() =>
               router.push({
                 pathname: "/providers/[id]",
@@ -405,6 +433,8 @@ const styles = StyleSheet.create<{
   container: ViewStyle;
   content: ViewStyle;
   locationRow: ViewStyle;
+  logoutButton: ViewStyle;
+  logoutText: TextStyle;
   locationSelector: ViewStyle;
   location: TextStyle;
   greeting: TextStyle;
@@ -446,6 +476,20 @@ const styles = StyleSheet.create<{
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
+  },
+
+  logoutButton: {
+    minHeight: 44,
+    flexDirection: "row",
+    gap: spacing.xs,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logoutText: {
+    color: colors.danger,
+    fontWeight: "700",
+    fontSize: 14,
   },
 
   location: {

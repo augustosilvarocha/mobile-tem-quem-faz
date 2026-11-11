@@ -1,3 +1,4 @@
+import { goBack } from "@/utils/navigation";
 import type { ReactNode } from "react";
 import {
   Pressable,
@@ -8,7 +9,6 @@ import {
   type ViewStyle,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, spacing } from "@/theme";
@@ -23,7 +23,7 @@ type ScreenHeaderProps = {
 };
 
 export function ScreenHeader({
-  onBackPress = () => router.back(),
+  onBackPress = goBack,
   right,
   style,
   subtitle,

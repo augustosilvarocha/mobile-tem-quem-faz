@@ -14,7 +14,7 @@ type FeatureCardProps = {
 export function FeatureCard({ icon, title, description, layout }: FeatureCardProps) {
   const responsiveStyles = layout ? createResponsiveStyles(layout) : undefined;
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, responsiveStyles?.container]}>
       <View
         style={[
           styles.iconCircle,
@@ -31,7 +31,7 @@ export function FeatureCard({ icon, title, description, layout }: FeatureCardPro
             styles.title,
             responsiveStyles?.title,
           ]}
-          numberOfLines={2}
+          numberOfLines={layout?.stackFeatures ? undefined : 2}
         >
           {title}
         </AppText>
@@ -91,6 +91,11 @@ const styles = StyleSheet.create({
 
 function createResponsiveStyles(layout: WelcomeLayout) {
   return StyleSheet.create({
+    container: layout.stackFeatures ? {
+      flex: 0,
+      width: "100%",
+      paddingHorizontal: spacing.sm,
+    } : {},
     iconCircle: {
       width: layout.featureCircleSize,
       height: layout.featureCircleSize,

@@ -38,7 +38,7 @@ export function WelcomeActions({ layout }: WelcomeActionsProps) {
           layout={layout}
         />
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, responsiveStyles.divider]} />
 
         <FeatureCard
           icon="location-outline"
@@ -47,7 +47,7 @@ export function WelcomeActions({ layout }: WelcomeActionsProps) {
           layout={layout}
         />
 
-        <View style={styles.divider} />
+        <View style={[styles.divider, responsiveStyles.divider]} />
 
         <FeatureCard
           icon="logo-whatsapp"
@@ -182,8 +182,14 @@ function createResponsiveStyles(layout: WelcomeLayout) {
       paddingBottom: layout.gap,
     },
     featuresBox: {
+      flexDirection: layout.stackFeatures ? "column" : "row",
       paddingVertical: layout.gap,
     },
+    divider: layout.stackFeatures ? {
+      width: "auto",
+      height: 1,
+      marginHorizontal: spacing.sm,
+    } : {},
     button: {
       minHeight: layout.buttonMinHeight,
       marginTop: layout.buttonSpacing,

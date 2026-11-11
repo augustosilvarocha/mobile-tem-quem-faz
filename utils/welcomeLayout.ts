@@ -12,6 +12,7 @@ export function getWelcomeLayout({ width, height, fontScale }: WelcomeFrame) {
   const logoHeight = tight ? 52 : compact ? 88 : 140;
 
   return {
+    stackFeatures: (width - horizontalPadding * 2) / Math.max(1, fontScale) < 300,
     horizontalPadding,
     gap: tight ? 4 : compact ? 6 : 8,
     logoHeight,

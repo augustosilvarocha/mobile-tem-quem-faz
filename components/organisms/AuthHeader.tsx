@@ -1,6 +1,6 @@
+import { goBack } from "@/utils/navigation";
 import { Image, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, spacing } from "@/theme";
@@ -16,11 +16,13 @@ export function AuthHeader({ compact = false, registering = false }: AuthHeaderP
   return (
     <View style={[styles.container, compact && styles.compactContainer]}>
       <Pressable
+        accessibilityLabel="Voltar"
+        accessibilityRole="button"
         hitSlop={8}
         style={styles.backButton}
-        onPress={() => router.back()}
+        onPress={goBack}
       >
-        <Ionicons name="arrow-back" size={30} color={colors.primary} />
+        <Ionicons name="chevron-back" size={28} color={colors.text.primary} />
       </Pressable>
 
       {!compact ? (

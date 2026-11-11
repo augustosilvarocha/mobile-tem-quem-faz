@@ -1,6 +1,7 @@
+import { ScreenHeader } from "@/components/molecules/ScreenHeader";
+import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useMemo, useState } from "react";
 import {
-  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -31,7 +32,7 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      <AppText style={styles.title}>Categorias</AppText>
+      <ScreenHeader title="Categorias" style={styles.title} />
 
       <SearchInput
         value={search}

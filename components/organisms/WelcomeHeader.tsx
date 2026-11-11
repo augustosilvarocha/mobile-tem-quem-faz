@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     maxWidth: "100%",
   },
   subtitle: {
+    maxWidth: "100%",
     color: colors.secondary,
     textAlign: "center",
   },
