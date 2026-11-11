@@ -72,7 +72,7 @@ Nesse modo, a API e o MinIO continuam precisando estar acessíveis pela rede loc
 
 ## Testar com o backend na EC2
 
-Para o deploy atual, use `EXPO_PUBLIC_API_URL=http://18.230.198.183/api`
+Para o deploy atual, use `EXPO_PUBLIC_API_URL=http://56.125.170.200/api`
 no `.env` e reinicie o Expo. O perfil `preview` do `eas.json` usa esse
 mesmo endereço. O plugin `plugins/withHttpApi.js` permite HTTP no APK
 Android quando a URL configurada começa com `http://`.

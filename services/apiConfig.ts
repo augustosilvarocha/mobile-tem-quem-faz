@@ -1,3 +1,3 @@
 export const BASE_URL = (
-  process.env.EXPO_PUBLIC_API_URL || "http://192.168.1.6:8000/api"
+  process.env.EXPO_PUBLIC_API_URL || "http://56.125.170.200/api"
 ).replace(/\/+$/, "");
