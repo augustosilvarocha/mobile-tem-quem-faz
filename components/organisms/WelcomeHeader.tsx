@@ -70,10 +70,10 @@ const styles = StyleSheet.create({
 
   illustration: {
     width: "100%",
-    marginBottom: -16,
-    borderWidth: 1,
+    marginBottom: -24,
+    borderWidth: 2,
     borderColor: colors.background.primary,
-    borderRadius: 16,
+    borderRadius: 24,
   },
 });
 

@@ -27,13 +27,13 @@ export function getWelcomeLayout({ width, height, fontScale }: WelcomeFrame) {
     featureDescriptionFontSize: tight ? 11 : compact ? 12 : 13,
     featureDescriptionLineHeight: tight ? 14 : compact ? 16 : 18,
     buttonMinHeight: tight ? 44 : compact ? 50 : 62,
-    buttonSpacing: tight ? 6 : compact ? 8 : 12,
+    buttonSpacing: tight ? 4 : compact ? 4 : 6,
     buttonFontSize: tight ? 15 : compact ? 16 : 18,
     buttonLineHeight: tight ? 18 : compact ? 20 : 22,
     buttonIconSize: tight ? 22 : compact ? 24 : 28,
     registerLabelFontSize: tight ? 12 : compact ? 14 : 16,
     registerLabelLineHeight: tight ? 18 : compact ? 20 : 22,
-    registerFontSize: tight ? 18 : compact ? 20 : 24,
+    registerFontSize: tight ? 16 : compact ? 18 : 20,
     registerLineHeight: tight ? 20 : compact ? 22 : 24,
   };
 }
