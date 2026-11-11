@@ -1,9 +1,10 @@
+import { goBack } from "@/utils/navigation";
+import { ScrollView } from "@/components/atoms/KeyboardAware";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -36,7 +37,7 @@ export default function ProviderRegister() {
       return;
     }
 
-    router.back();
+    goBack();
   }
 
   async function handleRegisterProvider(payload: CreateProviderPayload) {
@@ -63,9 +64,10 @@ export default function ProviderRegister() {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      keyboardVerticalOffset={0}
     >
       <ScrollView
+        automaticallyAdjustKeyboardInsets={false}
         ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -77,7 +79,7 @@ export default function ProviderRegister() {
           style={styles.backButton}
           onPress={handleBack}
         >
-          <Ionicons name="arrow-back" size={28} color={colors.text.primary} />
+          <Ionicons name="chevron-back" size={28} color={colors.text.primary} />
         </Pressable>
 
         <View style={styles.header}>

@@ -1,5 +1,5 @@
 import { StyleSheet, View } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker } from "@/components/atoms/NativeMap";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";

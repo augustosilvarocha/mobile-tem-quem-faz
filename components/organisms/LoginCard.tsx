@@ -1,5 +1,6 @@
+import { TextInput } from "@/components/atoms/KeyboardAware";
 import { useState } from "react";
-import { Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 

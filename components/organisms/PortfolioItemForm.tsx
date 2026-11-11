@@ -1,10 +1,10 @@
+import { TextInput } from "@/components/atoms/KeyboardAware";
 import { useState } from "react";
 import {
   Alert,
   Image,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";

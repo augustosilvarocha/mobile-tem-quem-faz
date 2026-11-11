@@ -1,9 +1,11 @@
+import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -177,8 +179,9 @@ export default function ManagePortfolio() {
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets={false}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
@@ -313,7 +316,7 @@ export default function ManagePortfolio() {
         title="Excluir este trabalho?"
         visible={Boolean(deletingItem)}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

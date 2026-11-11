@@ -1,9 +1,9 @@
+import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useEffect, useRef, useState } from "react";
 import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -65,12 +65,12 @@ export default function Verification() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      keyboardVerticalOffset={0}
       style={styles.container}
     >
       <ScrollView
+        automaticallyAdjustKeyboardInsets={false}
         ref={scrollRef}
-        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

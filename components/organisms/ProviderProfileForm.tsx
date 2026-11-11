@@ -1,3 +1,4 @@
+import { TextInput } from "@/components/atoms/KeyboardAware";
 import { useMemo, useState } from "react";
 import {
   Alert,
@@ -5,7 +6,6 @@ import {
   Linking,
   Pressable,
   StyleSheet,
-  TextInput,
   View,
   Switch,
   Modal,
@@ -13,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
-import MapView, { Marker, Region } from "react-native-maps";
+import MapView, { Marker, type Region } from "@/components/atoms/NativeMap";
 
 import { AppText } from "@/components/atoms/AppText";
 import { SelectField, SelectOption } from "@/components/molecules/SelectField";

@@ -1,5 +1,6 @@
+import { TextInput } from "@/components/atoms/KeyboardAware";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -147,7 +148,7 @@ export function VerificationCard({
       Alert.alert("Código reenviado", "Um novo código foi enviado para o seu WhatsApp.");
     } catch (err) {
       console.log("Erro ao reenviar código:", err);
-      Alert.alert("Erro", "Não foi possível reenviar o código.");
+      Alert.alert("Reenviar código", err instanceof Error ? err.message : "Não foi possível reenviar o código.");
     } finally {
       setResending(false);
     }

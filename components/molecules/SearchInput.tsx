@@ -1,8 +1,8 @@
+import { TextInput } from "@/components/atoms/KeyboardAware";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Pressable,
   StyleSheet,
-  TextInput,
   type StyleProp,
   type TextInputProps,
   type TextStyle,
