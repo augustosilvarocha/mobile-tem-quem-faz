@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import { storage as SecureStore } from "@/utils/storage";
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";

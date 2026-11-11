@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { AppState } from "react-native";
 import { useRootNavigationState } from "expo-router";
 
-import { expireAuthSession, getTokenExpiration } from "@/services/session.service";
+import { renewAuthSession, getTokenExpiration } from "@/services/session.service";
 import { getAccessToken, subscribeAuthSession } from "@/utils/authStorage";
 
 export function useAuthSession(enabled: boolean) {
@@ -25,7 +25,8 @@ export function useAuthSession(enabled: boolean) {
       const remaining = expiresAt === null ? 0 : expiresAt - Date.now();
 
       if (remaining <= 0) {
-        await expireAuthSession(token);
+        await renewAuthSession(token);
+        if (active && currentRevision === revision) timer = setTimeout(checkSessionSafely, 30_000);
         return;
       }
 
@@ -33,7 +34,10 @@ export function useAuthSession(enabled: boolean) {
     }
 
     function checkSessionSafely() {
-      checkSession().catch((error) => console.log("Erro ao verificar sessão:", error));
+      checkSession().catch((error) => {
+        console.log("Erro ao verificar sessão:", error);
+        if (active) timer = setTimeout(checkSessionSafely, 30_000);
+      });
     }
 
     const unsubscribe = subscribeAuthSession(checkSessionSafely);
