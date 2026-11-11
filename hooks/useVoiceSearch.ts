@@ -15,7 +15,12 @@ type UseVoiceSearchOptions = {
 };
 
 export function useVoiceSearch({ onError, onTranscript }: UseVoiceSearchOptions) {
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder({
+    ...RecordingPresets.HIGH_QUALITY,
+    numberOfChannels: 1,
+    sampleRate: 44100,
+    bitRate: 128000,
+  });
   const recorderState = useAudioRecorderState(recorder, 250);
   const [isTranscribing, setIsTranscribing] = useState(false);
 
