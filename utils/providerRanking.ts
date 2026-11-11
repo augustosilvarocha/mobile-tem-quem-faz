@@ -17,9 +17,9 @@ export function rankProviders(
       ? getDistance(origin, provider.cityCoordinates) / 1000
       : null;
     return {
-      ...provider,
-      distanceKm: preciseDistance ?? cityDistance,
-      distanceFromCity: !userLocation || preciseDistance === null,
+      provider: { ...provider, distanceKm: preciseDistance },
+      sortingDistanceKm: preciseDistance ?? cityDistance,
     };
-  }).sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+  }).sort((a, b) => (a.sortingDistanceKm ?? Infinity) - (b.sortingDistanceKm ?? Infinity))
+    .map(({ provider }) => provider);
 }

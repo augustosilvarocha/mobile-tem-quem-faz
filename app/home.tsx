@@ -112,17 +112,10 @@ export default function Home() {
       ? "Finalizar"
       : "Falar serviço";
 
-  const featuredProviders = useMemo(() => {
-    const ranked = [...providers];
-
-    if (userLocation && !preferredCity) {
-      ranked.sort((a, b) =>
-        (a.distanceKm ?? Number.MAX_SAFE_INTEGER) -
-        (b.distanceKm ?? Number.MAX_SAFE_INTEGER)
-      );
-    }
-    return getOneProviderPerCategory(ranked);
-  }, [providers, userLocation, preferredCity]);
+  const featuredProviders = useMemo(
+    () => getOneProviderPerCategory(providers),
+    [providers]
+  );
   const locationLabel = loadingLocationPreference
     ? "Carregando cidade..."
     : preferredCity
@@ -395,7 +388,6 @@ export default function Home() {
             city={provider.city}
             photo={provider.photo}
             distanceKm={provider.distanceKm}
-            distanceFromCity={provider.distanceFromCity}
             onPress={() =>
               router.push({
                 pathname: "/providers/[id]",

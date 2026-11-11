@@ -19,7 +19,6 @@ type ProviderCardProps = {
   city: string;
   photo?: string;
   distanceKm?: number | null;
-  distanceFromCity?: boolean;
   onPress?: () => void;
 };
 
@@ -29,10 +28,9 @@ export function ProviderCard({
   city,
   photo,
   distanceKm,
-  distanceFromCity,
   onPress,
 }: ProviderCardProps) {
-  const distanceLabel = formatProviderDistance(distanceKm, distanceFromCity);
+  const distanceLabel = formatProviderDistance(distanceKm);
 
   return (
     <Pressable

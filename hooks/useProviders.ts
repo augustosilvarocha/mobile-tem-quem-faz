@@ -27,7 +27,6 @@ export type ProviderCardData = {
   longitude?: number | null;
   show_location_on_map?: boolean | null;
   distanceKm?: number | null;
-  distanceFromCity?: boolean;
   cityCoordinates?: { latitude: number; longitude: number } | null;
 };
 
