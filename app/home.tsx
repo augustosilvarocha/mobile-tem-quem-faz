@@ -4,6 +4,7 @@ import {
   Keyboard,
   Pressable,
   StyleSheet,
+  useWindowDimensions,
   View,
   type TextStyle,
   type ViewStyle,
@@ -25,9 +26,9 @@ import { useCategories } from "@/hooks/useCategories";
 import { useProviders } from "@/hooks/useProviders";
 import { useVoiceSearch } from "@/hooks/useVoiceSearch";
 import { searchCategories, type Category } from "@/services/category.service";
-import { clearProvidersCache } from "@/services/provider.service";
 import { colors, radius, spacing } from "@/theme";
-import { clearAuthSession, getUserName } from "@/utils/authStorage";
+import { getAccessToken, getUserName, subscribeAuthSession } from "@/utils/authStorage";
+import { goBack } from "@/utils/navigation";
 import {
   getOneProviderPerCategory,
 } from "@/utils/providerDisplay";
@@ -45,6 +46,11 @@ function normalizeSearchText(value: string) {
 }
 
 export default function Home() {
+  const { width: windowWidth } = useWindowDimensions();
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const availableWidth = Math.max(0, (containerWidth ?? windowWidth) - spacing.lg * 2);
+  // Preserve 22 on a 390-unit screen; scale between 18 and 28 on other widths.
+  const titleFontSize = Math.max(18, Math.min(28, Math.round(22 * availableWidth / 342)));
   const { categories } = useCategories();
   const { providers } = useProviders();
   const {
@@ -54,8 +60,8 @@ export default function Home() {
   } = useLocationPreference();
 
   const [providerName, setProviderName] = useState<string | null>(null);
+  const [isGuest, setIsGuest] = useState<boolean | null>(null);
   const [cityModalVisible, setCityModalVisible] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
   const [search, setSearch] = useState("");
   const [suggestionsVisible, setSuggestionsVisible] = useState(false);
   const [matchedCategories, setMatchedCategories] = useState<{
@@ -80,18 +86,24 @@ export default function Home() {
   useFocusEffect(useCallback(() => {
     let isMounted = true;
 
-    async function loadProviderName() {
-      const storedProviderName = await getUserName();
+    async function loadSession() {
+      const [token, storedProviderName] = await Promise.all([getAccessToken(), getUserName()]);
 
       if (isMounted) {
-        setProviderName(storedProviderName);
+        setIsGuest(!token);
+        setProviderName(token ? storedProviderName : null);
       }
     }
 
-    loadProviderName();
+    const refreshSession = () => {
+      loadSession().catch((error) => console.log("Erro ao carregar sessão da home:", error));
+    };
+    const unsubscribe = subscribeAuthSession(refreshSession);
+    refreshSession();
 
     return () => {
       isMounted = false;
+      unsubscribe();
     };
   }, []));
 
@@ -203,39 +215,26 @@ export default function Home() {
     router.push("/providers/profile");
   }
 
-  async function handleLogout() {
-    if (loggingOut) return;
-    try {
-      setLoggingOut(true);
-      await clearAuthSession();
-      clearProvidersCache();
-      router.replace("/");
-    } catch {
-      Alert.alert("Sair", "Não foi possível sair. Tente novamente.");
-    } finally {
-      setLoggingOut(false);
-    }
-  }
-
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={({ nativeEvent: { layout } }) => setContainerWidth(layout.width)}
+    >
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        {isGuest === true ? <Pressable
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={goBack}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={28} color={colors.text.primary} />
+        </Pressable> : null}
+
         <View style={styles.locationRow}>
-          <Pressable
-            accessibilityLabel="Sair do aplicativo"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: loggingOut, busy: loggingOut }}
-            disabled={loggingOut}
-            hitSlop={8}
-            onPress={handleLogout}
-            style={styles.logoutButton}
-          >
-            <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-            <AppText style={styles.logoutText}>{loggingOut ? "Saindo..." : "Sair"}</AppText>
-          </Pressable>
           <Pressable
             accessibilityLabel={
               preferredCity
@@ -263,7 +262,12 @@ export default function Home() {
 
         <AppText style={styles.greeting}>{greeting}</AppText>
 
-        <AppText style={styles.title}>Qual serviço você procura hoje?</AppText>
+        <AppText style={[
+          styles.title,
+          { fontSize: titleFontSize, lineHeight: Math.round(titleFontSize * 32 / 22) },
+        ]}>
+          Qual serviço você procura hoje?
+        </AppText>
 
         <SearchInput
           value={search}
@@ -425,8 +429,7 @@ const styles = StyleSheet.create<{
   container: ViewStyle;
   content: ViewStyle;
   locationRow: ViewStyle;
-  logoutButton: ViewStyle;
-  logoutText: TextStyle;
+  backButton: ViewStyle;
   locationSelector: ViewStyle;
   location: TextStyle;
   greeting: TextStyle;
@@ -456,7 +459,7 @@ const styles = StyleSheet.create<{
   },
 
   locationRow: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
@@ -470,18 +473,13 @@ const styles = StyleSheet.create<{
     gap: spacing.xs,
   },
 
-  logoutButton: {
+  backButton: {
+    width: 28,
     minHeight: 44,
-    flexDirection: "row",
-    gap: spacing.xs,
+    marginLeft: -spacing.sm,
+    alignSelf: "flex-start",
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  logoutText: {
-    color: colors.danger,
-    fontWeight: "700",
-    fontSize: 14,
   },
 
   location: {
@@ -498,7 +496,7 @@ const styles = StyleSheet.create<{
   },
 
   greeting: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
     color: colors.primary,
     fontWeight: "700",
     fontSize: 18,
@@ -510,8 +508,6 @@ const styles = StyleSheet.create<{
     marginBottom: spacing.md,
     color: colors.text.primary,
     fontWeight: "800",
-    fontSize: 22,
-    lineHeight: 32,
   },
 
   searchBox: {
