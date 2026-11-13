@@ -2,6 +2,7 @@ import { ScrollView } from "@/components/atoms/KeyboardAware";
 import {
   Alert,
   Keyboard,
+  Linking,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -35,6 +36,8 @@ import {
 import { formatRecordingDuration } from "@/utils/time";
 
 const GUEST_GREETING = "Seja bem-vindo ao TemQuemFaz";
+const TUTORIAL_VIDEO_URL = process.env.EXPO_PUBLIC_TUTORIAL_VIDEO_URL?.trim()
+  || "https://youtube.com/shorts/hpjG1bo57FI?feature=share";
 
 function normalizeSearchText(value: string) {
   return value
@@ -215,6 +218,33 @@ export default function Home() {
     router.push("/providers/profile");
   }
 
+  async function handleOpenTutorial() {
+    if (!TUTORIAL_VIDEO_URL) {
+      Alert.alert("Como usar o aplicativo", "O vídeo tutorial estará disponível em breve.");
+      return;
+    }
+
+    try {
+      await Linking.openURL(TUTORIAL_VIDEO_URL);
+    } catch {
+      Alert.alert("Não foi possível abrir o vídeo", "Tente novamente em alguns instantes.");
+    }
+  }
+
+  const tutorialButton = (
+    <Pressable
+      accessibilityLabel="Assistir ao tutorial de uso do aplicativo"
+      accessibilityHint="Abre o vídeo no YouTube"
+      accessibilityRole="button"
+      hitSlop={6}
+      onPress={handleOpenTutorial}
+      style={({ pressed }) => [styles.tutorialButton, pressed && styles.tutorialButtonPressed]}
+    >
+      <Ionicons name="play-circle-outline" size={24} color={colors.primary} />
+      <AppText style={styles.tutorialLabel}>Como usar</AppText>
+    </Pressable>
+  );
+
   return (
     <View
       style={styles.container}
@@ -224,6 +254,7 @@ export default function Home() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        {isGuest !== false ? <View style={styles.headerRow}>
         {isGuest === true ? <Pressable
           accessibilityLabel="Voltar"
           accessibilityRole="button"
@@ -233,6 +264,9 @@ export default function Home() {
         >
           <Ionicons name="chevron-back" size={28} color={colors.text.primary} />
         </Pressable> : null}
+
+          {tutorialButton}
+        </View> : null}
 
         <View style={styles.locationRow}>
           <Pressable
@@ -257,7 +291,7 @@ export default function Home() {
               color={colors.text.secondary}
             />
           </Pressable>
-
+          {isGuest === false ? tutorialButton : null}
         </View>
 
         <AppText style={styles.greeting}>{greeting}</AppText>
@@ -279,7 +313,7 @@ export default function Home() {
           onBlur={handleSearchBlur}
           onSubmitEditing={() => handleSearchSubmit(search)}
           accessibilityLabel="Buscar serviço"
-          placeholder="Ex.: eletricista, pedreiro..."
+          placeholder="Ex.: pintor, babá..."
           returnKeyType="search"
           iconSize={22}
           containerStyle={styles.searchBox}
@@ -428,6 +462,10 @@ export default function Home() {
 const styles = StyleSheet.create<{
   container: ViewStyle;
   content: ViewStyle;
+  headerRow: ViewStyle;
+  tutorialButton: ViewStyle;
+  tutorialButtonPressed: ViewStyle;
+  tutorialLabel: TextStyle;
   locationRow: ViewStyle;
   backButton: ViewStyle;
   locationSelector: ViewStyle;
@@ -465,6 +503,36 @@ const styles = StyleSheet.create<{
     gap: spacing.sm,
   },
 
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+
+  tutorialButton: {
+    marginLeft: "auto",
+    flexShrink: 0,
+    minHeight: 38,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingHorizontal: 6,
+    borderRadius: radius.md,
+    backgroundColor: colors.background.card,
+  },
+
+  tutorialButtonPressed: {
+    opacity: 0.7,
+  },
+
+  tutorialLabel: {
+    color: colors.primary,
+    fontSize: 12,
+    lineHeight: 20,
+    fontWeight: "700",
+  },
+
   locationSelector: {
     minHeight: 44,
     flex: 1,
@@ -486,7 +554,7 @@ const styles = StyleSheet.create<{
     flexShrink: 1,
     color: colors.text.primary,
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 14,
     lineHeight: 22,
   },
 

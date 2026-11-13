@@ -76,6 +76,7 @@ export default function ProviderRegister() {
         <Pressable
           accessibilityLabel={registrationStep === 2 ? "Voltar para os dados obrigatórios" : "Voltar"}
           accessibilityRole="button"
+          hitSlop={8}
           style={styles.backButton}
           onPress={handleBack}
         >
@@ -111,12 +112,12 @@ export default function ProviderRegister() {
           <AppText variant="subtitle" style={styles.title}>
             {registrationStep === 1
               ? "Dados obrigatórios"
-              : "Endereço e localização"}
+              : "Complete seu perfil"}
           </AppText>
 
           {registrationStep === 2 ? (
             <AppText style={styles.optionalText} color={colors.text.secondary}>
-              Todos os dados desta etapa são opcionais. Você pode preencher somente o que souber ou pular esta etapa.
+              Foto, descrição e localização são opcionais.
             </AppText>
           ) : null}
         </View>
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
 
   backButton: {
     marginTop: spacing.lg,
-    width: 44,
+    width: 28,
     height: 44,
     alignItems: "center",
     justifyContent: "center",

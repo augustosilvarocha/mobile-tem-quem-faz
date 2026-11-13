@@ -83,9 +83,9 @@ const styles = StyleSheet.create({
 
   title: {
     color: colors.text.primary,
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
-    lineHeight: 28,
+    lineHeight: 24,
   },
 
   right: {

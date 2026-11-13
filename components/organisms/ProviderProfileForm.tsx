@@ -463,7 +463,7 @@ export function ProviderProfileForm({
               </AppText>
             ) : null}
             <AppText variant="name" style={styles.label}>
-              WhatsApp *
+              WhatsApp com DDD *
             </AppText>
             <TextInput
               accessibilityLabel="Número do WhatsApp"
@@ -478,10 +478,6 @@ export function ProviderProfileForm({
               maxLength={11}
               style={styles.input}
             />
-
-            <AppText variant="profession" color={colors.text.secondary}>
-              Informe o DDD + número, sem o código do país (55).
-            </AppText>
 
             {phoneError ? (
               <AppText
@@ -541,7 +537,7 @@ export function ProviderProfileForm({
 
             {isRegistration ? (
               <Pressable
-                accessibilityLabel="Continuar para endereço e localização"
+                accessibilityLabel="Continuar para completar o perfil"
                 accessibilityRole="button"
                 style={styles.button}
                 onPress={handleContinueToLocation}
@@ -555,7 +551,7 @@ export function ProviderProfileForm({
           </>
         ) : null}
 
-        {!isRegistration ? (
+        {showLocationFields ? (
           <>
             <AppText variant="name" style={styles.label}>
               Foto de perfil (opcional)
@@ -663,10 +659,6 @@ export function ProviderProfileForm({
             <AppText variant="subtitle" style={styles.sectionTitle}>
               Localização no mapa
             </AppText>
-            <AppText style={styles.locationHelp} color={colors.text.secondary}>
-              Use a localização do celular ou escolha o ponto manualmente.
-            </AppText>
-
             <Pressable
               accessibilityLabel="Usar a localização atual deste celular"
               accessibilityRole="button"
@@ -704,11 +696,6 @@ export function ProviderProfileForm({
               <View style={styles.locationPreviewContainer}>
                 <AppText variant="name" style={styles.previewTitle}>
                   Confira se o ponto está correto
-                </AppText>
-                <AppText style={styles.previewHelp} color={colors.text.secondary}>
-                  {nativeMapsAvailable
-                    ? "Se estiver errado, toque em “Escolher no mapa” para ajustar."
-                    : "Use “Abrir no mapa” para conferir sua localização."}
                 </AppText>
                 {nativeMapsAvailable ? <MapView
                   accessibilityLabel="Prévia da localização marcada"
@@ -780,7 +767,7 @@ export function ProviderProfileForm({
 
             {isRegistration ? (
               <Pressable
-                accessibilityLabel="Pular endereço e localização"
+                accessibilityLabel="Continuar sem endereço e localização"
                 accessibilityRole="button"
                 accessibilityState={{ disabled: submitting }}
                 disabled={submitting}
@@ -788,7 +775,7 @@ export function ProviderProfileForm({
                 onPress={handleSkipLocation}
               >
                 <AppText variant="button" color={colors.primary}>
-                  Pular esta etapa
+                  Continuar sem endereço
                 </AppText>
               </Pressable>
             ) : null}
@@ -948,13 +935,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 
-  locationHelp: {
-    marginTop: -spacing.xs,
-    marginBottom: spacing.xs,
-    fontSize: 16,
-    lineHeight: 22,
-  },
-
   locationStatus: {
     color: colors.text.secondary,
     textAlign: "center",
@@ -966,13 +946,6 @@ const styles = StyleSheet.create({
 
   previewTitle: {
     color: colors.text.primary,
-  },
-
-  previewHelp: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
-    fontSize: 16,
-    lineHeight: 22,
   },
 
   locationPreview: {

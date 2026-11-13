@@ -36,7 +36,7 @@ export function BottomNavigation({
       >
         <Ionicons
           name={active === "home" ? "home" : "home-outline"}
-          size={28}
+          size={26}
           color={colors.primary}
         />
         <AppText style={styles.label} numberOfLines={2}>
@@ -70,7 +70,7 @@ export function BottomNavigation({
             voiceDisabled && styles.voiceCircleDisabled,
           ]}
         >
-          <Ionicons name={voiceIconName} size={30} color={colors.white} />
+          <Ionicons name={voiceIconName} size={28} color={colors.white} />
         </View>
         <AppText style={styles.label} numberOfLines={2}>
           {voiceLabel}
@@ -86,7 +86,7 @@ export function BottomNavigation({
       >
         <Ionicons
           name={active === "profile" ? "person" : "person-outline"}
-          size={28}
+          size={26}
           color={colors.primary}
         />
         <AppText style={styles.label} numberOfLines={2}>
@@ -99,7 +99,7 @@ export function BottomNavigation({
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 96,
+    minHeight: 72,
     backgroundColor: colors.white,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   item: {
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
@@ -117,12 +118,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
-    marginTop: -24,
+    marginTop: -20,
   },
   voiceCircle: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
@@ -140,8 +141,8 @@ const styles = StyleSheet.create({
   label: {
     color: colors.primary,
     fontWeight: "600",
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 18,
     textAlign: "center",
   },
 });

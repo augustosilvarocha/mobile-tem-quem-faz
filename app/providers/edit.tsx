@@ -129,7 +129,6 @@ export default function EditProviderProfile() {
       >
         <ScreenHeader
           style={styles.header}
-          subtitle="Atualize seus dados de prestador."
           title="Editar perfil"
         />
 
