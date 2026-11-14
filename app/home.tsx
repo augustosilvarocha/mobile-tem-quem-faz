@@ -37,7 +37,7 @@ import { formatRecordingDuration } from "@/utils/time";
 
 const GUEST_GREETING = "Seja bem-vindo ao TemQuemFaz";
 const TUTORIAL_VIDEO_URL = process.env.EXPO_PUBLIC_TUTORIAL_VIDEO_URL?.trim()
-  || "https://youtube.com/shorts/hpjG1bo57FI?feature=share";
+  || "https://youtu.be/Q3LXcJmImNg";
 
 function normalizeSearchText(value: string) {
   return value
