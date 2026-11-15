@@ -9,15 +9,17 @@ export function getWelcomeLayout({ width, height, fontScale }: WelcomeFrame) {
   const tight = effectiveHeight < 500 || width < 330;
   const compact = tight || effectiveHeight < 740 || width < 360;
   const horizontalPadding = tight ? 12 : compact ? 16 : 20;
-  const logoHeight = tight ? 52 : compact ? 88 : 140;
+  const logoHeight = tight ? 88 : compact ? 112 : 136;
 
   return {
+    heroFontSize: tight ? 23 : compact ? 27 : 32,
+    heroLineHeight: tight ? 28 : compact ? 33 : 38,
     stackFeatures: (width - horizontalPadding * 2) / Math.max(1, fontScale) < 300,
     horizontalPadding,
     gap: tight ? 4 : compact ? 6 : 8,
     logoHeight,
     logoWidth: Math.min(width - horizontalPadding * 2, logoHeight * (250 / 140)),
-    illustrationMaxHeight: tight ? 150 : compact ? 240 : 280,
+    illustrationMaxHeight: tight ? 140 : compact ? 190 : 240,
     subtitleFontSize: tight ? 15 : compact ? 18 : 20,
     subtitleLineHeight: tight ? 19 : compact ? 22 : 24,
     featureCircleSize: tight ? 30 : compact ? 40 : 54,

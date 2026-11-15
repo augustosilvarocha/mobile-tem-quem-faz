@@ -1,3 +1,5 @@
+import { formatPhone } from "@/utils/phone";
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { useCallback, useState } from "react";
 import {
   Alert,
@@ -182,19 +184,25 @@ export default function OwnProviderProfile() {
         />
 
         {loading ? (
-          <View style={styles.feedback}>
-            <AppText color={colors.text.secondary}>Carregando perfil...</AppText>
-          </View>
+          <LoadingSkeleton layout="profile" />
         ) : isCustomer ? (
           <View style={styles.customerContent}>
             <View style={styles.customerAvatar}>
               <Ionicons name="person" size={56} color={colors.primary} />
             </View>
             <AppText variant="title" style={styles.customerName}>{userName || "Minha conta"}</AppText>
-            {userPhone ? <AppText color={colors.text.secondary}>WhatsApp: {userPhone}</AppText> : null}
+            {userPhone ? <AppText color={colors.text.secondary}>WhatsApp: {formatPhone(userPhone)}</AppText> : null}
             <AppText color={colors.text.secondary} style={styles.feedbackText}>
               Sua conta para encontrar profissionais e salvar seus favoritos.
             </AppText>
+            <Pressable accessibilityRole="button" style={styles.actionCard} onPress={() => router.push("/account/edit")}>
+              <Ionicons name="person-outline" size={24} color={colors.primary} />
+              <View style={styles.actionText}>
+                <AppText style={styles.actionTitle}>Editar perfil</AppText>
+                <AppText color={colors.text.secondary}>Altere suas informações.</AppText>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+            </Pressable>
             <Pressable accessibilityRole="button" style={styles.actionCard} onPress={() => router.push({ pathname: "/providers", params: { favorites: "true" } })}>
               <Ionicons name="star-outline" size={24} color={colors.primary} />
               <View style={styles.actionText}>

@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { useCallback, useRef, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
@@ -299,11 +300,7 @@ export default function ProviderDetails() {
         />
 
         {loading ? (
-          <View style={styles.feedback}>
-            <AppText color={colors.text.secondary}>
-              Carregando prestador...
-            </AppText>
-          </View>
+          <LoadingSkeleton layout="profile" />
         ) : error || !provider ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary}>
@@ -343,9 +340,7 @@ export default function ProviderDetails() {
               Portfólio
             </AppText>
             {portfolioLoading ? (
-              <AppText style={styles.portfolioFeedback}>
-                Carregando portfólio...
-              </AppText>
+              <LoadingSkeleton layout="portfolio" />
             ) : portfolioError ? (
               <AppText style={styles.portfolioFeedback}>
                 {portfolioError}

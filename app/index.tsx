@@ -40,7 +40,7 @@ export default function Welcome() {
           );
         }}
       >
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <WelcomeHeader layout={layout} />
           <WelcomeActions layout={layout} />
         </ScrollView>
@@ -50,6 +50,11 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingVertical: 16,
+  },
   scroll: {
     flex: 1,
   },

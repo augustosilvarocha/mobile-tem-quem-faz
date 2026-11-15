@@ -22,7 +22,7 @@ import { useCities } from "@/hooks/useCities";
 import { useStates } from "@/hooks/useStates";
 import { CreateProviderPayload } from "@/services/provider.service";
 import { colors, radius, spacing, typography } from "@/theme";
-import { isValidPhone, sanitizePhone } from "@/utils/phone";
+import { formatPhone, isValidPhone, sanitizePhone } from "@/utils/phone";
 import { persistLocalImage } from "@/utils/persistLocalImage";
 import { canRenderNativeMap } from "@/utils/nativeMaps";
 import { hasValidCoordinates } from "@/utils/providerDistance";
@@ -467,15 +467,15 @@ export function ProviderProfileForm({
             </AppText>
             <TextInput
               accessibilityLabel="Número do WhatsApp"
-              value={phone}
+              value={formatPhone(phone)}
               onChangeText={(text) => {
-                setPhone(sanitizePhone(text));
+                setPhone(sanitizePhone(text).slice(0, 11));
                 setPhoneError("");
               }}
-              placeholder="Ex.: 84999999999"
+              placeholder="Ex.: (84) 99999-9999"
               placeholderTextColor={colors.text.placeholder}
               keyboardType="phone-pad"
-              maxLength={11}
+              maxLength={16}
               style={styles.input}
             />
 
@@ -595,6 +595,27 @@ export function ProviderProfileForm({
               Endereço do comércio
             </AppText>
 
+            <Pressable
+              accessibilityLabel="Usar a localização atual deste celular"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: loadingLocation }}
+              style={[
+                styles.locationButton,
+                loadingLocation && styles.locationButtonDisabled,
+              ]}
+              onPress={handleUserCurrentLocation}
+              disabled={loadingLocation}
+            >
+              <Ionicons name="location" size={20} color={colors.primary} />
+              <AppText variant="profession" color={colors.primary}>
+                {loadingLocation
+                  ? "Buscando localização..."
+                  : hasSelectedLocation
+                    ? "Atualizar localização atual"
+                    : "Usar localização atual"}
+              </AppText>
+            </Pressable>
+
             <AppText variant="name" style={styles.label}>
               Bairro
             </AppText>
@@ -659,26 +680,6 @@ export function ProviderProfileForm({
             <AppText variant="subtitle" style={styles.sectionTitle}>
               Localização no mapa
             </AppText>
-            <Pressable
-              accessibilityLabel="Usar a localização atual deste celular"
-              accessibilityRole="button"
-              accessibilityState={{ disabled: loadingLocation }}
-              style={[
-                styles.locationButton,
-                loadingLocation && styles.locationButtonDisabled,
-              ]}
-              onPress={handleUserCurrentLocation}
-              disabled={loadingLocation}
-            >
-              <Ionicons name="location" size={20} color={colors.primary} />
-              <AppText variant="profession" color={colors.primary}>
-                {loadingLocation
-                  ? "Buscando localização..."
-                  : hasSelectedLocation
-                    ? "Atualizar localização atual"
-                    : "Usar localização atual"}
-              </AppText>
-            </Pressable>
 
             {nativeMapsAvailable || hasSelectedLocation ? <Pressable
               accessibilityLabel={nativeMapsAvailable ? "Escolher a localização no mapa" : "Abrir localização no mapa"}

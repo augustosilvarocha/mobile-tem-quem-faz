@@ -1,3 +1,4 @@
+import { SkeletonBlock } from "@/components/molecules/LoadingSkeleton";
 import { useMemo, useState } from "react";
 import {
   FlatList,
@@ -94,19 +95,23 @@ export function SelectField({
         style={[styles.field, disabled && styles.fieldDisabled]}
         onPress={handleOpen}
       >
-        <AppText
-          variant="field"
-          color={value ? colors.text.primary : colors.text.placeholder}
-        >
-          {loading ? "Carregando..." : value ? value.label : placeholder}
-        </AppText>
+        {loading ? (
+          <SkeletonBlock style={{ width: "65%", height: 18 }} />
+        ) : (
+          <AppText
+            variant="field"
+            color={value ? colors.text.primary : colors.text.placeholder}
+          >
+            {value ? value.label : placeholder}
+          </AppText>
+        )}
 
         <Ionicons name="chevron-down" size={20} color={colors.text.secondary} />
       </Pressable>
 
       <Modal
         visible={visible}
-        animationType="slide"
+        animationType="fade"
         transparent
         onRequestClose={handleClose}
       >

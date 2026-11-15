@@ -120,3 +120,16 @@ export async function apiDelete(
     throw new ApiError(await getErrorMessage(response, "Erro ao excluir os dados"), {}, response.status);
   }
 }
+
+export async function apiPatch<T>(endpoint: string, body: unknown, accessToken: string): Promise<T> {
+  const response = await authenticatedFetch(endpoint, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }, accessToken);
+  const data = await parseJsonResponse(response);
+  if (!response.ok) {
+    throw new ApiError(getParsedErrorMessage(data, "N\u00e3o foi poss\u00edvel salvar os dados."), data ?? {}, response.status);
+  }
+  return data as T;
+}

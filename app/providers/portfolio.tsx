@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -194,7 +195,7 @@ export default function ManagePortfolio() {
         </AppText>
 
         {loading ? (
-          <AppText style={styles.feedback}>Carregando portfólio...</AppText>
+          <LoadingSkeleton layout="portfolio" />
         ) : error ? (
           <AppText style={styles.feedback}>{error}</AppText>
         ) : formVisible ? (

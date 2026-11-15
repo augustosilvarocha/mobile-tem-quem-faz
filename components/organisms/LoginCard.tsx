@@ -6,7 +6,7 @@ import { router } from "expo-router";
 
 import { AppText } from "@/components/atoms/AppText";
 import { colors, radius, spacing, typography } from "@/theme";
-import { sanitizePhone, isValidPhone } from "@/utils/phone";
+import { formatPhone, sanitizePhone, isValidPhone } from "@/utils/phone";
 import { requestOtp } from "@/services/auth.service";
 
 type LoginCardProps = {
@@ -94,15 +94,15 @@ export function LoginCard({ onPhoneFocus, registering = false }: LoginCardProps)
         <View style={styles.inputDivider} />
 
         <TextInput
-          value={phone}
+          value={formatPhone(phone)}
           onFocus={onPhoneFocus}
           onChangeText={(text) => {
-            setPhone(sanitizePhone(text));
+            setPhone(sanitizePhone(text).slice(0, 11));
             setError("");
           }}
           keyboardType="number-pad"
-          maxLength={11}
-          placeholder="84999999999"
+          maxLength={16}
+          placeholder="(84) 99999-9999"
           placeholderTextColor={colors.text.placeholder}
           style={styles.input}
         />

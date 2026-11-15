@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
 import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useMemo, useState } from "react";
@@ -42,9 +43,7 @@ export default function CategoriesScreen() {
       />
 
       {loading ? (
-        <View style={styles.center}>
-          <AppText>Carregando categorias...</AppText>
-        </View>
+        <LoadingSkeleton layout="categories" />
       ) : error ? (
         <View style={styles.center}>
           <AppText>{error}</AppText>

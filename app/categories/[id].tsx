@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useMemo, useState } from "react";
 import {
@@ -78,9 +79,7 @@ export default function CategoryProvidersScreen() {
         contentContainerStyle={styles.content}
       >
         {isLoading ? (
-          <View style={styles.emptyContainer}>
-            <AppText style={styles.emptyText}>Carregando prestadores...</AppText>
-          </View>
+          <LoadingSkeleton layout="providers" />
         ) : error ? (
           <View style={styles.emptyContainer}>
             <AppText style={styles.emptyText}>{error}</AppText>

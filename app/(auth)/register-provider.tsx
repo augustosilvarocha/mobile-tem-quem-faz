@@ -8,10 +8,12 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
+import { getAccessToken, getUserName, getUserPhone } from "@/utils/authStorage";
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { AppText } from "@/components/atoms/AppText";
 import {
   ProviderProfileForm,
@@ -25,6 +27,25 @@ export default function ProviderRegister() {
   const [registrationStep, setRegistrationStep] =
     useState<ProviderRegistrationStep>(1);
   const scrollRef = useRef<ScrollView>(null);
+  const [initialValues, setInitialValues] = useState<{ name?: string; phone?: string } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadSession() {
+      try {
+        if (!await getAccessToken()) {
+          if (active) setInitialValues({});
+          return;
+        }
+        const [name, phone] = await Promise.all([getUserName(), getUserPhone()]);
+        if (active) setInitialValues({ name: name ?? "", phone: phone ?? "" });
+      } catch {
+        if (active) setInitialValues({});
+      }
+    }
+    loadSession();
+    return () => { active = false; };
+  }, []);
 
   function handleRegistrationStepChange(step: ProviderRegistrationStep) {
     setRegistrationStep(step);
@@ -122,14 +143,15 @@ export default function ProviderRegister() {
           ) : null}
         </View>
 
-        <ProviderProfileForm
+        {initialValues === null ? <LoadingSkeleton layout="form" /> : <ProviderProfileForm
+          initialValues={initialValues}
           mode="registration"
           registrationStep={registrationStep}
           onRegistrationStepChange={handleRegistrationStepChange}
           submitLabel="Continuar para verificação"
           submittingLabel="Cadastrando..."
           onSubmit={handleRegisterProvider}
-        />
+        />}
       </ScrollView>
     </KeyboardAvoidingView>
   );

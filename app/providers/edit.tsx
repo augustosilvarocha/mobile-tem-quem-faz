@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useEffect, useState } from "react";
 import {
@@ -133,9 +134,7 @@ export default function EditProviderProfile() {
         />
 
         {loading ? (
-          <View style={styles.feedback}>
-            <AppText color={colors.text.secondary}>Carregando dados...</AppText>
-          </View>
+          <LoadingSkeleton layout="form" />
         ) : error || !provider ? (
           <View style={styles.feedback}>
             <AppText color={colors.text.secondary}>

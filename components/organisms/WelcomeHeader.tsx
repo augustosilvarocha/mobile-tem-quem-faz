@@ -1,93 +1,31 @@
 import { Image, StyleSheet, View } from "react-native";
 import { AppText } from "@/components/atoms/AppText";
-import { colors } from "@/theme";
+import { colors, spacing } from "@/theme";
 import type { WelcomeLayout } from "@/utils/welcomeLayout";
 
-type WelcomeHeaderProps = {
-  layout: WelcomeLayout;
-  showIllustration?: boolean;
-};
+type WelcomeHeaderProps = { layout: WelcomeLayout; showIllustration?: boolean };
 
-export function WelcomeHeader({
-  layout,
-  showIllustration = true,
-}: WelcomeHeaderProps) {
-  const responsiveStyles = createResponsiveStyles(layout);
+export function WelcomeHeader({ layout, showIllustration = true }: WelcomeHeaderProps) {
   return (
-    <View style={[styles.container, responsiveStyles.container]}>
-      <Image
-        source={require("../../assets/images/logo.png")}
-        style={[styles.logo, responsiveStyles.logo]}
-        resizeMode="contain"
-      />
-
-      <AppText
-        variant="subtitle"
-        style={[
-          styles.subtitle,
-          responsiveStyles.subtitle,
-        ]}
-      >
-        Encontre prestadores de serviço{"\n"}
-        <AppText
-          variant="subtitle"
-          color={colors.primary}
-          style={responsiveStyles.subtitle}
-        >
-          perto de você.
-        </AppText>
+    <View style={[styles.container, { paddingHorizontal: layout.horizontalPadding, gap: layout.gap * 2 }]}>
+      <Image source={require("../../assets/images/logo.png")} resizeMode="contain"
+        accessibilityLabel="TemQuemFaz" style={{ width: layout.logoWidth, height: layout.logoHeight }} />
+      <AppText variant="title" style={[styles.title, { fontSize: layout.heroFontSize, lineHeight: layout.heroLineHeight }]}>
+        O serviço que você{ "\n" }precisa, perto{ "\n" }
+        <AppText variant="title" style={{ color: colors.primary, fontSize: layout.heroFontSize, lineHeight: layout.heroLineHeight }}>de você.</AppText>
       </AppText>
-
-      {showIllustration && (
-        <Image
-          source={require("../../assets/images/auth-banner.png")}
-          style={[
-            styles.illustration,
-            responsiveStyles.illustration,
-          ]}
-          resizeMode="contain"
-        />
-      )}
+      <AppText style={[styles.description, { fontSize: layout.subtitleFontSize, lineHeight: layout.subtitleLineHeight }]}>
+        Encontre profissionais da sua região.
+      </AppText>
+      {showIllustration && <Image source={require("../../assets/images/welcome-duo.png")}
+        resizeMode="contain" style={[styles.illustration, { height: layout.illustrationMaxHeight }]} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexShrink: 0,
-    alignItems: "center",
-  },
-
-  logo: {
-    flexShrink: 1,
-    maxWidth: "100%",
-  },
-  subtitle: {
-    maxWidth: "100%",
-    color: colors.secondary,
-    textAlign: "center",
-  },
-
-  illustration: {
-    width: "100%",
-    marginBottom: -24,
-    borderWidth: 2,
-    borderColor: colors.background.primary,
-    borderRadius: 24,
-  },
+  container: { alignItems: "center", flexShrink: 0 },
+  title: { color: "#082252", textAlign: "center", width: "100%", letterSpacing: -0.8 },
+  description: { color: colors.text.secondary, textAlign: "center" },
+  illustration: { width: "100%", marginTop: spacing.xs, borderRadius: 24 },
 });
-
-function createResponsiveStyles(layout: WelcomeLayout) {
-  return StyleSheet.create({
-    container: { paddingHorizontal: layout.horizontalPadding },
-    logo: { width: layout.logoWidth, height: layout.logoHeight },
-    subtitle: {
-      fontSize: layout.subtitleFontSize,
-      lineHeight: layout.subtitleLineHeight,
-    },
-    illustration: {
-      height: layout.illustrationMaxHeight,
-      marginTop: layout.gap,
-    },
-  });
-}

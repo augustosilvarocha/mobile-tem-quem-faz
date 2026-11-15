@@ -1,6 +1,6 @@
+import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Pressable,
   StyleSheet,
   View,
@@ -77,12 +77,7 @@ export function CategorySelector({
       />
 
       {loading && (
-        <View style={styles.feedback}>
-          <ActivityIndicator color={colors.primary} />
-          <AppText variant="field" color={colors.text.secondary}>
-            Carregando categorias...
-          </AppText>
-        </View>
+        <LoadingSkeleton layout="categoryOptions" />
       )}
 
       {!loading && error && (
