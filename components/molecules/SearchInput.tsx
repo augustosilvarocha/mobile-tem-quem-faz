@@ -13,6 +13,7 @@ import {
 import { colors, radius, spacing, typography } from "@/theme";
 
 type SearchInputProps = Omit<TextInputProps, "style"> & {
+  keyboardBottomOffset?: number;
   containerStyle?: StyleProp<ViewStyle>;
   iconColor?: string;
   iconName?: keyof typeof Ionicons.glyphMap;

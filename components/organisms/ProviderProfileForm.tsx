@@ -8,13 +8,13 @@ import {
   StyleSheet,
   View,
   Switch,
-  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import MapView, { Marker, type Region } from "@/components/atoms/NativeMap";
 
+import { MapLocationPicker } from "@/components/molecules/MapLocationPicker";
 import { AppText } from "@/components/atoms/AppText";
 import { SelectField, SelectOption } from "@/components/molecules/SelectField";
 import { CategorySelector } from "@/components/organisms/CategorySelector";
@@ -25,6 +25,7 @@ import { colors, radius, spacing, typography } from "@/theme";
 import { formatPhone, isValidPhone, sanitizePhone } from "@/utils/phone";
 import { persistLocalImage } from "@/utils/persistLocalImage";
 import { canRenderNativeMap } from "@/utils/nativeMaps";
+import { getCityCoordinates } from "@/utils/cityCoordinates";
 import { hasValidCoordinates } from "@/utils/providerDistance";
 import { GENDER_OPTIONS, ProviderGender } from "@/utils/gender";
 import { formatCpf, isValidCpf, sanitizeCpf } from "@/utils/cpf";
@@ -113,8 +114,8 @@ export function ProviderProfileForm({
   const { states, loading: loadingStates } = useStates();
   const { cities, loading: loadingCities } = useCities();
   const isRegistration = mode === "registration";
-  const showRequiredFields = !isRegistration || registrationStep === 1;
-  const showLocationFields = !isRegistration || registrationStep === 2;
+  const showPersonalFields = !isRegistration || registrationStep === 1;
+  const showServiceFields = !isRegistration || registrationStep === 2;
 
   const stateOptions: SelectOption[] = useMemo(
     () => states.map((state) => ({ id: state.uf, label: `${state.name} - ${state.uf}` })),
@@ -256,13 +257,53 @@ export function ProviderProfileForm({
     }
   }
 
-  function handleOpenMapPicker() {
-    setMapRegion({
-      latitude: latitude ?? mapRegion.latitude,
-      longitude: longitude ?? mapRegion.longitude,
-      latitudeDelta: mapRegion.latitudeDelta,
-      longitudeDelta: mapRegion.longitudeDelta,
-    });
+  async function handleOpenMapPicker() {
+    if (loadingLocation) return;
+    if (hasSelectedLocation) {
+      setMapRegion({ ...mapRegion, latitude: latitude!, longitude: longitude! });
+      setMapPickerVisible(true);
+      return;
+    }
+
+    const city = cities.find((item) => item.id === selectedCity?.id);
+    let center = city ? getCityCoordinates(city.name, city.uf) : null;
+    setLoadingLocation(true);
+    try {
+      if (await Location.hasServicesEnabledAsync()) {
+        let permission = await Location.getForegroundPermissionsAsync();
+        if (permission.status !== Location.PermissionStatus.GRANTED && permission.canAskAgain) {
+          permission = await Location.requestForegroundPermissionsAsync();
+        }
+        if (permission.status === Location.PermissionStatus.GRANTED) {
+          // Prefer a recent fix and limit GPS waiting time so the picker still opens.
+          let timeout: ReturnType<typeof setTimeout> | undefined;
+          try {
+            const position = await Promise.race([
+              (async () => {
+                const recent = await Location.getLastKnownPositionAsync({
+                  maxAge: 60_000,
+                  requiredAccuracy: 5_000,
+                });
+                return recent ?? await Location.getCurrentPositionAsync({
+                  accuracy: Location.Accuracy.Balanced,
+                });
+              })(),
+              new Promise<null>((resolve) => { timeout = setTimeout(() => resolve(null), 5_000); }),
+            ]);
+            if (position && hasValidCoordinates(position.coords)) center = position.coords;
+          } finally {
+            clearTimeout(timeout);
+          }
+        }
+      }
+    } catch {
+      // The selected city remains available when device location is unavailable.
+    } finally {
+      setLoadingLocation(false);
+    }
+    setMapRegion(center
+      ? { ...center, latitudeDelta: 0.06, longitudeDelta: 0.06 }
+      : mapRegion);
     setMapPickerVisible(true);
   }
 
@@ -294,14 +335,6 @@ export function ProviderProfileForm({
     setShowLocationOnMap(true);
   }
 
-  function handleConfirmMapLocation() {
-    if (latitude === null || longitude === null) {
-      Alert.alert("Mapa", "Marque um ponto no mapa antes de confirmar.");
-      return;
-    }
-    setMapPickerVisible(false);
-  }
-
   function handleToggleShowLocationOnMap(enabled: boolean) {
     if (enabled && !hasSelectedLocation) {
       Alert.alert(
@@ -320,7 +353,7 @@ export function ProviderProfileForm({
     setShowLocationOnMap(false);
   }
 
-  function validateRequiredFields() {
+  function validatePersonalFields() {
     if (!isValidCpf(cpf)) {
       setCpfError("Informe um CPF válido.");
       return false;
@@ -338,6 +371,10 @@ export function ProviderProfileForm({
       return false;
     }
 
+    return true;
+  }
+
+  function validateServiceFields() {
     if (!selectedCity) {
       Alert.alert("Atenção", "Selecione o estado e a cidade.");
       return false;
@@ -352,20 +389,22 @@ export function ProviderProfileForm({
   }
 
   function handleContinueToLocation() {
-    if (!validateRequiredFields()) {
+    if (!validatePersonalFields()) {
       return;
     }
 
     onRegistrationStepChange?.(2);
   }
 
-  async function submitProfile(includeLocation: boolean) {
-    if (!validateRequiredFields()) {
+  async function submitProfile() {
+    if (!validatePersonalFields()) {
       if (isRegistration) {
         onRegistrationStepChange?.(1);
       }
       return;
     }
+
+    if (!validateServiceFields()) return;
 
     if (!selectedCity) {
       return;
@@ -383,14 +422,14 @@ export function ProviderProfileForm({
         photoUri: photoChanged ? photo : null,
         description,
         categories: selectedCategories,
-        neighborhood: includeLocation ? neighborhood : "",
-        street: includeLocation ? street : "",
-        number: includeLocation ? number : "",
-        address_complement: includeLocation ? addressComplement : "",
-        reference_point: includeLocation ? referencePoint : "",
-        latitude: includeLocation ? latitude : null,
-        longitude: includeLocation ? longitude : null,
-        show_location_on_map: includeLocation ? showLocationOnMap : false,
+        neighborhood: neighborhood,
+        street: street,
+        number: number,
+        address_complement: addressComplement,
+        reference_point: referencePoint,
+        latitude: latitude,
+        longitude: longitude,
+        show_location_on_map: showLocationOnMap,
       });
     } catch (err: any) {
       console.log("Erro ao enviar dados do prestador:", err);
@@ -404,23 +443,19 @@ export function ProviderProfileForm({
   }
 
   function handleSubmit() {
-    return submitProfile(true);
-  }
-
-  function handleSkipLocation() {
-    return submitProfile(false);
+    return submitProfile();
   }
 
   return (
     <>
       <View style={styles.form}>
-        {showRequiredFields ? (
+        {showPersonalFields ? (
           <>
             <AppText variant="profession" color={colors.text.secondary}>
-              * Campos obrigatórios
+              Preencha os campos indicados como obrigatórios.
             </AppText>
             <AppText variant="name" style={styles.label}>
-              Nome completo *
+              Nome completo (obrigatório)
             </AppText>
             <TextInput
               accessibilityLabel="Nome completo obrigatório"
@@ -433,7 +468,7 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              CPF *
+              CPF (obrigatório)
             </AppText>
             <TextInput
               accessibilityLabel="CPF obrigatório"
@@ -463,10 +498,10 @@ export function ProviderProfileForm({
               </AppText>
             ) : null}
             <AppText variant="name" style={styles.label}>
-              WhatsApp com DDD *
+              WhatsApp (obrigatório)
             </AppText>
             <TextInput
-              accessibilityLabel="Número do WhatsApp"
+              accessibilityLabel="Número do WhatsApp obrigatório"
               value={formatPhone(phone)}
               onChangeText={(text) => {
                 setPhone(sanitizePhone(text).slice(0, 11));
@@ -492,31 +527,6 @@ export function ProviderProfileForm({
             ) : null}
 
             <AppText variant="name" style={styles.label}>
-              Estado *
-            </AppText>
-            <SelectField
-              placeholder="Selecione o estado"
-              value={selectedState}
-              options={stateOptions}
-              onSelect={handleSelectState}
-              loading={loadingStates}
-              searchPlaceholder="Buscar estado"
-            />
-
-            <AppText variant="name" style={styles.label}>
-              Cidade *
-            </AppText>
-            <SelectField
-              placeholder="Selecione a cidade"
-              value={selectedCity}
-              options={cityOptions}
-              onSelect={setSelectedCity}
-              disabled={!selectedState}
-              loading={loadingCities}
-              searchPlaceholder="Buscar cidade"
-            />
-
-            <AppText variant="name" style={styles.label}>
               Gênero (opcional)
             </AppText>
             <SelectField
@@ -530,29 +540,6 @@ export function ProviderProfileForm({
               Se informado, será exibido no seu perfil público.
             </AppText>
 
-            <CategorySelector
-              selectedCategories={selectedCategories}
-              onChange={setSelectedCategories}
-            />
-
-            {isRegistration ? (
-              <Pressable
-                accessibilityLabel="Continuar para completar o perfil"
-                accessibilityRole="button"
-                style={styles.button}
-                onPress={handleContinueToLocation}
-              >
-                <AppText variant="button" color={colors.white}>
-                  Continuar
-                </AppText>
-                <Ionicons name="arrow-forward" size={22} color={colors.white} />
-              </Pressable>
-            ) : null}
-          </>
-        ) : null}
-
-        {showLocationFields ? (
-          <>
             <AppText variant="name" style={styles.label}>
               Foto de perfil (opcional)
             </AppText>
@@ -574,6 +561,55 @@ export function ProviderProfileForm({
               )}
             </Pressable>
 
+            {isRegistration ? (
+              <Pressable
+                accessibilityLabel="Continuar para serviço e localização"
+                accessibilityRole="button"
+                style={styles.button}
+                onPress={handleContinueToLocation}
+              >
+                <AppText variant="button" color={colors.white}>
+                  Continuar
+                </AppText>
+                <Ionicons name="arrow-forward" size={22} color={colors.white} />
+              </Pressable>
+            ) : null}
+          </>
+        ) : null}
+
+        {showServiceFields ? (
+          <>
+            <CategorySelector
+              selectedCategories={selectedCategories}
+              onChange={setSelectedCategories}
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Estado (obrigatório)
+            </AppText>
+            <SelectField
+              placeholder="Selecione o estado"
+              value={selectedState}
+              options={stateOptions}
+              onSelect={handleSelectState}
+              loading={loadingStates}
+              searchPlaceholder="Buscar estado"
+            />
+
+            <AppText variant="name" style={styles.label}>
+              Cidade (obrigatória)
+            </AppText>
+            <SelectField
+              placeholder="Selecione a cidade"
+              value={selectedCity}
+              options={cityOptions}
+              onSelect={setSelectedCity}
+              disabled={!selectedState}
+              loading={loadingCities}
+              searchPlaceholder="Buscar cidade"
+            />
+
+
             <AppText variant="name" style={styles.label}>
               Descrição do seu serviço (opcional)
             </AppText>
@@ -589,7 +625,7 @@ export function ProviderProfileForm({
           </>
         ) : null}
 
-        {showLocationFields ? (
+        {showServiceFields ? (
           <>
             <AppText variant="subtitle" style={styles.sectionTitle}>
               Endereço do comércio
@@ -616,8 +652,22 @@ export function ProviderProfileForm({
               </AppText>
             </Pressable>
 
+            {nativeMapsAvailable || hasSelectedLocation ? <Pressable
+              accessibilityLabel={nativeMapsAvailable ? "Escolher a localização no mapa" : "Abrir localização no mapa"}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: loadingLocation }}
+              disabled={loadingLocation}
+              style={[styles.locationButton, loadingLocation && styles.locationButtonDisabled]}
+              onPress={nativeMapsAvailable ? handleOpenMapPicker : handleOpenLocationExternally}
+            >
+              <Ionicons name="map" size={20} color={colors.primary} />
+              <AppText variant="profession" color={colors.primary}>
+                {loadingLocation ? "Localizando..." : nativeMapsAvailable ? "Escolher no mapa" : "Abrir no mapa"}
+              </AppText>
+            </Pressable> : null}
+
             <AppText variant="name" style={styles.label}>
-              Bairro
+              Bairro (opcional)
             </AppText>
             <TextInput
               accessibilityLabel="Bairro opcional"
@@ -629,7 +679,7 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              Rua
+              Rua (opcional)
             </AppText>
             <TextInput
               accessibilityLabel="Rua opcional"
@@ -641,7 +691,7 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              Número
+              Número (opcional)
             </AppText>
             <TextInput
               accessibilityLabel="Número do endereço opcional"
@@ -654,7 +704,7 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              Complemento
+              Complemento (opcional)
             </AppText>
             <TextInput
               accessibilityLabel="Complemento do endereço opcional"
@@ -666,7 +716,7 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="name" style={styles.label}>
-              Ponto de referência
+              Ponto de referência (opcional)
             </AppText>
             <TextInput
               accessibilityLabel="Ponto de referência opcional"
@@ -678,20 +728,8 @@ export function ProviderProfileForm({
             />
 
             <AppText variant="subtitle" style={styles.sectionTitle}>
-              Localização no mapa
+              Localização no mapa (opcional)
             </AppText>
-
-            {nativeMapsAvailable || hasSelectedLocation ? <Pressable
-              accessibilityLabel={nativeMapsAvailable ? "Escolher a localização no mapa" : "Abrir localização no mapa"}
-              accessibilityRole="button"
-              style={styles.locationButton}
-              onPress={nativeMapsAvailable ? handleOpenMapPicker : handleOpenLocationExternally}
-            >
-              <Ionicons name="map" size={20} color={colors.primary} />
-              <AppText variant="profession" color={colors.primary}>
-                {nativeMapsAvailable ? "Escolher no mapa" : "Abrir no mapa"}
-              </AppText>
-            </Pressable> : null}
 
             {hasSelectedLocation && latitude !== null && longitude !== null ? (
               <View style={styles.locationPreviewContainer}>
@@ -766,78 +804,22 @@ export function ProviderProfileForm({
               </AppText>
             </Pressable>
 
-            {isRegistration ? (
-              <Pressable
-                accessibilityLabel="Continuar sem endereço e localização"
-                accessibilityRole="button"
-                accessibilityState={{ disabled: submitting }}
-                disabled={submitting}
-                style={styles.skipButton}
-                onPress={handleSkipLocation}
-              >
-                <AppText variant="button" color={colors.primary}>
-                  Continuar sem endereço
-                </AppText>
-              </Pressable>
-            ) : null}
+
           </>
         ) : null}
       </View>
 
-      {nativeMapsAvailable && mapPickerVisible ? <Modal
-        visible={mapPickerVisible}
-        animationType="slide"
-        onRequestClose={() => setMapPickerVisible(false)}
-      >
-        <View style={styles.mapPickerContainer}>
-          <View style={styles.mapPickerHeader}>
-            <Pressable
-              accessibilityLabel="Fechar mapa"
-              accessibilityRole="button"
-              style={styles.mapPickerIconButton}
-              onPress={() => setMapPickerVisible(false)}
-            >
-              <Ionicons name="close" size={24} color={colors.text.primary} />
-            </Pressable>
-
-            <AppText variant="name" color={colors.text.primary}>
-              Escolher localização
-            </AppText>
-
-            <Pressable
-              accessibilityLabel="Confirmar localização marcada"
-              accessibilityRole="button"
-              style={styles.mapPickerIconButton}
-              onPress={handleConfirmMapLocation}
-            >
-              <Ionicons name="checkmark" size={24} color={colors.primary} />
-            </Pressable>
-          </View>
-
-          <AppText style={styles.mapPickerHelp} color={colors.text.secondary}>
-            Toque no mapa ou arraste o marcador até o local correto.
-          </AppText>
-
-          <MapView
-            style={styles.mapPicker}
-            initialRegion={mapRegion}
-            onRegionChangeComplete={setMapRegion}
-            onPress={(event) => {
-              handleSelectMapLocation(event.nativeEvent.coordinate);
-            }}
-          >
-            {latitude !== null && longitude !== null ? (
-              <Marker
-                coordinate={{ latitude, longitude }}
-                draggable
-                onDragEnd={(event) => {
-                  handleSelectMapLocation(event.nativeEvent.coordinate);
-                }}
-              />
-            ) : null}
-          </MapView>
-        </View>
-      </Modal> : null}
+      {nativeMapsAvailable && mapPickerVisible ? (
+        <MapLocationPicker
+          initialRegion={mapRegion}
+          initialCoordinate={hasSelectedLocation ? { latitude: latitude!, longitude: longitude! } : null}
+          onCancel={() => setMapPickerVisible(false)}
+          onConfirm={(coordinate) => {
+            handleSelectMapLocation(coordinate);
+            setMapPickerVisible(false);
+          }}
+        />
+      ) : null}
     </>
   );
 }
@@ -913,12 +895,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
 
-  skipButton: {
-    minHeight: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.md,
-  },
 
   locationButton: {
     height: 52,
@@ -974,40 +950,4 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  mapPickerContainer: {
-    flex: 1,
-    backgroundColor: colors.background.primary,
-  },
-
-  mapPickerHeader: {
-    height: 72,
-    paddingHorizontal: spacing.md,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-
-  mapPickerIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.background.card,
-  },
-
-  mapPickerHelp: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 16,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-
-  mapPicker: {
-    flex: 1,
-  },
 });

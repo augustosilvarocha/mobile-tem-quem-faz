@@ -24,6 +24,7 @@ export function CategorySelector({
 }: CategorySelectorProps) {
   const { categories, loading, error } = useCategories();
   const [search, setSearch] = useState("");
+  const [resultsHeight, setResultsHeight] = useState(202);
 
   const filteredCategories = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -53,7 +54,7 @@ export function CategorySelector({
   return (
     <View style={styles.container}>
       <AppText variant="subtitle" style={styles.title}>
-        Categoria de serviço *
+        Categoria de serviço (obrigatória)
       </AppText>
 
       <AppText
@@ -66,6 +67,7 @@ export function CategorySelector({
 
       <SearchInput
         accessibilityLabel="Buscar categoria de serviço"
+        keyboardBottomOffset={resultsHeight + spacing.sm}
         value={search}
         onChangeText={setSearch}
         placeholder="Buscar categoria"
@@ -87,7 +89,10 @@ export function CategorySelector({
       )}
 
       {!loading && !error && (
-        <View style={styles.grid}>
+        <View
+          style={styles.grid}
+          onLayout={(event) => setResultsHeight(event.nativeEvent.layout.height)}
+        >
           {filteredCategories.map((category) => {
             const isSelected = selectedCategories.includes(category.id);
 

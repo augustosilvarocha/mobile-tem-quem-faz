@@ -1,8 +1,8 @@
 import { LoadingSkeleton } from "@/components/molecules/LoadingSkeleton";
 import { ScreenHeader } from "@/components/molecules/ScreenHeader";
-import { ScrollView } from "@/components/atoms/KeyboardAware";
 import { useMemo, useState } from "react";
 import {
+  FlatList,
   StyleSheet,
   View,
 } from "react-native";
@@ -49,29 +49,32 @@ export default function CategoriesScreen() {
           <AppText>{error}</AppText>
         </View>
       ) : (
-        <ScrollView
+        <FlatList
+          data={filteredCategories}
+          keyExtractor={(category) => category.id.toString()}
+          numColumns={2}
+          initialNumToRender={8}
+          maxToRenderPerBatch={6}
+          windowSize={5}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.content}
-        >
-          <View style={styles.grid}>
-            {filteredCategories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                title={category.name}
-                image={category.image}
-                onPress={() =>
-                  router.push({
-                    pathname: "/categories/[id]",
-                    params: {
-                      id: category.id.toString(),
-                      name: category.name,
-                    },
-                  })
-                }
-              />
-            ))}
-          </View>
-        </ScrollView>
+          columnWrapperStyle={styles.grid}
+          ListEmptyComponent={<AppText>Nenhuma categoria encontrada.</AppText>}
+          renderItem={({ item: category }) => (
+            <CategoryCard
+              title={category.name}
+              image={category.image}
+              onPress={() =>
+                router.push({
+                  pathname: "/categories/[id]",
+                  params: { id: category.id.toString(), name: category.name },
+                })
+              }
+            />
+          )}
+        />
       )}
     </View>
   );
@@ -101,9 +104,8 @@ const styles = StyleSheet.create({
 
   grid: {
     flexDirection: "row",
-    flexWrap: "wrap",
     justifyContent: "space-between",
-    rowGap: spacing.md,
+    marginBottom: spacing.md,
   },
 
   center: {

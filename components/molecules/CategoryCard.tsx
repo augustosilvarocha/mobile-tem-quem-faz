@@ -1,4 +1,5 @@
-import { Image, Pressable, StyleSheet, View, ViewStyle, TextStyle, ImageStyle } from "react-native";
+import { Pressable, StyleSheet, View, ViewStyle, TextStyle, ImageStyle } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/atoms/AppText";
@@ -42,7 +43,11 @@ export function CategoryCard({
         <Image
           source={{ uri: image }}
           style={styles.image}
-          resizeMode="contain"
+          contentFit="contain"
+          cachePolicy="memory-disk"
+          recyclingKey={image}
+          enforceEarlyResizing
+          transition={0}
         />
       ) : (
         <View style={styles.imagePlaceholder}>

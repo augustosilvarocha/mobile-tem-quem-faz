@@ -95,7 +95,7 @@ export default function ProviderRegister() {
         showsVerticalScrollIndicator={false}
       >
         <Pressable
-          accessibilityLabel={registrationStep === 2 ? "Voltar para os dados obrigatórios" : "Voltar"}
+          accessibilityLabel={registrationStep === 2 ? "Voltar para os dados pessoais" : "Voltar"}
           accessibilityRole="button"
           hitSlop={8}
           style={styles.backButton}
@@ -132,13 +132,13 @@ export default function ProviderRegister() {
 
           <AppText variant="subtitle" style={styles.title}>
             {registrationStep === 1
-              ? "Dados obrigatórios"
-              : "Complete seu perfil"}
+              ? "Dados pessoais"
+              : "Serviço e localização"}
           </AppText>
 
           {registrationStep === 2 ? (
             <AppText style={styles.optionalText} color={colors.text.secondary}>
-              Foto, descrição e localização são opcionais.
+              Selecione sua categoria de serviço e cidade. Descrição, endereço e marcação no mapa são opcionais.
             </AppText>
           ) : null}
         </View>

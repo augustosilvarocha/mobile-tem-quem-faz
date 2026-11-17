@@ -9,7 +9,7 @@ import {
   type TextInputProps,
 } from "react-native";
 
-const RevealInput = createContext<(input: NativeTextInput | null) => void>(() => {});
+const RevealInput = createContext<(input: NativeTextInput | null, bottomOffset?: number) => void>(() => {});
 
 // Type and value exports let existing refs keep using the native instance type.
 export type ScrollView = NativeScrollView;
@@ -19,11 +19,13 @@ export const ScrollView = forwardRef<NativeScrollView, ScrollViewProps>(function
 ) {
   const ref = useRef<NativeScrollView>(null);
   const focused = useRef<NativeTextInput | null>(null);
+  const focusedBottomOffset = useRef(0);
   const [webKeyboardInset, setWebKeyboardInset] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useImperativeHandle(forwardedRef, () => ref.current!);
-  const reveal = useCallback((input: NativeTextInput | null = focused.current) => {
+  const reveal = useCallback((input: NativeTextInput | null = focused.current, bottomOffset = focusedBottomOffset.current) => {
     focused.current = input;
+    focusedBottomOffset.current = bottomOffset;
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       if (!focused.current?.isFocused()) return;
@@ -35,10 +37,10 @@ export const ScrollView = forwardRef<NativeScrollView, ScrollViewProps>(function
         const bottom = (viewport?.height ?? window.innerHeight) + (viewport?.offsetTop ?? 0) - 24;
         const top = (viewport?.offsetTop ?? 0) + 16;
         const scrollNode = ref.current?.getScrollableNode() as HTMLElement | undefined;
-        if (scrollNode && bounds.bottom > bottom) scrollNode.scrollTop += bounds.bottom - bottom;
+        if (scrollNode && bounds.bottom + bottomOffset > bottom) scrollNode.scrollTop += bounds.bottom + bottomOffset - bottom;
         else if (scrollNode && bounds.top < top) scrollNode.scrollTop -= top - bounds.top;
       } else {
-        if (Keyboard.isVisible()) ref.current?.scrollResponderScrollNativeHandleToKeyboard(focused.current, 32, true);
+        if (Keyboard.isVisible()) ref.current?.scrollResponderScrollNativeHandleToKeyboard(focused.current, 32 + bottomOffset, true);
       }
     }, 150);
   }, []);
@@ -80,19 +82,22 @@ export const ScrollView = forwardRef<NativeScrollView, ScrollViewProps>(function
 
 export type TextInput = NativeTextInput;
 // eslint-disable-next-line @typescript-eslint/no-redeclare
-export const TextInput = forwardRef<NativeTextInput, TextInputProps>(function KeyboardAwareInput(
-  { onFocus, onContentSizeChange, ...props }, ref
+export const TextInput = forwardRef<NativeTextInput, TextInputProps & { keyboardBottomOffset?: number }>(function KeyboardAwareInput(
+  { onFocus, onContentSizeChange, keyboardBottomOffset = 0, ...props }, ref
 ) {
   const reveal = useContext(RevealInput);
   const input = useRef<NativeTextInput>(null);
   useImperativeHandle(ref, () => input.current!);
+  useEffect(() => {
+    if (input.current?.isFocused()) reveal(input.current, keyboardBottomOffset);
+  }, [keyboardBottomOffset, reveal]);
   return <NativeTextInput
     {...props}
     ref={input}
-    onFocus={(event) => { onFocus?.(event); reveal(input.current); }}
+    onFocus={(event) => { onFocus?.(event); reveal(input.current, keyboardBottomOffset); }}
     onContentSizeChange={(event) => {
       onContentSizeChange?.(event);
-      if (input.current?.isFocused()) reveal(input.current);
+      if (input.current?.isFocused()) reveal(input.current, keyboardBottomOffset);
     }}
   />;
 });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Image } from "expo-image";
 
 import {
   Category,
@@ -47,6 +48,17 @@ export function useCategories() {
       isActive = false;
     };
   }, []);
+
+  useEffect(() => {
+    // Warm only the first screen, leaving bandwidth for other app requests.
+    const images = [...new Set(
+      categories.slice(0, 8).flatMap((category) => category.image ? [category.image] : [])
+    )];
+    if (images.length > 0) {
+      // Prefetch is optional: an image failure must not prevent category browsing.
+      void Image.prefetch(images, "memory-disk").catch(() => {});
+    }
+  }, [categories]);
 
   return {
     categories,
